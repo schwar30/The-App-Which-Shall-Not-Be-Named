@@ -1410,17 +1410,20 @@ server <- function(input, output, session) {
   
   observeEvent(input$corp_view, {
     
+    isolate(input$corp_view)
+    # isolate(input$corpID)
+    # isolate(input$corp_dealer)
+    
     output$corp_table <- renderTable({
-      
-    isolate(input$corpID)
-    isolate(input$corp_dealer)
       
     data_table <- read.csv("~/Desktop/Rob Scripts/Reference Files/zip codes.csv")
     
     data_table <- data_table %>% 
       select(PAR.Name, Dealer, FSA.ZIP.Code, Percentage.of.FSA.ZIP)
     
-    if(input$corpID != "") {
+    # The conditionals need to be isolated otherwise they will auto update
+    
+    if(isolate(input$corpID) != "") {
       
       corpID <- isolate(input$corpID)
       
@@ -1428,18 +1431,26 @@ server <- function(input, output, session) {
       
       data_table <- data_table %>% 
         filter(str_detect(Dealer, corpID))
-      
-      
+
     }
     
-    if(input$corp_dealer != "") {
-      
+    # The conditionals need to be isolated otherwise they will auto update
+
+    if(isolate(input$corp_dealer) != "") {
+
       dealer <- isolate(input$corp_dealer)
-      
-      data_table <- data_table %>% 
+
+      data_table <- data_table %>%
         filter(str_detect(PAR.Name, dealer))
-      
+
     }
+    
+    data_table <- data_table %>% 
+      arrange(FSA.ZIP.Code) %>% 
+      rename("Dealer Name" = PAR.Name) %>% 
+      rename("Dealer ID" = Dealer) %>% 
+      rename("Zipcode" = FSA.ZIP.Code) %>% 
+      rename("Percentage of Zipcode\nAssigned" = Percentage.of.FSA.ZIP)
     
     data_table
       
@@ -1449,9 +1460,6 @@ server <- function(input, output, session) {
   
   corp_setup <- reactive({
     
-    isolate(input$corpID)
-    isolate(input$corp_dealer)
-    
     data_table <- read.csv("~/Desktop/Rob Scripts/Reference Files/zip codes.csv")
     
     data_table <- data_table %>% 
@@ -1459,14 +1467,13 @@ server <- function(input, output, session) {
     
     if(input$corpID != "") {
       
-      corpID <- isolate(input$corpID)
+      corpID <- input$corpID
       
       data_table$Dealer <- as.character(data_table$Dealer)
       
       data_table <- data_table %>% 
         filter(str_detect(Dealer, corpID))
-      
-      
+
     }
     
     if(input$corp_dealer != "") {
@@ -1480,24 +1487,19 @@ server <- function(input, output, session) {
     
     data_table
     
-    # browser()
-    
   })
   
   output$corp_download <- downloadHandler(
     
-    # browser(),
-    
-   filename = ifelse(input$corp_dealer != "", paste0(input$corp_dealer, " Corporate Zipcodes.csv"), "Corporate Zipcodes.csv"),
+   filename = function(){
+     ifelse(input$corp_dealer != "", paste0(input$corp_dealer, " Corporate Zipcodes.csv"), "Corporate Zipcodes.csv")
+   },
    
    content = function(file){
      
      write.csv(corp_setup(), file, row.names = F)
      
-   }
-
-    
-  )
+   })
   
 }
 
