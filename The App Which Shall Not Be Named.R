@@ -94,7 +94,9 @@ ui <- dashboardPage(
       menuItem("Google Sheets", tabName = "gsheet", icon = icon("exclamation"),
                menuSubItem("New Google Sheet", tabName = "new_gsheet"),
                menuSubItem("Edit Google Sheet", tabName = "edit_gsheet"),
-               menuSubItem("Remove Google Sheet", tabName = "remove_gsheet"))
+               menuSubItem("Remove Google Sheet", tabName = "remove_gsheet")),
+      
+      menuItem("Corporate Zipcode Breakdown", tabName = "corporate", icon = icon("steam"))
       
     ) 
     
@@ -362,7 +364,25 @@ ui <- dashboardPage(
                 
                 actionBttn(inputId = "delete_gsheet", label = "Deleet Sheet")
                 
-              ))
+              )),
+      
+      tabItem(tabName = "corporate",
+              
+              titlePanel("Corporate Zipcode Breakout"),
+              
+              sidebarPanel(
+                
+                textInput(inputId = "corpID", label = "Corporate ID"),
+                "or", 
+                textInput(inputId = "corp_dealer", label = "Dealer Name"),
+                actionBttn(inputId = "corp_view", label = "View Associations"),
+                downloadButton(outputId = "corp_download", label = "Download Associations")
+                
+              ),
+              
+              tableOutput("corp_table")
+              
+              )
       
     )))
 
@@ -1387,6 +1407,97 @@ server <- function(input, output, session) {
   # take exceptionally long to just copy. Pretty nice for SMALL data sets, but anything we would use it for makes this
   # near useless here.
   # })
+  
+  observeEvent(input$corp_view, {
+    
+    output$corp_table <- renderTable({
+      
+    isolate(input$corpID)
+    isolate(input$corp_dealer)
+      
+    data_table <- read.csv("~/Desktop/Rob Scripts/Reference Files/zip codes.csv")
+    
+    data_table <- data_table %>% 
+      select(PAR.Name, Dealer, FSA.ZIP.Code, Percentage.of.FSA.ZIP)
+    
+    if(input$corpID != "") {
+      
+      corpID <- isolate(input$corpID)
+      
+      data_table$Dealer <- as.character(data_table$Dealer)
+      
+      data_table <- data_table %>% 
+        filter(str_detect(Dealer, corpID))
+      
+      
+    }
+    
+    if(input$corp_dealer != "") {
+      
+      dealer <- isolate(input$corp_dealer)
+      
+      data_table <- data_table %>% 
+        filter(str_detect(PAR.Name, dealer))
+      
+    }
+    
+    data_table
+      
+    })
+    
+  })
+  
+  corp_setup <- reactive({
+    
+    isolate(input$corpID)
+    isolate(input$corp_dealer)
+    
+    data_table <- read.csv("~/Desktop/Rob Scripts/Reference Files/zip codes.csv")
+    
+    data_table <- data_table %>% 
+      select(PAR.Name, Dealer, FSA.ZIP.Code, Percentage.of.FSA.ZIP)
+    
+    if(input$corpID != "") {
+      
+      corpID <- isolate(input$corpID)
+      
+      data_table$Dealer <- as.character(data_table$Dealer)
+      
+      data_table <- data_table %>% 
+        filter(str_detect(Dealer, corpID))
+      
+      
+    }
+    
+    if(input$corp_dealer != "") {
+      
+      dealer <- isolate(input$corp_dealer)
+      
+      data_table <- data_table %>% 
+        filter(str_detect(PAR.Name, dealer))
+      
+    }
+    
+    data_table
+    
+    # browser()
+    
+  })
+  
+  output$corp_download <- downloadHandler(
+    
+    # browser(),
+    
+   filename = ifelse(input$corp_dealer != "", paste0(input$corp_dealer, " Corporate Zipcodes.csv"), "Corporate Zipcodes.csv"),
+   
+   content = function(file){
+     
+     write.csv(corp_setup(), file, row.names = F)
+     
+   }
+
+    
+  )
   
 }
 
