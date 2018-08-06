@@ -1,0 +1,70 @@
+﻿Like Adam’s tutorial, there are somethings that are just good to know because it leads to much less confusion navigating through everything. This will only get bigger over time, as I don’t plan on memorizing all of these initially, but I really don’t want to forget about anything either:
+
+
+* cd
+   * Also known as change directory, and will always bring back to the home folder
+* cd [folder/directory]
+   * Changes the working directory to the selected directory
+* ls
+   * Lists all of the files in a certain folder (can be nice to know other folders in the directory or files in general)
+* ls -la
+   * Also lists the files in the working directory, but shows hidden files as well and lists it cleaner (in my opinion)
+* \ before a space
+   * Some folders have spaces in their names and the command line, like other programming languages, have issues reading. However, if a backslash is placed in front of the space, the file will be read just fine.
+* git add
+   * This command allows you to collect everything you want to commit together and can be used multiple times before a commit is performed
+   * git add can actually have multiple files following it (ie git add x y z) to make the syntax a little cleaner
+* git add -A
+   * This command allows for everything to be added immediately rather than choosing individual pieces
+* git add . 
+   * This command adds the entire working directory 
+* git add *.[file type]
+   * This command adds all of a certain type of file
+* touch [filename]
+   * Touch allows for odd files to be created that would otherwise be difficult to make. Most notably, .gitignore is particularly helpful when using git add -A, git add ., or git add *.[file type], but is difficult to create otherwise.
+* git.ignore
+   * Not a command, but it’s worth knowing, because you can put any file name that you want in here and git will never take it, which is kind of a neat thing
+* git init 
+   * Sets up the tracking so that git can recognize the folder as something it should
+* git diff 
+   * This can sometimes be nice to see what has been changed in the files you want to commit
+* git remote -v
+   * This lists the repositories for the origin
+* git remote set-url origin <url> 
+   * This allows the remote repository to be changed if it is for whatever reason not correct
+* git reset [file]
+   * This allows something in the git add to be removed if you don’t want it to be committed.
+
+
+One of the most jarring things for me was thinking that commits were fairly final things and showed no insight as to what happened. Neither of these are the case, and commits can be done easily and with little to no repercussion. Even if a commit is made and something is left out, a file is forgotten, or an edit has not been made yet, it is very easy to make a new commit and there are no real issues with doing so.
+
+
+Adam has set up an ssh key for all of us, so that means that we do not need to sign in our credentials anytime we want to access github, which is great because it makes everything so fast.
+
+
+I kind of view the git add in the standard commands rather than the git commands just because its set up rather than producing any changes. The following have much more to do with uploading changes to github:
+
+
+* git commit        
+   * Moves objects from git add to the staging area. This is kind of a limbo between remote and local
+* git commit -m “[message]”
+   * Honestly, all commits should include this because it provides tiny bits of insights to the changes that were committed. 
+* git status
+   * Very helpful to see what is committed, what is not, and what has been changed.
+* git remote add origin <url>
+   * The url needs to be the repository in github, but that’s not hard to find or set up. This allows for the commits to be pushed to the correct spot.
+* git remote
+   * Pretty much just confirms that the origin is there to be pushed to.
+* git push -u origin master
+   * Adds the commit to github
+* git pull
+   * What’s nice about this is that it combines the fetch and merge commands which are generally what is needed anyway.
+
+
+So this is the general setup for pushing changes to github:
+1. Ensure that all git tools are set up (repositories, hidden git folders, origin, etc.)
+2. Navigate to the directory including everything that you want to be added to the upload.
+3. Use git add to select everything you want to commit
+4. Use git commit to bring everything you added into the staging area. Don’t forget to have some kind of message.
+5. Use git push -u origin master (assuming the origin is set up already)
+More than anything else, there are really only a few points that should really be put in the highest regard: this is really for version control and directories mean everything. To clarify, it’s a really nice and powerful tool for making sure that changes that are made are not lost in case something goes wrong. Moreover, its actually not that complicated to push changes (especially if I’m the only developer on it, and in which case it’s kind of like a portfolio). The only things that really need to be checked is the directory you’re in, and making sure that the folder that’s being used has the hidden .git folder. Other than that it really is just a sharing software.
