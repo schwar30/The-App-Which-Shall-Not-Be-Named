@@ -1,3 +1,5 @@
+# Test this
+
 library(shiny)
 
 # Probably useless below
@@ -96,7 +98,13 @@ ui <- dashboardPage(
                menuSubItem("Edit Google Sheet", tabName = "edit_gsheet"),
                menuSubItem("Remove Google Sheet", tabName = "remove_gsheet")),
       
-      menuItem("Corporate Zipcode Breakdown", tabName = "corporate", icon = icon("steam"))
+      # This is a tab that shows and allows downloads for the breakout of corporate zipcodes
+      
+      menuItem("Corporate Zipcode Breakdown", tabName = "corporate", icon = icon("steam")),
+      
+      # This allows the leads to be filtered either by phone number or website
+      
+      menuItem("Export Wrangling", tabName = "wrangle", icon = icon("book"))
       
     ) 
     
@@ -381,6 +389,26 @@ ui <- dashboardPage(
               ),
               
               tableOutput("corp_table")
+              
+              ),
+      
+      tabItem(tabName = "wrangle",
+              
+              titlePanel("Export Wrangling"),
+              
+              sidebarPanel(
+                
+                fileInput(inputId = "export_file", label = "Please Upload Export:"),
+                textInput(inputId = "export_website", label = "Filter Website"),
+                textInput(inputId = "export_phone", label = "Filter Phone", value = ""),
+                actionButton(inputId = "export_clean", label = "Show Table"), 
+                actionButton(inputId = "export_count", label = "Lead Count"),
+                downloadButton(outputId = "export_download", label = "Download Cleaned Export")
+                
+              ),
+              
+              tableOutput("export_count_table"),
+              tableOutput("export_clean_table")
               
               )
       
@@ -1500,6 +1528,164 @@ server <- function(input, output, session) {
      write.csv(corp_setup(), file, row.names = F)
      
    })
+  
+  observeEvent(input$export_clean, {
+    
+    output$export_clean_table <- renderTable({
+      
+      isolate(input$export_clean)
+      
+      file_to_read <- isolate(input$export_file)
+      if(is.null(file_to_read)) {
+        return()
+      }
+      
+      export_table <- read.csv(file_to_read$datapath)
+      
+      export_table <- export_table %>% 
+        select(SentTo, Type, Campaign, MarketingSource, Website, Phone, IVR.Number, TransferredTo)
+      
+      export_table$Phone <- gsub("\\..*", "", export_table$Phone)
+      export_table$IVR.Number <- gsub("\\..*", "", export_table$IVR.Number)
+      export_table$TransferredTo <- gsub("\\..*", "", export_table$TransferredTo)
+      
+      if(isolate(input$export_website) != "") {
+        
+        export_table <- export_table %>% 
+          filter(Campaign == "Web") %>% 
+          filter(Website == isolate(input$export_website))
+        
+      }
+      
+      if(isolate(input$export_phone) != "") {
+        
+        export_table <- export_table %>% 
+          filter(Campaign == "Phone") %>% 
+          filter(IVR.Number == isolate(input$export_phone))
+        
+      }else{
+        
+        export_table <- export_table
+        
+      }
+      
+      export_table <- export_table %>% 
+        distinct() %>% 
+        filter(SentTo != "")
+      
+      export_table$MarketingSource[export_table$MarketingSource == ""] <- "Web"
+      
+      export_table
+      
+    })
+    
+  })
+  
+  observeEvent(input$export_count, {
+    
+    output$export_count_table <- renderTable({
+      
+      file_to_read <- isolate(input$export_file)
+      if(is.null(file_to_read)) {
+        return()
+      }
+      
+      export_table <- read.csv(file_to_read$datapath)
+      
+      export_table <- export_table %>% 
+        select(SentTo, Type, Campaign, MarketingSource, Website, Phone, IVR.Number, TransferredTo)
+      
+      export_table$Phone <- gsub("\\..*", "", export_table$Phone)
+      export_table$IVR.Number <- gsub("\\..*", "", export_table$IVR.Number)
+      export_table$TransferredTo <- gsub("\\..*", "", export_table$TransferredTo)
+      
+      if(isolate(input$export_website) != "") {
+        
+        export_table <- export_table %>% 
+          filter(Campaign == "Web") %>% 
+          filter(Website == isolate(input$export_website))
+        
+      }
+      
+      if(isolate(input$export_phone) != "") {
+        
+        export_table <- export_table %>% 
+          filter(Campaign == "Phone") %>% 
+          filter(IVR.Number == isolate(input$export_phone))
+        
+      }else{
+        
+        export_table <- export_table
+        
+      }
+      
+      export_table <- export_table %>% 
+        distinct() %>% 
+        filter(SentTo != "") %>% 
+        count() %>% 
+        rename("Total Number of Leads" = n)
+      
+      export_table
+      
+    })
+    
+  })
+  
+  export_setup <- reactive({
+    
+    file_to_read <- isolate(input$export_file)
+    if(is.null(file_to_read)) {
+      return()
+    }
+    
+    export_table <- read.csv(file_to_read$datapath)
+    
+    export_table <- export_table %>% 
+      select(SentTo, Type, Campaign, MarketingSource, Website, Phone, IVR.Number, TransferredTo)
+    
+    export_table$Phone <- gsub("\\..*", "", export_table$Phone)
+    export_table$IVR.Number <- gsub("\\..*", "", export_table$IVR.Number)
+    export_table$TransferredTo <- gsub("\\..*", "", export_table$TransferredTo)
+    
+    if(input$export_website != "") {
+      
+      export_table <- export_table %>% 
+        filter(Campaign == "Web") %>% 
+        filter(Website == input$export_website)
+      
+    }
+    
+    if(input$export_phone != "") {
+      
+      export_table <- export_table %>% 
+        filter(Campaign == "Phone") %>% 
+        filter(IVR.Number == input$export_phone)
+      
+    }else{
+      
+      export_table <- export_table
+      
+    }
+    
+    export_table <- export_table %>% 
+      distinct() %>% 
+      filter(SentTo != "")
+    
+    export_table$MarketingSource[export_table$MarketingSource == ""] <- "Web"
+    
+    export_table
+    
+  })
+  
+  output$export_download <- downloadHandler(
+    
+    filename = "Filtered Leads.csv",
+    
+    content = function(file) {
+      write.csv(export_setup(), file, row.names = F)
+    }
+    
+  )
   
 }
 
