@@ -1,8 +1,6 @@
-# Test this
-
 library(shiny)
 
-# Probably useless below
+# Probably useless at the time being
 
 library(shinyjs)
 
@@ -12,24 +10,50 @@ library(stringr)
 library(DT)
 library(data.table)
 
-# I don't think I use any relevant things from this either
+# I can't get the auto authorization to work without this option.
+
+options(httr_oob_default = T)
+library(googleAnalyticsR)
+
+# browser()
+
+# I don't think I use any relevant things from this either.
+# Even if I did, I should be using the packages officer and
+# FlexTable
 
 library(ReporteRs)
 
 # Both are used for API calls
 
 library(RAdwords)
-library(RGA)
 
-# Below is likely unnecessary
+# There isn't anything particularly wrong with RGA, I just wanted to 
+# try something different so I wouldn't just copy Adam's / Austin's code
+# for analytics API calls. Might do the same for Adowrds API.
+
+# library(RGA)
+
+# Below is likely unnecessary because the google sheets API is ridiculously slow.
+# Took over a half hour to input a datatable with ~10,000 entries.
 
 library(googlesheets)
 
 library(shinyWidgets)
 
-# This is particularly for call files which tend to be rather large
+# This is particularly for the call files and lead exports which tend to be rather large
 
 options(shiny.maxRequestSize = 30 * 1024^2)
+
+# I need this because I want the selectize option in the UI for API calls.
+
+client_csv <- read.csv("~/Desktop/Rob Scripts/Reference Files/client_website_ga_id.csv")
+client_csv <- client_csv %>% 
+  filter(str_detect(UA, "UA"))
+
+# This file isn't particularly updated with correct corresponding http:// or https:// starters,
+# so i just remove them initially so they actually match up.
+
+client_csv$name <- gsub("^.*\\/\\/", "", client_csv$name)
 
 ui <- dashboardPage(
   
@@ -80,7 +104,7 @@ ui <- dashboardPage(
       # struggle with right now is unfortunately the stuff I'll never have to deal with in the near future, 
       # but I think it's still worth knowing.
       
-      menuItem("API Call", tabName = "api", icon = icon("ban")), 
+      menuItem("Analytics API Call", tabName = "api", icon = icon("tree")), 
       
       # More of a basic reporting kind of thing that Stullzy wants to lay out. It's not difficult, but the problem
       # is I don't explicitly know everything to filter, but I think it's pretty decent.
@@ -315,6 +339,8 @@ ui <- dashboardPage(
               
               sidebarPanel(
                 
+                selectizeInput(inputId = "api_website", label = "Select Website", choices = client_csv$name,
+                               multiple = T),
                 dateInput(inputId = "first_date", label = "First Date"),
                 dateInput(inputId = "last_date", label = "Last Date"),
                 actionButton(inputId = "api_call", label = "API Call")
@@ -1353,22 +1379,158 @@ server <- function(input, output, session) {
   observeEvent(input$api_call, {
 
     output$api_text <- renderText({
-
+      
+      # This little bit of code is just so that the API call can run without needing to sign in to 
+      # Google Analytics
+      
+      ga_auth("~/Desktop/Rob Scripts/Current Projects/Git/ga.oauth")
+      
+      # This lists all the Kennedy Accounts, UA codes, and analyticsID's.
+      
+      kennedy_accounts <- ga_account_list()
+      
       # browser()
-
-      body <- statement(select = "Clicks",
-                        report = "CAMPAIGN_PERFORMANCE_REPORT",
-                        start = isolate(input$first_date),
-                        end = isolate(input$last_date))
-
-      source("/Volumes/Front/Adam/Shiny8/scripts/googleAuth.R")
-      source("~/Desktop/Rob Scripts/Reference Files/source.R")
-
-    browser()
-
-      metric <- getData(clientCustomerId = client_id,
-                        google_auth = authorize_Adwords(),
-                        statement = body)
+      
+      if(nrow(as.data.frame(input$api_website)) > 1) {
+        
+        # The selectize option would always pull in the first value if it was not a multiple, but 
+        # data over multiple sites means nothing, so I just wanted some alerts to fire if someone 
+        # tried to enter more than one or less than 1 site. Probably should have created it such that if 
+        # it wasn't equal to 1 it would fire off, but it doesn't matter. It gave me a little bit more insight
+        # on the alerts.
+        
+        confirmSweetAlert(
+          
+          session = session,
+          inputId = "api_2_alert",
+          type = "warning",
+          title = "Please select only 1 website",
+          btn_labels = "OK!",
+          danger_mode = T
+          
+        )
+        
+      }
+      
+      if(nrow(as.data.frame(input$api_website)) == 0) {
+        
+        # Alert if no website is listed
+        
+        confirmSweetAlert(
+          
+          session = session,
+          inputId = "api_0_alert",
+          type = "warning",
+          title = "Please select a website",
+          btn_labels = "OK!",
+          danger_mode = T
+          
+        )
+        
+      }else{
+        
+        # Here's all the meat and potatoes. The list doesn't seem to be updated whether the 
+        # site is http:// or https://, so I removed it from the original file and from the called
+        # Kennedy accounts.
+        
+        kennedy_accounts$websiteUrl <- gsub("^.*\\/\\/", "", kennedy_accounts$websiteUrl)
+        
+        # Since we only want a single id, we filter out the row that we need and select the id we want
+        
+        client_id <- kennedy_accounts %>% 
+          filter(websiteUrl == input$api_website) %>% 
+          select(viewId)
+        
+        # Since the viewID is still as a dataframe and we want it as a character, so we need to select 
+        # the single cell so it is just a character.
+        
+        client_id <- client_id$viewId[1]
+        
+        # So many trials at trying to set up the filters. The difficulty came from only being able to have
+        # a single operator in the filter_clause_ga4 function. These are all the single shoot offs, and while
+        # they are unused, they don't flow together to get the filter I want
+        
+        # filter_us <- dim_filter("country", "EXACT", "United States")
+        # filter_can <- dim_filter("country", "EXACT", "Canada")
+        # source1 <- dim_filter("source", "PARTIAL", "doubleclick", not = T)
+        # source2 <- dim_filter("source", "PARTIAL", "buttons", not = T)
+        # source3 <- dim_filter("source", "PARTIAL", "semalt", not = T)
+        # source4 <- dim_filter("hostname", "PARTIAL", "(not set)", not = T)
+        # source5 <- dim_filter("source", "PARTIAL", "uptime.com", not = T)
+        # source6 <- dim_filter("source", "PARTIAL", "seo", not = T)
+        # source7 <- dim_filter("source", "PARTIAL", "monetize", not = T)
+        # source8 <- dim_filter("source", "PARTIAL", ".ml", not = T)
+        # source9 <- dim_filter("source", "PARTIAL", "amezon", not = T)
+        # source10 <- dim_filter("source", "PARTIAL", ".info", not = T)
+        # source11 <- dim_filter("source", "PARTIAL", "traffic2money", not = T)
+        # source12 <- dim_filter("networkLocation", "PARTIAL", "ovh", not = T)
+        # source12 <- dim_filter("networkLocation", "PARTIAL", "ocean", not = T)
+        # source13 <- dim_filter("networkLocation", "PARTIAL", "evercompliant", not = T)
+        # source14 <- dim_filter("networkLocation", "PARTIAL", "hubspot", not = T)
+        # source15 <- dim_filter("networkLocation", "PARTIAL", "microsoft corporation", not = T)
+        # source16 <- dim_filter("networkLocation", "PARTIAL", "127.0.0.1:8888 / referral", not = T)
+        # source17 <- dim_filter("networkLocation", "PARTIAL", "google llc", not = T)
+        # source18 <- dim_filter("networkLocation", "PARTIAL", "amazon technologies inc.", not = T)
+        
+        # Had to use regular expressions because then we could use deMorgan's laws of equivalence. It was 
+        # super annoying to keep track of everything but it now works. Honestly, manybe I shouldn't have struggled
+        # as much as I did, because ultimately I didn't need to condense as much as I did, but this is kind of nice,
+        # because if I need to change anything directly, I can just change the small word associated with (likely)
+        # the service provider.
+        
+        filter_both <- dim_filter("country", "REGEXP", "United States|Canada")
+        source <- dim_filter("source", "REGEXP", "doubleclick|buttons|semalt|uptime.com|seo|monetize|\\.ml|amezon|\\.info|traffic2money", not = T)
+        hostname <- dim_filter("hostname", "PARTIAL", "(not set)", not = T)
+        service_provider <- dim_filter("networkLocation", "REGEXP", "ovh|ocean|evercompliant|hubspot|microsoft corporation|127\\.0\\.0\\.1\\:8888 \\/ referral|google llc|amazon technologies inc\\.", not = T)
+        
+        # Sets up the filter to MATCH the Analytics filter by combining the aforementioned conditions
+        
+        new_filter <- filter_clause_ga4(list(filter_both, source, hostname, service_provider),
+                                        operator = "AND")
+        # rv <- list()
+        # filter_all <- filter_clause_ga4(list(#filter_us, filter_can,
+        #                                         filter_both,
+        #                                         source1, source2, source3,
+        #                                         source4, source5, source6, source7, source8, source9,
+        #                                         source10, source11, source12, source13, source14, source15,
+        #                                         source16, source17, source18
+        #                                         ), operator = "OR"
+        # )
+        # filter_test <- filter_clause_ga4(list(filter_us, filter_can),
+        #                                     operator = "OR")
+        # 
+        # filter <- filter_clause_ga4(list(filter_all, filter_test), operator = "AND")
+        # 
+        # filter_all <- filter_clause_ga4(list(filter_source, filter_country),
+        #                                 operator = "OR")
+        # browser()
+        # call2 <- google_analytics(client_id,
+        #                           date_range = c(input$first_date, input$last_date),
+        #                           metrics = "sessions",
+        #                           dim_filters = filter_test
+        # )
+        # browser()
+        
+        # The actual call. Only pulls sessions right now because this is a test and I really have no intention
+        # of making this test page / app compete with Shiny, since this would lose anyway.
+        
+        sessions_call <- google_analytics(client_id,
+                                    date_range = c(input$first_date, input$last_date),
+                                    metrics = "sessions",
+                                    dim_filters = new_filter)
+        
+        # The call again brings in everything as a dataframe, but I want a character object, so that's what this does.
+        # I am honestly super impressed with myself for figuring this junk out. Everything in this was ridiculous because
+        # of authorizations, converting to proper types, and having to be concerned with logical equivalence made this 
+        # unequivically the most difficult script I've written to date. Luckily, however, if I ever wanted to test anything
+        # out here, it would be much, much easier because now it's all about finding the correct ga: tag and setting up the 
+        # call. Gold Sticker.
+                                   
+        total_sessions <- sessions_call$sessions[1]
+        total_sessions
+    
+      }
+      
     })
 
   })
