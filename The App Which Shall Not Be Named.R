@@ -1,3 +1,6 @@
+# This is a test
+
+
 library(shiny)
 
 # Probably useless at the time being
@@ -55,6 +58,14 @@ client_csv <- client_csv %>%
 
 client_csv$name <- gsub("^.*\\/\\/", "", client_csv$name)
 
+# For the Magic Spreadsheet component, I make update selectize based off other inputs, but that 
+# still requires an initial value. I could directly set the choices equal to NULL, but having them
+# exist first is a decent thing to do anyway. I should also rename these so they aren't general.
+
+data1 <- NULL
+data2 <- NULL
+data_set <- NULL
+
 ui <- dashboardPage(
   
   dashboardHeader(title = "\nThe\nApp\nWhich\nShall\nNot\nBe\nNamed", titleWidth = 400),
@@ -82,7 +93,7 @@ ui <- dashboardPage(
       # On occassion we will be asked about inquiry zipcode breakouts, which isn't very common, but it 
       # would take like half an hour or so to finalize, and this is just easier since its now generalized
       
-      menuItem("Zipcode Breakout", tabName = "zipcode", icon = icon("magic")),
+      menuItem("Zipcode Breakout", tabName = "zipcode", icon = icon("fire")),
       
       # Allows for numbers from Dialog Tech to be found and exported very quickly and nicely
       
@@ -106,6 +117,11 @@ ui <- dashboardPage(
       
       menuItem("Analytics API Call", tabName = "api", icon = icon("tree")), 
       
+      # The API call for analytics wasn't easy, but I was still able to do it, so I guess it's also probably worth
+      # getting a test page for this as well.
+      
+      menuItem("Adwords API Call", tabName = "adwords", icon = icon("adn")),
+      
       # More of a basic reporting kind of thing that Stullzy wants to lay out. It's not difficult, but the problem
       # is I don't explicitly know everything to filter, but I think it's pretty decent.
       
@@ -128,7 +144,14 @@ ui <- dashboardPage(
       
       # This allows the leads to be filtered either by phone number or website
       
-      menuItem("Export Wrangling", tabName = "wrangle", icon = icon("book"))
+      menuItem("Export Wrangling", tabName = "wrangle", icon = icon("book")),
+      
+      menuItem("Magic Spreadsheet", tabName = "magic", icon = icon("magic"),
+               menuSubItem("Upload Properties", tabName = "magic_upload"),
+               menuSubItem("Join Options", tabName = "magic_join"),
+               menuSubItem("Spreadsheet Cleanup", tabName = "magic_cleanup"),
+               menuSubItem("View", tabName = "magic_view"), 
+               menuSubItem("Download", tabName = "magic_download"))
       
     ) 
     
@@ -198,6 +221,12 @@ ui <- dashboardPage(
                 
                 column(4, tableOutput("zipcode_table"))
               )),
+      
+      # I have recently learned that none of this is particularly helpful, because while there are many keywords that get 
+      # paused, generally (not always) keywords are paused to replace with either a more specific or general keyword. Unfortunately,
+      # this does not help actually show which clients pause their brand keywords, although that was the intial purpose. This was,
+      # however, the first tool I made in shiny, so while ineffective for anything, its still a nice relic.
+      
       
       tabItem(tabName = "paused_upload",
               
@@ -335,7 +364,7 @@ ui <- dashboardPage(
       
       tabItem(tabName = "api",
               
-              titlePanel("Test API Call"),
+              titlePanel("Test Analytics API Call"),
               
               sidebarPanel(
                 
@@ -350,6 +379,23 @@ ui <- dashboardPage(
               textOutput("api_text")
               
               ),
+      
+      tabItem(tabName = "adwords",
+              
+              titlePanel("Test Adwords API Call"),
+              
+              sidebarPanel(
+                
+                dateInput(inputId = "adwords_first_date", label = "First Date"),
+                dateInput(inputId = "adwords_last_date", label = "Last Date"),
+                actionButton(inputId = "adwords_api_call", label = "API Call")
+                
+              ),
+              
+              textOutput("adwords_api_text")
+              
+              ),
+      
       
       tabItem(tabName = "paid_search",
               
@@ -436,7 +482,92 @@ ui <- dashboardPage(
               tableOutput("export_count_table"),
               tableOutput("export_clean_table")
               
-              )
+              ),
+      
+      tabItem(tabName = "magic_upload",
+              
+              titlePanel("Upload Properties"),
+              
+              sidebarPanel(
+                
+                fileInput(inputId = "file", label = "Please Input Desired File(s)", multiple = T), 
+                radioButtons(inputId = "deliminator", label = "Deliminator", choices = c(Comma = ",", Tab = "\t", Space = " ", Semicolon = ";"), selected = ","),
+                numericInput(inputId = "skip", label = "Number of lines you want to skip", value = "0"),
+                radioButtons(inputId = "encode", label = "Encoding", choices = c("unknown", "UTF-8", "UTF-16", "UTF-32"), selected = "unknown"),
+                actionButton(inputId = "problems", label = "Save")
+                
+              )),
+      
+      tabItem(tabName = "magic_join",
+              
+              titlePanel("Join Options"),
+              
+              sidebarPanel(
+                
+                radioButtons(inputId = "combine_choice", label = "Join Options", choices = c(rBind = "rbindlist",
+                                                                                             cBind = "cbindlist",
+                                                                                             "Left Join" = "left_join",
+                                                                                             "Right Join" = "right_join",
+                                                                                             "Inner Join" = "inner_join",
+                                                                                             "Full Join" = "full_join")),
+                selectizeInput(inputId = "join_prop", label = "Join by which column?", choices = colnames(intersect(data1, data2)), multiple = T),
+                actionButton(inputId = "combine_activate", label = "Select")
+                
+              )),
+      
+      tabItem(tabName = "magic_cleanup",
+              
+              titlePanel("SpreadSheet Cleanup"),
+              
+              sidebarPanel(
+                
+                textInput(inputId = "filter_text", label = "What would you like to filter?"),
+                selectizeInput(inputId = "filter_selectize", label = "Choose column to filter through:", choices = colnames(data_set), multiple = T),
+                prettyToggle(inputId = "filter_toggle",
+                             label_on = "Include",
+                             icon_on = icon("check"),
+                             status_on = "success",
+                             status_off = "danger",
+                             label_off = "Exclude",
+                             icon_off = icon("remove"))
+              ),
+              
+              sidebarPanel(
+                
+                selectizeInput(inputId = "arrange_selectize", label = "Arrange by which column?", choices = colnames(intersect(data1, data2)), multiple = T),
+                checkboxInput(inputId = "arrange_checkbox", label = "Select for high to low or reverse alphabetical order:")
+                
+              ),
+              
+              sidebarPanel(
+                
+                selectizeInput(inputId = "select_selectize", label = "Which columns do you want? (Order matters)", choices = colnames(data_set), multiple = T)
+                
+              ),
+              
+              column(12, 
+              
+              actionButton(inputId = "cleanup_update", label = "Update")
+              
+              )),
+      
+      tabItem(tabName = "magic_view",
+              
+              titlePanel("View Magic"),
+              
+              actionButton(inputId = "real_table", label = "Click to View Changes"),
+              tableOutput("selected_table")
+              
+              ),
+      
+      tabItem(tabName = "magic_download",
+              
+              titlePanel("Magic Download"),
+              
+              sidebarPanel(
+                textInput(inputId = "magic_download_name", label = "Input Download Name:", value = ""),
+                downloadButton(outputId = "download", label = "Download")
+              ))
       
     )))
 
@@ -1383,7 +1514,7 @@ server <- function(input, output, session) {
       # This little bit of code is just so that the API call can run without needing to sign in to 
       # Google Analytics
       
-      ga_auth("~/Desktop/Rob Scripts/Current Projects/Git/ga.oauth")
+      ga_auth("~/Desktop/Rob Scripts/Reference Files/ga.oauth")
       
       # This lists all the Kennedy Accounts, UA codes, and analyticsID's.
       
@@ -1478,14 +1609,15 @@ server <- function(input, output, session) {
         # because if I need to change anything directly, I can just change the small word associated with (likely)
         # the service provider.
         
-        filter_both <- dim_filter("country", "REGEXP", "United States|Canada")
-        source <- dim_filter("source", "REGEXP", "doubleclick|buttons|semalt|uptime.com|seo|monetize|\\.ml|amezon|\\.info|traffic2money", not = T)
+        country <- dim_filter("country", "REGEXP", "United States|Canada")
+        source <- dim_filter("source", "REGEXP", "doubleclick|buttons|semalt|uptime\\.com|seo|monetize|\\.ml|amezon|\\.info|traffic2money", not = T)
         hostname <- dim_filter("hostname", "PARTIAL", "(not set)", not = T)
-        service_provider <- dim_filter("networkLocation", "REGEXP", "ovh|ocean|evercompliant|hubspot|microsoft corporation|127\\.0\\.0\\.1\\:8888 \\/ referral|google llc|amazon technologies inc\\.", not = T)
+        service_provider <- dim_filter("networkLocation", "REGEXP", "ovh|ocean|evercompliant|hubspot|microsoft corporation|google llc|amazon technologies inc\\.", not = T)
+        source_medium <- dim_filter("sourceMedium", "REGEXP", "127\\.0\\.0\\.1\\:8888 \\/ referral", not = T)
         
         # Sets up the filter to MATCH the Analytics filter by combining the aforementioned conditions
         
-        new_filter <- filter_clause_ga4(list(filter_both, source, hostname, service_provider),
+        new_filter <- filter_clause_ga4(list(country, source, hostname, service_provider, source_medium),
                                         operator = "AND")
         # rv <- list()
         # filter_all <- filter_clause_ga4(list(#filter_us, filter_can,
@@ -1576,27 +1708,27 @@ server <- function(input, output, session) {
     
   )
   
-  # observeEvent(input$gsheet_create, {
-  #   
-  #   file_to_read <- isolate(input$gsheet_file)
-  #   
-  #   if(is.null(file_to_read)) {
-  #     return()
-  #   }
-  #   
-  #   data_table <- read.csv(file_to_read$datapath)
-  #   
+  observeEvent(input$gsheet_create, {
+
+    file_to_read <- isolate(input$gsheet_file)
+
+    if(is.null(file_to_read)) {
+      return()
+    }
+
+    data_table <- read.csv(file_to_read$datapath)
+
   # browser()
-  # 
-  # google_sheet <- gs_new(title = input$gsheet_name, ws = input$worksheet_first_name, input = data_table)
-  # 
-  # This is unfortunately, going to by and large be entirely useless. Works well for very small data sets 
+
+  google_sheet <- gs_new(title = input$gsheet_name, ws = input$worksheet_first_name, input = data_table)
+
+  # This is unfortunately, going to by and large be entirely useless. Works well for very small data sets
   # (less than 500 entries TOTAL), but gets increasingly worse the more entries included. Google's brief
   # API page on this says that there is a limit of 500 requests per 100 seconds per project, so pretty much
-  # if there's anything sizeable, say 10,000 entries, its calculated to take over 30 mins for something that wouldn't 
+  # if there's anything sizeable, say 10,000 entries, its calculated to take over 30 mins for something that wouldn't
   # take exceptionally long to just copy. Pretty nice for SMALL data sets, but anything we would use it for makes this
   # near useless here.
-  # })
+  })
   
   observeEvent(input$corp_view, {
     
@@ -1848,6 +1980,646 @@ server <- function(input, output, session) {
     }
     
   )
+  
+  observeEvent(input$adwords_api_call, {
+    
+    output$adwords_api_text <- renderText({
+      
+    source("/Volumes/Front/Adam/Shiny8/scripts/googleAuth.R")
+      
+      browser()
+      
+      authorize_Adwords()
+      google_auth <- authorize_Adwords()
+      
+      body <- statement(select = "Clicks",
+                        report = "ACCOUNT_PERFORMANCE_REPORT",
+                        start = "2018-01-01",
+                        end = "2018-01-10")
+      
+      data1 <- getData(clientCustomerId = "320-743-6876",
+                      google_auth = google_auth,
+                      statement = body,
+                      transformation = F
+                      )
+      
+      data1
+      
+      # This is quite simply a lot harder. I have no idea how to set up 
+      # anything here. Like, seriously, I tried, but as of the day I tried, 
+      # there's simply no way that this is actually going to work. Evertything
+      # That I think should be standard is not, so I can't even get close to making the 
+      # API call. My guess is that I cannot use the same credentials that are being
+      # used for the shiny Desktop version, which is dumb. This is the only setup,
+      # but not much I can do without being able to authorize anything.
+      
+      # source("/Volumes/Front/Adam/Shiny8/scripts/googleAuth.R")
+      # 
+      # trial <- function(){
+      #   doAuth()
+      # noquote(doAuth()[["credentials"]][["c.id"]])
+      # noquote(doAuth()[["credentials"]][["c.secret"]])
+      # noquote(doAuth()[["credentials"]][["auth.developerToken"]])
+      # }
+      # 
+      # trial()
+      
+    })
+    
+  })
+  
+  observeEvent(input$problems, {
+    
+    # Some of this can get harder to read than it probably should. Ultimately, having these notifications are kind of nice on 
+    # the ui side of things, so it's important to know how to use them, and if a possible error could occur, where to place them.
+    # While I didn't know this at the time of scripting, you are able to have the functions non-embedded, which makes everything
+    # so much easier because
+    
+    file_to_read <- input$file
+    
+    if(is.null(file_to_read)){
+      
+      return()
+      
+    }
+    
+    data1 <<- try(read.csv(input$file[[1, "datapath"]], skip = input$skip, sep = input$deliminator, encoding = input$encode), silent = T)
+    data2 <<- try(read.csv(input$file[[2, "datapath"]], skip = input$skip, sep = input$deliminator, encoding = input$encode), silent = T)
+    
+    # browser()
+    
+    # browser()
+    
+    if(nrow(input$file) == 1) {
+
+      data_set <<- data1
+      
+      updateSelectizeInput(session = session, inputId = "arrange_selectize", label = "Arrange by which column?", 
+                           choices = colnames(data_set))
+      
+      updateSelectizeInput(session = session, inputId = "filter_selectize", label = "Choose column to filter through:",
+                           choices = colnames(data_set))
+      
+      updateSelectizeInput(session = session, inputId = "select_selectize", label = "Which columns do you want? (Order matters)",
+                           choices = colnames(data_set))
+
+    }
+    
+    
+    if(!exists("data1")|!exists("data2")) {
+      
+      # browser()
+      
+      if(str_detect(data1[1], "more columns than column names")|str_detect(data2[1], "more columns than column names")){
+        # browser()
+        confirmSweetAlert(session = session, 
+                          inputId = "bad_file",
+                          type = "warning",
+                          title = "There are some lines in one or both of these files that need to be skipped. If you are
+                          unsure of how many, please check your files.",
+                          btn_labels = "OK!",
+                          danger_mode = T)
+      }else{
+        
+        # browser()
+        
+      }
+    }else{
+      
+      confirmSweetAlert(session = session,
+                        inputId = "good_file",
+                        type = "success",
+                        title = "This file can be used to do what you please!",
+                        btn_labels = "OK!", 
+                        danger_mode = T)
+      
+      updateSelectizeInput(session = session, inputId = "join_prop", label = "Join by which column(s)?", 
+                           choices = intersect(colnames(data1), colnames(data2)), selected = NULL)
+      
+    }
+    
+  })
+  
+  
+  
+  observeEvent(input$combine_activate, {
+    
+    # browser()
+    
+    if(length(input$file) > 0) {
+      
+      if(input$combine_choice == "rbindlist" & nrow(input$file) > 1) {
+        
+        data_set <- try(rbind(data1, data2))
+        
+        if(class(data_set) == "try-error") {
+          
+          confirmSweetAlert(session = session, 
+                            inputId = "rbind_mess",
+                            type = "error",
+                            title = "These two sheets do not have the same columns. Try a different operation maybe?",
+                            btn_labels = "OK!",
+                            danger_mode = T)
+          
+        }else{
+          
+          confirmSweetAlert(session = session, 
+                            inputId = "rbind_success",
+                            type = "success",
+                            title = "Successful rBind!",
+                            btn_labels = "OK!",
+                            danger_mode = T)
+          
+        }
+        
+      }
+      
+      if(input$combine_choice == "left_join" & nrow(input$file) > 1){
+        
+        data_set <<- try(left_join(data1, data2, by = input$join_prop))
+        
+        # View(data_set)
+        
+        if(class(data_set) == "try-error") {
+          
+          confirmSweetAlert(session = session, 
+                            inputId = "ljoin_failure",
+                            type = "error",
+                            title = "Oh no! Those files do not seem to have any common columns!",
+                            btn_labels = "OK!",
+                            danger_mode = T)
+          
+          
+        }else{
+          
+          if(is.null(input$join_prop)) {
+            
+            confirmSweetAlert(session = session,
+                              inputId = "leftj_no_column",
+                              type = "warning",
+                              title = "There were no columns selected, so spreadsheets are joined by
+                              all common columns",
+                              btn_labels = "OK!",
+                              danger_mode = T)
+            
+          }else{
+            
+            confirmSweetAlert(session = session, 
+                              inputId = "leftj_success", 
+                              type = "success", 
+                              title = "Sucessful Left Join!",
+                              btn_labels = "OK!",
+                              danger_mode = T)
+          }
+          
+        }
+        
+      }
+      
+      if(input$combine_choice == "cbindlist" & nrow(input$file) > 1) {
+        
+        # browser()
+        
+        data_set <<- try(cbind(data1, data2))
+        
+        if(class(data_set) == "try-error") {
+          
+          confirmSweetAlert(session = session, 
+                            inputId = "cbind_failure",
+                            type = "error",
+                            title = "There are not the same number of rows in the data sets!",
+                            btn_labels = "OK!",
+                            danger_mode = T)
+          
+        }else{
+          
+          confirmSweetAlert(session = session, 
+                            inputId = "cbind_success",
+                            type = "success",
+                            title = "Successful cBind!",
+                            btn_labels = "OK!",
+                            danger_mode = T)
+          
+        }
+        
+        
+      }
+      
+      if(input$combine_choice == "right_join" & nrow(input$file) > 1){
+        
+        data_set <<- try(right_join(data1, data2, by = input$join_prop))
+        
+        if(class(data_set) == "try-error") {
+          
+          confirmSweetAlert(session = session, 
+                            inputId = "rjoin_failure",
+                            type = "error",
+                            title = "Oh no! Those files do not seem to have any common columns!",
+                            btn_labels = "OK!",
+                            danger_mode = T)
+        }else{
+          
+          if(is.null(input$join_prop)) {
+            
+            confirmSweetAlert(session = session,
+                              inputId = "rightj_no_column",
+                              type = "warning",
+                              title = "There were no columns selected, so spreadsheets are joined by
+                              all common columns",
+                              btn_labels = "OK!",
+                              danger_mode = T)
+            
+          }else{
+            
+            confirmSweetAlert(session = session, 
+                              inputId = "rightj_success", 
+                              type = "success", 
+                              title = "Sucessful Right Join!",
+                              btn_labels = "OK!",
+                              danger_mode = T)
+          }
+        }
+      }
+      
+      if(input$combine_choice == "inner_join" & nrow(input$file) > 1){
+        
+        data_set <<- try(inner_join(data1, data2, by = input$join_prop))
+        
+        if(class(data_set) == "try-error") {
+          
+          confirmSweetAlert(session = session, 
+                            inputId = "innerjoin_failure",
+                            type = "error",
+                            title = "Oh no! Those files do not seem to have any common columns!",
+                            btn_labels = "OK!",
+                            danger_mode = T)
+        }else{
+          
+          if(is.null(input$join_prop)) {
+            
+            confirmSweetAlert(session = session,
+                              inputId = "innerj_no_column",
+                              type = "warning",
+                              title = "There were no columns selected, so spreadsheets are joined by
+                              all common columns",
+                              btn_labels = "OK!",
+                              danger_mode = T)
+            
+          }else{
+            
+            confirmSweetAlert(session = session, 
+                              inputId = "innerj_success", 
+                              type = "success", 
+                              title = "Sucessful Inner Join!",
+                              btn_labels = "OK!",
+                              danger_mode = T)
+          }
+        }
+        
+        
+      }
+      
+      if(input$combine_choice == "full_join" & nrow(input$file) > 1) {
+        
+        data_set <<- try(full_join(data1, data2, by = input$join_prop))
+        
+        if(class(data_set) == "try-error") {
+          
+          confirmSweetAlert(session = session, 
+                            inputId = "fjoin_failure",
+                            type = "error",
+                            title = "Oh no! Those files do not seem to have any common columns!",
+                            btn_labels = "OK!",
+                            danger_mode = T)
+        }else{ 
+          
+          if(is.null(input$join_prop)) {
+            
+            confirmSweetAlert(session = session,
+                              inputId = "fjoin_no_column",
+                              type = "warning",
+                              title = "There were no columns selected, so spreadsheets are joined by
+                              all common columns",
+                              btn_labels = "OK!",
+                              danger_mode = T)
+            
+          }else{
+            
+            confirmSweetAlert(session = session, 
+                              inputId = "fjoin_success", 
+                              type = "success", 
+                              title = "Sucessful Full Join!",
+                              btn_labels = "OK!",
+                              danger_mode = T)
+          }
+        }
+        
+        
+        # }else{
+        #   
+        #   
+        #   browser()
+        #   # So now this is the only outcome, which is supposed to be an impossible outcome. 
+        #   # Who'd a thunk? 
+        #   
+        #   # It's because the else statement is connected to several pieces
+        #   
+        #   confirmSweetAlert(session = session, 
+        #                     inputId = "what",
+        #                     type = "error",
+        #                     title = "Wow...you managed to click a radiobutton that didn't exist.
+        #                     At least I'm here to congratulate you on your special day.",
+        #                     btn_labels = "Congrats!",
+        #                     danger_mode = T)
+        
+      }
+      
+      if(nrow(input$file) == 1) {
+        
+        confirmSweetAlert(session = session, 
+                          inputId = "one_set_warning", 
+                          type = "warning", 
+                          title = "You need more than 1 data set to make a join!",
+                          btn_labels = "OK!",
+                          danger_mode = T)
+        
+      }
+    }else{
+      
+      # if(is.null(input$file)) {
+      
+      confirmSweetAlert(session = session, 
+                        inputId = "no_set_warning", 
+                        type = "warning", 
+                        title = "You need to upload 2 data sets to make a join!",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+    }
+    
+    updateSelectizeInput(session = session, inputId = "arrange_selectize", label = "Arrange by which column?", 
+                         choices = colnames(data_set))
+    
+    updateSelectizeInput(session = session, inputId = "filter_selectize", label = "Choose column to filter through:",
+                         choices = colnames(data_set))
+    
+    updateSelectizeInput(session = session, inputId = "select_selectize", label = "Which columns do you want? (Order matters)",
+                         choices = colnames(data_set))
+    
+  })
+  
+  observeEvent(input$combine_activate, {
+    
+    if(is.null(input$file)){
+      
+      confirmSweetAlert(session = session, 
+                        inputId = "empty_selectize",
+                        title = "Please upload a file first!",
+                        type = "warning",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+    }
+    
+  })
+  
+  observeEvent(input$cleanup_update, {
+    
+    # browser()
+    
+    if(is.null(data1) | is.null(data2)) {
+      
+      confirmSweetAlert(session = session, 
+                        inputId = "cleanup_no_file",
+                        title = "Please upload 2 files first!", 
+                        type = "warning", 
+                        btn_labels = "OK!", 
+                        danger_mode = T)
+      
+    }else{
+      
+      # browser()
+      
+      if(!((!is.null(input$select_selectize) & !is.null(input$filter_selectize))|
+         (!is.null(input$select_selectize) & !is.null(input$arrange_selectize))|
+         (!is.null(input$arrange_selectize) & !is.null(input$filter_selectize)))) {
+        
+        # browser()
+      
+      if(is.null(data_set)) {
+        
+        confirmSweetAlert(session = session, 
+                          inputId = "cleanup_no_merge",
+                          title = "Please merge datasets first!",
+                          type = "warning",
+                          btn_labels = "OK!", 
+                          danger_mode = T)
+        
+      }else{
+        
+        if(!is.null(input$arrange_selectize)) {
+          
+          if(input$arrange_selectize %in% colnames(data_set))
+            
+            # browser()
+            
+            selected_column <- grep(paste0("^", noquote(input$arrange_selectize), "$"), colnames(data_set))
+          # selected_column_name <- colnames(data_set[selected_column[1]])
+          
+          data_set <- data_set[order(data_set[selected_column], decreasing = input$arrange_checkbox),]
+          # data_set <- data_set[data_set[selected_column] != "",] 
+          data_set <<- data_set
+          
+          updateSelectizeInput(session = session, inputId = "arrange_selectize", label = "Arrange by which column?", 
+                               choices = colnames(data_set))
+          
+          updateSelectizeInput(session = session, inputId = "filter_selectize", label = "Choose column to filter through:",
+                               choices = colnames(data_set))
+          
+          updateSelectizeInput(session = session, inputId = "select_selectize", label = "Which columns do you want? (Order matters)",
+                               choices = colnames(data_set))
+          
+          confirmSweetAlert(session = session,
+                            inputId = "arrange_success",
+                            title = "Dataset arranged as described!",
+                            type = "success",
+                            danger_mode = T)
+          
+        } 
+        
+        if(!is.null(input$filter_selectize)) {
+          
+          # browser()
+          
+          if(input$filter_toggle == F) {
+            
+            # data_set <- data_set[data_set[selected_column] != input$filter_text]
+            
+            selected_column <- grep(paste0("^", noquote(input$filter_selectize), "$"), colnames(data_set))
+            
+            # browser()
+            
+            data_set <- data_set[data_set[selected_column] != input$filter_text,]
+            
+            # data_set <- data_set[!str_detect(data_set[selected_column], input$filter_text),]
+            
+            data_set <<- data_set
+            
+            updateSelectizeInput(session = session, inputId = "arrange_selectize", label = "Arrange by which column?", 
+                                 choices = colnames(data_set))
+            
+            updateSelectizeInput(session = session, inputId = "filter_selectize", label = "Choose column to filter through:",
+                                 choices = colnames(data_set))
+            
+            updateSelectizeInput(session = session, inputId = "select_selectize", label = "Which columns do you want? (Order matters)",
+                                 choices = colnames(data_set))
+            
+            updateTextInput(session = session, inputId = "filter_text", label = "What would you like to filter?", value = "")
+            
+            confirmSweetAlert(session = session,
+                              inputId = "filter_remove_success",
+                              title = "Data Filtered as Described!",
+                              type = "success",
+                              btn_labels = "OK!",
+                              danger_mode = T)
+            
+          }else{
+            
+            selected_column <- grep(paste0("^", noquote(input$filter_selectize), "$"), colnames(data_set))
+            data_set <- data_set[data_set[selected_column] == input$filter_text,]
+            data_set <<- data_set
+            
+            updateSelectizeInput(session = session, inputId = "arrange_selectize", label = "Arrange by which column?", 
+                                 choices = colnames(data_set))
+            
+            updateSelectizeInput(session = session, inputId = "filter_selectize", label = "Choose column to filter through:",
+                                 choices = colnames(data_set))
+            
+            updateSelectizeInput(session = session, inputId = "select_selectize", label = "Which columns do you want? (Order matters)",
+                                 choices = colnames(data_set))
+            
+            updateTextInput(session = session, inputId = "filter_text", label = "What would you like to filter?", value = "")
+            
+            confirmSweetAlert(session = session,
+                              inputId = "filter_keep_success",
+                              title = "Data Filtered as Described!",
+                              type = "success",
+                              btn_labels = "OK!",
+                              danger_mode = T)
+            
+          }
+          
+        } 
+        
+        if(!is.null(input$select_selectize)) {
+          
+          # browser()
+          
+          selected_columns <- which(colnames(data_set) %in% input$filter_selectize)
+          data_set <- data_set[, input$select_selectize]
+          data_set <<- data_set
+          
+          updateSelectizeInput(session = session, inputId = "arrange_selectize", label = "Arrange by which column?", 
+                               choices = colnames(data_set))
+          
+          updateSelectizeInput(session = session, inputId = "filter_selectize", label = "Choose column to filter through:",
+                               choices = colnames(data_set))
+          
+          updateSelectizeInput(session = session, inputId = "select_selectize", label = "Which columns do you want? (Order matters)",
+                               choices = colnames(data_set))
+          
+          
+          confirmSweetAlert(session = session,
+                            inputId = "select_success",
+                            title = "Selected Columns Successfully!",
+                            type = "success",
+                            btn_labels = "OK!",
+                            danger_mode = T)
+        }
+        
+      
+      
+      }
+    }else{
+      
+      confirmSweetAlert(session = session, 
+                        inputId = "more_than_one_entry",
+                        title = "Please only make one change at a time!", 
+                        type = "warning", 
+                        danger_mode = T, 
+                        btn_labels = "OK!")
+      
+    }
+    }
+  })
+  
+  observeEvent(input$real_table, {
+    
+    output$selected_table <- renderTable({
+      
+      # This little bit is required for the view, because R does not know how to handle embedded
+      # values. There will probably be other things that I need to filter out, but for right now, this is
+      # a pretty simplistic fix.
+      
+      data_set[data_set == "\x89\xf6_"] <- NA
+      
+      data_set
+      
+    })
+    
+    if(is.null(data_set)) {
+      
+      confirmSweetAlert(session = session, 
+                        inputId = "magic_view_alert",
+                        text = "There is no data set to view!",
+                        type = "warning",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+    }else{
+      
+      "success"
+      
+    }
+    
+  })
+  
+  reactive_data <- reactive({data_set})
+  
+  output$download <- downloadHandler(
+    
+    # browser(),
+    
+    filename = ifelse(input$download_name == "", "Magic Spreadsheet.csv", paste0(input$download_name, ".csv")),
+    
+    content = function(file) {
+      
+      write.csv(data_set, file, row.names = F)
+      
+    }
+    
+  )
+  
+  # browser()
+    
+  # download_text <- reactive({input$magic_download_name})
+  
+    output$download <- downloadHandler(
+      
+      # browser(),
+      
+      filename = function(){
+        ifelse(input$magic_download_name == "", "Magic Spreadsheet.csv", paste0(input$magic_download_name, ""))
+        },
+      
+      content = function(file) {
+        
+        write.csv(data_set, file, row.names = F)
+        
+      }
+      
+    )    
+  
   
 }
 
