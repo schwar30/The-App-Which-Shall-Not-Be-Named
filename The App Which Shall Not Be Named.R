@@ -1,5 +1,9 @@
-# This is a test
+# Adwords API Call, Google Sheets do not work. Not honestly sure if I should
+# try to make sheets work since its API restrictions renders it ineffective.
+# I can't figure out the Adwords API call yet, but if I can, that would be a 
+# decent addition.
 
+# This is ultimately the life-blood of this whole script
 
 library(shiny)
 
@@ -82,18 +86,21 @@ ui <- dashboardPage(
       # Many campaigns see dips in performance despite the fact that clicks go up and 
       # spend goes up, but many times there's a push to disconinue brand keywords. This is 
       # meant to show paused keywords and how many conversions that were lost as a result of this.
+      # This ended up not haveing any benefit to reporting, as it loses scope of so much, and according
+      # to the PPC team, looking at the changes in raw keywords is not particulary a beneficial thing.
+      #it is with a heavy heart then, that I decide this needs to be sunset.
       
-      menuItem("Paused Keywords", tabName = "paused", icon = icon("empire"),
-               menuSubItem("File Upload", tabName = "paused_upload"),
-               menuSubItem("Filtered Paused", tabName = "list_keyword"),
-               menuSubItem("Count of Paused Keywords", tabName = "count_keyword"),
-               menuSubItem("Paused & Removed Keywords", tabName = "totals_keyword"),
-               menuSubItem("Summaries", tabName = "summary_keyword")),
+      # menuItem("Paused Keywords", tabName = "paused", icon = icon("empire"),
+      #          menuSubItem("File Upload", tabName = "paused_upload"),
+      #          menuSubItem("Filtered Paused", tabName = "list_keyword"),
+      #          menuSubItem("Count of Paused Keywords", tabName = "count_keyword"),
+      #          menuSubItem("Paused & Removed Keywords", tabName = "totals_keyword"),
+      #          menuSubItem("Summaries", tabName = "summary_keyword")),
       
       # On occassion we will be asked about inquiry zipcode breakouts, which isn't very common, but it 
       # would take like half an hour or so to finalize, and this is just easier since its now generalized
       
-      menuItem("Zipcode Breakout", tabName = "zipcode", icon = icon("fire")),
+      menuItem("Zipcode Breakout", tabName = "zipcode", icon = icon("empire")),
       
       # Allows for numbers from Dialog Tech to be found and exported very quickly and nicely
       
@@ -133,10 +140,14 @@ ui <- dashboardPage(
       # that this or multiple sheets need to be created overnight or something. Either way, not too worth allocating a ton of
       # time into. Probably would work well for my strongman app though.
       
-      menuItem("Google Sheets", tabName = "gsheet", icon = icon("exclamation"),
-               menuSubItem("New Google Sheet", tabName = "new_gsheet"),
-               menuSubItem("Edit Google Sheet", tabName = "edit_gsheet"),
-               menuSubItem("Remove Google Sheet", tabName = "remove_gsheet")),
+      # Decided to sunset this as well, since I can't think of a single time that using this would be more effective than just
+      # downloading the export or copy pasting a dataset. It's really unfortunate the googleSheets API is so restrictive, because
+      # Otherwise, this could really have some nice potential.
+      
+      # menuItem("Google Sheets", tabName = "gsheet", icon = icon("exclamation"),
+      #          menuSubItem("New Google Sheet", tabName = "new_gsheet"),
+      #          menuSubItem("Edit Google Sheet", tabName = "edit_gsheet"),
+      #          menuSubItem("Remove Google Sheet", tabName = "remove_gsheet")),
       
       # This is a tab that shows and allows downloads for the breakout of corporate zipcodes
       
@@ -228,82 +239,82 @@ ui <- dashboardPage(
       # however, the first tool I made in shiny, so while ineffective for anything, its still a nice relic.
       
       
-      tabItem(tabName = "paused_upload",
-              
-              # When I originally built the paused keyword stuff, I was playing around with other page setups with 
-              # shinyjs, so I kept this as a multitab, and since there are so many buttons and outputs, its probably
-              # a decent idea. This part is simply a file upload.
-              
-              sidebarPanel(
-                fileInput(inputId = "paused_file", label = "Please Input Desired .csv Keyword File")
-              )),
-      
-      tabItem(tabName = "list_keyword",
-              
-              # This component just lists all of the keywords that are paused and can be all of them, just the brand, 
-              # or just the nonbrand. Also allows for downloads of these keywords, though the use of this is probably
-              # very limited
-              
-              sidebarPanel(
-                actionButton(inputId = "paused_filter", label = "View Paused Keywords"),
-                actionButton(inputId = "paused_filter_brand", label = "View Paused Brand Keywords"),
-                actionButton(inputId = "paused_filter_nonbrand", label = "View Paused\nNonBrand Keywords"),
-                downloadButton(outputId = "paused_download_all", label = "All Paused Keywords"),
-                downloadButton(outputId = "paused_download_brand", label = "Paused Brand Keywords"),
-                downloadButton(outputId = "paused_download_nonbrand", label = "Paused Nonbrand Keywords")
-              ),
-              
-              fluidRow(
-                tableOutput("paused_filter_table")
-              )),
-      
-      tabItem(tabName = "count_keyword",
-              
-              # This provides a count of how many brand keywords are paused, nonbrand keywords, or total paused keywords
-              # there are.
-              
-              sidebarPanel(
-                
-                actionButton(inputId = "paused_count_brand", label = "Brand Keyword Count"),
-                actionButton(inputId = "paused_count_nonbrand", label = "Nonbrand Keyword Count"),
-                actionButton(inputId = "paused_count_all", label = "All Keyword Count")
-              ),
-              
-              
-              fluidRow(
-                tableOutput(outputId = "paused_count_table")
-              )),
-      
-      tabItem(tabName = "totals_keyword",
-              
-              # Shows how many lost conversions there are by keyword. Allows for the downloads too.
-              
-              sidebarPanel(
-                
-                actionButton(inputId = "paused_all", label = "View Inactive"),
-                actionButton(inputId = "paused_brand", label = "View Brand Inactive"),
-                actionButton(inputId = "paused_nonbrand", label = "View Nonbrand Inactive"),
-                downloadButton(outputId = "paused_all_download", label = "Download Inactive"),
-                downloadButton(outputId = "paused_brand_download", label = "Download Brand Inactive"),
-                downloadButton(outputId = "paused_nonbrand_download", label = "Download Nonbrand Inactive")
-              ),
-              
-              tableOutput("paused_all_table")
-              
-      ),
-      
-      # Shows total loss of conversions for brand, nonbrand, and total groups.
-      
-      tabItem(tabName = "summary_keyword",
-              
-              sidebarPanel(
-                actionButton(inputId = "paused_all_total", label = "Inactive Summary"),
-                actionButton(inputId = "paused_brand_total", label = "Brand Inactive Summary"),
-                actionButton(inputId = "paused_nonbrand_total", label = "Nonbrand Inactive Summary")
-                
-              ),
-              tableOutput("paused_all_total_table")
-      ),
+      # tabItem(tabName = "paused_upload",
+      #         
+      #         # When I originally built the paused keyword stuff, I was playing around with other page setups with 
+      #         # shinyjs, so I kept this as a multitab, and since there are so many buttons and outputs, its probably
+      #         # a decent idea. This part is simply a file upload.
+      #         
+      #         sidebarPanel(
+      #           fileInput(inputId = "paused_file", label = "Please Input Desired .csv Keyword File")
+      #         )),
+      # 
+      # tabItem(tabName = "list_keyword",
+      #         
+      #         # This component just lists all of the keywords that are paused and can be all of them, just the brand, 
+      #         # or just the nonbrand. Also allows for downloads of these keywords, though the use of this is probably
+      #         # very limited
+      #         
+      #         sidebarPanel(
+      #           actionButton(inputId = "paused_filter", label = "View Paused Keywords"),
+      #           actionButton(inputId = "paused_filter_brand", label = "View Paused Brand Keywords"),
+      #           actionButton(inputId = "paused_filter_nonbrand", label = "View Paused\nNonBrand Keywords"),
+      #           downloadButton(outputId = "paused_download_all", label = "All Paused Keywords"),
+      #           downloadButton(outputId = "paused_download_brand", label = "Paused Brand Keywords"),
+      #           downloadButton(outputId = "paused_download_nonbrand", label = "Paused Nonbrand Keywords")
+      #         ),
+      #         
+      #         fluidRow(
+      #           tableOutput("paused_filter_table")
+      #         )),
+      # 
+      # tabItem(tabName = "count_keyword",
+      #         
+      #         # This provides a count of how many brand keywords are paused, nonbrand keywords, or total paused keywords
+      #         # there are.
+      #         
+      #         sidebarPanel(
+      #           
+      #           actionButton(inputId = "paused_count_brand", label = "Brand Keyword Count"),
+      #           actionButton(inputId = "paused_count_nonbrand", label = "Nonbrand Keyword Count"),
+      #           actionButton(inputId = "paused_count_all", label = "All Keyword Count")
+      #         ),
+      #         
+      #         
+      #         fluidRow(
+      #           tableOutput(outputId = "paused_count_table")
+      #         )),
+      # 
+      # tabItem(tabName = "totals_keyword",
+      #         
+      #         # Shows how many lost conversions there are by keyword. Allows for the downloads too.
+      #         
+      #         sidebarPanel(
+      #           
+      #           actionButton(inputId = "paused_all", label = "View Inactive"),
+      #           actionButton(inputId = "paused_brand", label = "View Brand Inactive"),
+      #           actionButton(inputId = "paused_nonbrand", label = "View Nonbrand Inactive"),
+      #           downloadButton(outputId = "paused_all_download", label = "Download Inactive"),
+      #           downloadButton(outputId = "paused_brand_download", label = "Download Brand Inactive"),
+      #           downloadButton(outputId = "paused_nonbrand_download", label = "Download Nonbrand Inactive")
+      #         ),
+      #         
+      #         tableOutput("paused_all_table")
+      #         
+      # ),
+      # 
+      # # Shows total loss of conversions for brand, nonbrand, and total groups.
+      # 
+      # tabItem(tabName = "summary_keyword",
+      #         
+      #         sidebarPanel(
+      #           actionButton(inputId = "paused_all_total", label = "Inactive Summary"),
+      #           actionButton(inputId = "paused_brand_total", label = "Brand Inactive Summary"),
+      #           actionButton(inputId = "paused_nonbrand_total", label = "Nonbrand Inactive Summary")
+      #           
+      #         ),
+      #         tableOutput("paused_all_total_table")
+      # ),
       
       # Allows a merged file to be input and then exports a lot of VOC slides in the reporting folder
       
@@ -413,38 +424,38 @@ ui <- dashboardPage(
       # All of this stuff is still in "development", which generally means its not going to get touched
       # unless I really want to, which I'm not sure if I do since its only helpful in limited scenarios.
       
-      tabItem(tabName = "new_gsheet",
-              
-              titlePanel("New Google Sheet"),
-              
-              sidebarPanel(
-                
-                fileInput(inputId = "gsheet_file", label = "Data Wanted to be Put in A Google Sheet:"),
-                textInput(inputId = "gsheet_name", label = "Name of New Google Sheet:"),
-                textInput(inputId = "worksheet_first_name", label = "Worksheet Name:"),
-                actionBttn(inputId = "gsheet_create", label = "Create Sheet")
-                
-              )),
-      
-      tabItem(tabName = "edit_gsheet",
-              
-              titlePanel("Edit Google Sheet"),
-              
-              sidebarPanel(
-                
-                actionBttn(inputId = "update_gsheet", label = "Edit Sheet")
-                
-              )),
-      
-      tabItem(tabName = "remove_gsheet",
-              
-              titlePanel("Remove Google Sheet"),
-              
-              sidebarPanel(
-                
-                actionBttn(inputId = "delete_gsheet", label = "Deleet Sheet")
-                
-              )),
+      # tabItem(tabName = "new_gsheet",
+      #         
+      #         titlePanel("New Google Sheet"),
+      #         
+      #         sidebarPanel(
+      #           
+      #           fileInput(inputId = "gsheet_file", label = "Data Wanted to be Put in A Google Sheet:"),
+      #           textInput(inputId = "gsheet_name", label = "Name of New Google Sheet:"),
+      #           textInput(inputId = "worksheet_first_name", label = "Worksheet Name:"),
+      #           actionBttn(inputId = "gsheet_create", label = "Create Sheet")
+      #           
+      #         )),
+      # 
+      # tabItem(tabName = "edit_gsheet",
+      #         
+      #         titlePanel("Edit Google Sheet"),
+      #         
+      #         sidebarPanel(
+      #           
+      #           actionBttn(inputId = "update_gsheet", label = "Edit Sheet")
+      #           
+      #         )),
+      # 
+      # tabItem(tabName = "remove_gsheet",
+      #         
+      #         titlePanel("Remove Google Sheet"),
+      #         
+      #         sidebarPanel(
+      #           
+      #           actionBttn(inputId = "delete_gsheet", label = "Deleet Sheet")
+      #           
+      #         )),
       
       tabItem(tabName = "corporate",
               
@@ -1511,6 +1522,8 @@ server <- function(input, output, session) {
 
     output$api_text <- renderText({
       
+      isolate(input$api_call)
+      
       # This little bit of code is just so that the API call can run without needing to sign in to 
       # Google Analytics
       
@@ -1522,7 +1535,9 @@ server <- function(input, output, session) {
       
       # browser()
       
-      if(nrow(as.data.frame(input$api_website)) > 1) {
+      if(nrow(as.data.frame((isolate(input$api_website)))) > 1) {
+        
+        # browser()
         
         # The selectize option would always pull in the first value if it was not a multiple, but 
         # data over multiple sites means nothing, so I just wanted some alerts to fire if someone 
@@ -1541,9 +1556,9 @@ server <- function(input, output, session) {
           
         )
         
-      }
+      }else{
       
-      if(nrow(as.data.frame(input$api_website)) == 0) {
+      if(nrow(as.data.frame(isolate(input$api_website))) == 0) {
         
         # Alert if no website is listed
         
@@ -1559,6 +1574,8 @@ server <- function(input, output, session) {
         )
         
       }else{
+  
+        isolate(input$api_website)
         
         # Here's all the meat and potatoes. The list doesn't seem to be updated whether the 
         # site is http:// or https://, so I removed it from the original file and from the called
@@ -1569,7 +1586,7 @@ server <- function(input, output, session) {
         # Since we only want a single id, we filter out the row that we need and select the id we want
         
         client_id <- kennedy_accounts %>% 
-          filter(websiteUrl == input$api_website) %>% 
+          filter(websiteUrl == isolate(input$api_website)) %>% 
           select(viewId)
         
         # Since the viewID is still as a dataframe and we want it as a character, so we need to select 
@@ -1662,11 +1679,10 @@ server <- function(input, output, session) {
         total_sessions
     
       }
-      
+      }
     })
 
   })
-  
   
   paid_search_setup <- reactive({
     
