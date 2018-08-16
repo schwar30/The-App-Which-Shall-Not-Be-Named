@@ -69,6 +69,7 @@ client_csv$name <- gsub("^.*\\/\\/", "", client_csv$name)
 data1 <- NULL
 data2 <- NULL
 data_set <- NULL
+date_ranges <- NULL
 
 ui <- dashboardPage(
   
@@ -183,12 +184,21 @@ ui <- dashboardPage(
               
               sidebarPanel(
                 fileInput(inputId = "analytics_file", label = "Upload Analytics Data:"),
-                numericInput(inputId = "analytics_lines", label = "Number of Lines to Skip:", value = ""),
-                textInput(inputId = "analytics_year", label = "Current Year:", value = "2018"),
+                numericInput(inputId = "analytics_lines", label = "Number of Lines to Skip:", value = "6"),
+                
+                # I decided that it was probably more worthwhile to not have this since I found a way to compare
+                # without a given year, allowing for period over period calculations and no yearly updates. Depends a 
+                # little more heavily on the analytics download, but (since I'm the only person I forsee using this)
+                # I should just know what I'm downloading in the first place. Maybe wouldn't hurt to actually show the date 
+                # range somewhere.
+                
+                # textInput(inputId = "analytics_year", label = "Current Year:", value = "2018"),
+                
                 actionButton(inputId = "analytics_update", label = "Get Referral Differences", icon = icon("empire")),
                 actionButton(inputId = "analytics_count", label = "Get Referral Counts", icon = icon("rebel"))
               ),
               
+              tableOutput(outputId = "analytics_date_range"),
               tableOutput(outputId = "analytics_sum"),
               dataTableOutput(outputId = "analytic_table")
               
@@ -586,39 +596,121 @@ server <- function(input, output, session) {
   
   observeEvent(input$analytics_update, {
     
-    output$analytic_table <- renderDataTable({
+    
+    # browser()
+    
+    # This is alwways helpful so it doesn't error out when nothing is included, and allows everything
+    # to be isolated so it doesn't fire only one time.
+    
+    file_to_read <- isolate(input$analytics_file)
+    
+    # if(is.null(file_to_read)){
+    #   return()
+    # }
+    
+    # Allows the lines to be skipped. Both analytics and adwords have weird exports, so I usually
+    # throw the UTF-8 tag on the read.csv
+    
+    # browser()
+    
+    data_table <- try(read.csv(file_to_read$datapath, skip = input$analytics_lines, encoding = "UTF-8"))
+    
+    # browser()
+    
+    # This needs to be all separated so they can be joined and then mutated
+    
+    if(class(data_table) != "try-error") {
       
-      # This is alwways helpful so it doesn't error out when nothing is included, and allows everything
-      # to be isolated so it doesn't fire only one time.
+      # browser()
       
-      file_to_read <- isolate(input$analytics_file)
-      
-      if(is.null(file_to_read)){
-        return()
-      }
-      
-      # Allows the lines to be skipped. Both analytics and adwords have weird exports, so I usually
-      # throw the UTF-8 tag on the read.csv
-      
-      data_table <- read.csv(file_to_read$datapath, skip = input$analytics_lines, encoding = "UTF-8")
-      
-      # This needs to be all separated so they can be joined and then mutated
+      if("Date.Range" %in% colnames(data_table)){
+        
+        # browser()
       
       data_table <- data_table %>% 
         select(Source, Date.Range, Sessions)
       
+      first_range <- as.character(data_table$Date.Range[1])
+      second_range <- as.character(data_table$Date.Range[2])
+      
+      date_ranges <- t(c(second_range, first_range))
+      colnames(date_ranges) <- c("First Date Range", "Second Date Range")
+      date_ranges <- as.data.frame(date_ranges)
+      
       analytics_2018 <- data_table %>% 
-        filter(str_detect(Date.Range, input$analytics_year)) %>% 
+        filter(str_detect(Date.Range, first_range)) %>% 
         filter(Sessions != "")
       
       analytics_2017 <- data_table %>% 
-        filter(!str_detect(Date.Range, input$analytics_year)) %>% 
+        filter(!str_detect(Date.Range, first_range)) %>% 
         filter(Sessions != "")
+      
+      }else{
+        
+        analytics_2017 <- 1
+        analytics_2018 <- 1
+        
+      }
+      
+    }else{
+      
+      # browser()
+      
+      analytics_2017 <- 0
+      analytics_2018 <- 0
+      
+    }
+    
+    # browser()
+    
+    if(is.null(nrow(analytics_2018)) | is.null(nrow(analytics_2017)) | is.null(input$analytics_file)) {
+      
+      # browser()
+      
+      if(analytics_2018 == 1 | analytics_2017 == 1) {
+        
+        confirmSweetAlert(session = session, 
+                          inputId = "wrong_analytics_year",
+                          title = "You either do not have year over year data or a valid referral analytics export!",
+                          type = "warning",
+                          btn_labels = "OK!", 
+                          danger_mode = T)
+        
+      }
+      
+      # if(is.null(analytics_2017)) {
+      #   
+      #   confirmSweetAlert(session = session, 
+      #                     inputId = "no_prior_analytics",
+      #                     title = "You have no prior period or prior year data!",
+      #                     type = "warning",
+      #                     btn_labels = "OK!", 
+      #                     danger_mode = T)
+      #   
+      # }
+      
+      if(is.null(input$analytics_file)) {
+        
+        confirmSweetAlert(session = session, 
+                          inputId = "no_analytics_file",
+                          title = "Please input a referral file!",
+                          type = "warning",
+                          btn_labels = "OK!", 
+                          danger_mode = T)
+        
+      }
+      
+      combined_table <- NULL
+      
+    }else{
       
       # Joins the date tables and selects only the relevant metrics and then creates a difference and percentage change column. 
       # I also thought it was worth while to only show referral traffic that saw a change.
       
       combined_table <- left_join(analytics_2017, analytics_2018, by = "Source")
+      
+      # browser()
+      
       combined_table <- combined_table %>% 
         select(Source, Sessions.x, Sessions.y) %>% 
         rename("Website" = Source, "prior_year" = Sessions.x, "current_year" = Sessions.y) %>% 
@@ -632,50 +724,173 @@ server <- function(input, output, session) {
       # datatable is used here, but honestly, its not that necessary. I thought it might be nice for identifying culligan.com specifically,
       # but its almost always in the top 10 (if there's a severe referral drop), so its not helpful. Nice to know for later though.
       
+      confirmSweetAlert(session = session, 
+                        inputId = "referral_table_success",
+                        title = "Successfully generated referral table!",
+                        type = "success",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+    }
+    
+    
+    
+    output$analytic_table <- renderDataTable({
+ 
+      if(is.null(combined_table)){
+        
+      }else{
+      
       datatable(combined_table)
+        
+      }
       
     })
+    
+    output$analytics_date_range <- renderTable({
+      
+      # browser()
+
+      if(is.data.frame(date_ranges)){
+
+        date_ranges
+
+      }else{
+
+
+      }
+
+    })
+    
   })
   
   observeEvent(input$analytics_count, {
     
-    output$analytics_sum <- renderTable({
+    # browser()
+    
+    file_to_read <- isolate(input$analytics_file)
+    
+    data_table <- try(read.csv(file_to_read$datapath, skip = input$analytics_lines, encoding = "UTF-8"))
+    
+    # browser()
+    
+    # This needs to be all separated so they can be joined and then mutated
+    
+    if(class(data_table) != "try-error") {
       
-      file_to_read <- isolate(input$analytics_file)
+      # browser()
       
-      if(is.null(file_to_read)){
-        return()
+      if("Date.Range" %in% colnames(data_table)){
+        
+        # browser()
+        
+        data_table <- data_table %>% 
+          select(Source, Date.Range, Sessions)
+        
+        first_range <- as.character(data_table$Date.Range[1])
+        
+        analytics_2018 <- data_table %>% 
+          filter(str_detect(Date.Range, first_range)) %>% 
+          filter(Sessions != "")
+        
+        analytics_2017 <- data_table %>% 
+          filter(!str_detect(Date.Range, first_range)) %>% 
+          filter(Sessions != "")
+        
+      }else{
+        
+        analytics_2017 <- 1
+        analytics_2018 <- 1
+        
       }
       
-      data_table <- read.csv(file_to_read$datapath, skip = input$analytics_lines, encoding = "UTF-8")
-      data_table <- data_table %>% 
-        select(Source, Date.Range, Sessions)
+    }else{
       
-      analytics_2018 <- data_table %>% 
-        filter(str_detect(Date.Range, input$analytics_year)) %>% 
-        filter(Sessions != "")
+      # browser()
       
-      analytics_2017 <- data_table %>% 
-        filter(!str_detect(Date.Range, input$analytics_year)) %>% 
-        filter(Sessions != "")
+      analytics_2017 <- 0
+      analytics_2018 <- 0
+      
+    }
+    
+    if(is.null(nrow(analytics_2018)) | is.null(nrow(analytics_2017)) | is.null(input$analytics_file)) {
+      
+      if(analytics_2018 == 1 | analytics_2017 == 1) {
+        
+        confirmSweetAlert(session = session, 
+                          inputId = "wrong_analytics_year",
+                          title = "You either do not have year over year data or a valid referral analytics export!",
+                          type = "warning",
+                          btn_labels = "OK!", 
+                          danger_mode = T)
+        
+      }
+      
+      if(is.null(input$analytics_file)) {
+        
+        confirmSweetAlert(session = session, 
+                          inputId = "no_analytics_file",
+                          title = "Please input a referral file!",
+                          type = "warning",
+                          btn_labels = "OK!", 
+                          danger_mode = T)
+      }
+      
+      combined_table <- NULL
+      
+    }else{
+      
+    
+    combined_table <- left_join(analytics_2017, analytics_2018, by = "Source")
+    combined_table <- combined_table %>% 
+      select(Source, Sessions.x, Sessions.y) %>% 
+      rename("Website" = Source, "prior_year" = Sessions.x, "current_year" = Sessions.y) %>% 
+      filter(Website != "") %>% 
+      mutate(Difference = current_year - prior_year, percent_change = paste0(round(Difference / prior_year * 100, 2), "%")) %>% 
+      arrange(Difference) %>% 
+      # select(Website, Difference) %>% 
+      summarise("prior" = sum(prior_year), "current" = sum(current_year)) %>% 
+      mutate("Difference" = current - prior) %>% 
+      rename("Prior Year" = prior, "Current Year" = current)
+    
+    # This part is only important for letting you know the scope of the drop.
+    
+    # combined_table
+    
+    confirmSweetAlert(session = session, 
+                      inputId = "referral_table_successc",
+                      title = "Successfully generated referral counts!",
+                      type = "success",
+                      btn_labels = "OK!",
+                      danger_mode = T)
+    
+    }
+    
+    output$analytics_sum <- renderTable({
+      
+      # file_to_read <- isolate(input$analytics_file)
+      # 
+      # if(is.null(file_to_read)){
+      #   return()
+      # }
+      # 
+      # data_table <- read.csv(file_to_read$datapath, skip = input$analytics_lines, encoding = "UTF-8")
+      # data_table <- data_table %>% 
+      #   select(Source, Date.Range, Sessions)
+      # 
+      # first_range <- as.character(data_table$Date.Range[1])
+      # 
+      # analytics_2018 <- data_table %>% 
+      #   filter(str_detect(Date.Range, input$analytics_year)) %>% 
+      #   filter(Sessions != "")
+      # 
+      # analytics_2017 <- data_table %>% 
+      #   filter(!str_detect(Date.Range, input$analytics_year)) %>% 
+      #   filter(Sessions != "")
       
       # Everything is pretty much the same as before, but the focus is to get the sums instead of everything else
       
-      combined_table <- left_join(analytics_2017, analytics_2018, by = "Source")
-      combined_table <- combined_table %>% 
-        select(Source, Sessions.x, Sessions.y) %>% 
-        rename("Website" = Source, "prior_year" = Sessions.x, "current_year" = Sessions.y) %>% 
-        filter(Website != "") %>% 
-        mutate(Difference = current_year - prior_year, percent_change = paste0(round(Difference / prior_year * 100, 2), "%")) %>% 
-        arrange(Difference) %>% 
-        # select(Website, Difference) %>% 
-        summarise("prior" = sum(prior_year), "current" = sum(current_year)) %>% 
-        mutate("Difference" = current - prior) %>% 
-        rename("Prior Year" = prior, "Current Year" = current)
-      
-      # This part is only important for letting you know the scope of the drop.
-      
-      combined_table
+     combined_table
       
     })
     
@@ -2003,7 +2218,7 @@ server <- function(input, output, session) {
       
     source("/Volumes/Front/Adam/Shiny8/scripts/googleAuth.R")
       
-      browser()
+      # browser()
       
       authorize_Adwords()
       google_auth <- authorize_Adwords()
