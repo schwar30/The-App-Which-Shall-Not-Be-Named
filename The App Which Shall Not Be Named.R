@@ -672,6 +672,7 @@ server <- function(input, output, session) {
         confirmSweetAlert(session = session, 
                           inputId = "wrong_analytics_year",
                           title = "You either do not have year over year data or a valid referral analytics export!",
+                          text = "If you do think it's valid, check the number of lines you skipped!",
                           type = "warning",
                           btn_labels = "OK!", 
                           danger_mode = T)
