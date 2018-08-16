@@ -899,36 +899,97 @@ server <- function(input, output, session) {
   
   observeEvent(input$zipcode_list, {
     
-    output$zipcode_table <- renderTable({
+    # browser()
+    
+    input$zipcode_list
+    
+    file_to_read <- isolate(input$zipcode_lead)
+    # if(is.null(file_to_read)) {
+    #   return()
+    # }
+    
+    # The reason this is used instead of read.csv is the file input allows for
+    # multiple files. It's kind of a nice thing when its a weird combination of dealers
+    # that want aggregated data
+    
+    # browser()
+    
+    if(is.null(nrow(file_to_read))){
       
-      input$zipcode_list
+      lead_export <- NULL
       
-      file_to_read <- isolate(input$zipcode_lead)
-      if(is.null(file_to_read)) {
-        return()
+      confirmSweetAlert(session = session, 
+                        inputId = "zipcode_no_file",
+                        title = "Please Input Lead Export(s)!",
+                        type = "warning",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+    }else{
+    
+    lead_export <- rbindlist(lapply(file_to_read$datapath, fread), 
+                             use.names = T, fill = T)
+    
+    # Customers are able to put in their own zipcodes, and this is what we really use for zipcode
+    # placement, so a new column is made to overwrite postal code if its available. Then all inquiries
+    # are grouped by zipcode and counted.
+    
+    # if(("SentTo" %in% colnames(lead_export) & "PostalCode" %in% colnames(lead_export) & "IVRZip" %in% colnames(lead_export)) &
+    #    (any(is.na(lead_export$SentTo)) )) {
+      
+      # browser()
+      
+    # }
+    
+    if(ncol(lead_export) == 99) {
+    
+    lead_export <- lead_export %>% 
+      select(SentTo, PostalCode, IVRZip) %>% 
+      mutate(Zipcode = ifelse(is.na(IVRZip), PostalCode, IVRZip)) %>% 
+      group_by(Zipcode) %>% 
+      count(Zipcode) %>% 
+      filter(Zipcode != "") %>% 
+      arrange(-n) %>% 
+      rename("Inquiries" = n)
+    
+    confirmSweetAlert(session = session, 
+                      inputId = "zipcode_success",
+                      title = "Zipcode Ordering Complete!",
+                      type = "success",
+                      btn_labels = "OK!",
+                      danger_mode = T)
+    
+    }else{
+      
+      lead_export <- NULL
+      
+      if(nrow(input$zipcode_lead) == 1) {
+      
+      confirmSweetAlert(session = session, 
+                        inputId = "zipcode_bad_file_one",
+                        title = "This is not a lead export!",
+                        type = "warning",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+        
+      }else{
+        
+        confirmSweetAlert(session = session, 
+                          inputId = "zipcode_bad_file_multiple",
+                          title = "At least one file is not a lead export. Check uploaded files!",
+                          type = "warning",
+                          btn_labels = "OK!",
+                          danger_mode = T)
+        
       }
       
-      # The reason this is used instead of read.csv is the file input allows for
-      # multiple files. It's kind of a nice thing when its a weird combination of dealers
-      # that want aggregated data
-
-      lead_export <- rbindlist(lapply(file_to_read$datapath, fread), 
-                               use.names = T, fill = T)
-      
-      # Customers are able to put in their own zipcodes, and this is what we really use for zipcode
-      # placement, so a new column is made to overwrite postal code if its available. Then all inquiries
-      # are grouped by zipcode and counted.
-      
-      lead_export <- lead_export %>% 
-        select(SentTo, PostalCode, IVRZip) %>% 
-        mutate(Zipcode = ifelse(is.na(IVRZip), PostalCode, IVRZip)) %>% 
-        group_by(Zipcode) %>% 
-        count(Zipcode) %>% 
-        filter(Zipcode != "") %>% 
-        arrange(-n) %>% 
-        rename("Inquiries" = n)
+    }
+    }
+    # browser()
+    output$zipcode_table <- renderTable({
       
       lead_export
+      
     })
     
   })
@@ -939,6 +1000,19 @@ server <- function(input, output, session) {
     if(is.null(file_to_read)) {
       return()
     }
+    
+    # browser()
+    
+    # if(input$zipcode_coop == ""){
+    #   
+    #   confirmSweetAlert(session = session,
+    #                     inputId = "download_warning",
+    #                     title = "There is no dealer name. Input if you want a name!",
+    #                     type = "warning",
+    #                     btn_labels = "OK!",
+    #                     danger_mode = T)
+    #   
+    # }
     
     # All of this code is the exact code for what is shown in the browser, but
     # it needs to go here so everything can be setup to be downloaded.
