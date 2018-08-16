@@ -206,7 +206,7 @@ ui <- dashboardPage(
       
       tabItem(tabName = "dialog",
               
-              titlePanel("Call App"),
+              titlePanel("Dialog Tech Call App"),
               
               fluidRow(
                 
@@ -1049,36 +1049,95 @@ server <- function(input, output, session) {
   
   observeEvent(input$dialog_total, {
     
+    # Again, this file to read stuff is nice for preventing errors.
+    
+    # isolate(input$dialog_total)
+    
+    file_to_read <- isolate(input$dialog_file)
+    
+    # if(is.null(file_to_read)) {
+    #   return()
+    # }
+    
+    # Changes number from numeric to character. I don't know why I didn't have this
+    # as a textinput to be completely honest. Just counts calls.
+    
+    # browser()
+    
+    if(input$dialog_number == "") {
+      
+      phone_export <- NULL
+      
+    }else{
+    
+    phone_export <- try(read.csv(file_to_read$datapath))
+    
+    }
+    
+    # browser()
+    
+    if(class(phone_export) == "try-error") {
+      
+      confirmSweetAlert(session = session, 
+                        inputId = "dialog_no_file",
+                        title = "Please upload an export from DialogTech!",
+                        type = "warning",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+    }else{
+      
+      if(input$dialog_number != "") {
+        
+      
+    if("dnis" %in% colnames(phone_export)) {
+    
+    phone_export$dnis <- as.character(phone_export$dnis)
+    
+    phone_export <- phone_export %>% 
+      filter(str_detect(dnis, isolate(input$dialog_number))) %>% 
+      group_by(dnis) %>% 
+      count(dnis) %>% 
+      rename("Number" = dnis) %>% 
+      rename("Count" = n)
+    
+    
     output$dialog_count <- renderTable({
-      
-      # Again, this file to read stuff is nice for preventing errors.
-      
-      isolate(input$dialog_total)
-      
-      file_to_read <- isolate(input$dialog_file)
-      
-      if(is.null(file_to_read)) {
-        return()
-      }
-      
-      # Changes number from numeric to character. I don't know why I didn't have this
-      # as a textinput to be completely honest. Just counts calls.
-      
-      phone_export <- read.csv(isolate(file_to_read$datapath))
-      
-      phone_export$dnis <- as.character(phone_export$dnis)
-
-      phone_export <- phone_export %>% 
-        filter(str_detect(dnis, isolate(input$dialog_number))) %>% 
-        group_by(dnis) %>% 
-        count(dnis) %>% 
-        rename("Number" = dnis) %>% 
-        rename("Count" = n)
       
       phone_export
       
+    
+      
     })
     
+    confirmSweetAlert(session = session,
+                      inputId = "dialog_success",
+                      title = "Successufly counted calls from DialogTech!",
+                      type = "success",
+                      btn_labels = "OK!",
+                      danger_mode = T)
+    
+    }else{
+      
+      confirmSweetAlert(session = session,
+                        inputId = "wrong_file_dialog",
+                        title = "This file does not include a dnis column! Is this file from Dialog Tech?",
+                        type = "warning",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+    }
+      }else{
+      
+        confirmSweetAlert(session = session,
+                          inputId = "no_number_dialog",
+                          title = "You did not include a phone number!",
+                          type = "warning",
+                          btn_labels = "OK!",
+                          danger_mode = T)
+        
+    }
+    }
   })
   
   download_setup <- reactive({
@@ -1091,7 +1150,7 @@ server <- function(input, output, session) {
     
     # More setup. What this does is select the rows that include the desired number
     
-    phone_export <- read.csv(file_to_read$datapath)
+    phone_export <- try(read.csv(file_to_read$datapath))
     
     phone_export$dnis <- as.character(phone_export$dnis)
     
