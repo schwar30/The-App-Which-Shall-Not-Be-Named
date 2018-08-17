@@ -123,12 +123,12 @@ ui <- dashboardPage(
       # struggle with right now is unfortunately the stuff I'll never have to deal with in the near future, 
       # but I think it's still worth knowing.
       
-      menuItem("Analytics API Call", tabName = "api", icon = icon("tree")), 
+      # menuItem("Analytics API Call", tabName = "api", icon = icon("tree")), 
       
       # The API call for analytics wasn't easy, but I was still able to do it, so I guess it's also probably worth
       # getting a test page for this as well.
       
-      menuItem("Adwords API Call", tabName = "adwords", icon = icon("adn")),
+      # menuItem("Adwords API Call", tabName = "adwords", icon = icon("adn")),
       
       # More of a basic reporting kind of thing that Stullzy wants to lay out. It's not difficult, but the problem
       # is I don't explicitly know everything to filter, but I think it's pretty decent.
@@ -383,39 +383,39 @@ ui <- dashboardPage(
       # the authorize_adwords bit doesn't make any sense at all. I tried pulling from the original source, but it doesn't
       # seem to be working the way I have it scripted.
       
-      tabItem(tabName = "api",
-              
-              titlePanel("Test Analytics API Call"),
-              
-              sidebarPanel(
-                
-                selectizeInput(inputId = "api_website", label = "Select Website", choices = client_csv$name,
-                               multiple = T),
-                dateInput(inputId = "first_date", label = "First Date"),
-                dateInput(inputId = "last_date", label = "Last Date"),
-                actionButton(inputId = "api_call", label = "API Call")
-                
-              ),
-              
-              textOutput("api_text")
-              
-              ),
-      
-      tabItem(tabName = "adwords",
-              
-              titlePanel("Test Adwords API Call"),
-              
-              sidebarPanel(
-                
-                dateInput(inputId = "adwords_first_date", label = "First Date"),
-                dateInput(inputId = "adwords_last_date", label = "Last Date"),
-                actionButton(inputId = "adwords_api_call", label = "API Call")
-                
-              ),
-              
-              textOutput("adwords_api_text")
-              
-              ),
+      # tabItem(tabName = "api",
+      #         
+      #         titlePanel("Test Analytics API Call"),
+      #         
+      #         sidebarPanel(
+      #           
+      #           selectizeInput(inputId = "api_website", label = "Select Website", choices = client_csv$name,
+      #                          multiple = T),
+      #           dateInput(inputId = "first_date", label = "First Date"),
+      #           dateInput(inputId = "last_date", label = "Last Date"),
+      #           actionButton(inputId = "api_call", label = "API Call")
+      #           
+      #         ),
+      #         
+      #         textOutput("api_text")
+      #         
+      #         ),
+      # 
+      # tabItem(tabName = "adwords",
+      #         
+      #         titlePanel("Test Adwords API Call"),
+      #         
+      #         sidebarPanel(
+      #           
+      #           dateInput(inputId = "adwords_first_date", label = "First Date"),
+      #           dateInput(inputId = "adwords_last_date", label = "Last Date"),
+      #           actionButton(inputId = "adwords_api_call", label = "API Call")
+      #           
+      #         ),
+      #         
+      #         textOutput("adwords_api_text")
+      #         
+      #         ),
       
       
       tabItem(tabName = "paid_search",
