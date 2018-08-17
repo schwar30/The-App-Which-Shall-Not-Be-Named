@@ -79,6 +79,16 @@ ui <- dashboardPage(
     
     sidebarMenu(
       
+      # This tab is my most expansive and most useful project, which definitely puts it at the top
+      # of the app.
+      
+      menuItem("Magic Spreadsheet", tabName = "magic", icon = icon("magic"),
+               menuSubItem("Upload Properties", tabName = "magic_upload"),
+               menuSubItem("Join Options", tabName = "magic_join"),
+               menuSubItem("Spreadsheet Cleanup", tabName = "magic_cleanup"),
+               menuSubItem("View", tabName = "magic_view"), 
+               menuSubItem("Download", tabName = "magic_download")),
+      
       # There seems to be a huge dip in referral traffic for almost every site, so I 
       # wanted a way to quantify the losses
       
@@ -156,14 +166,7 @@ ui <- dashboardPage(
       
       # This allows the leads to be filtered either by phone number or website
       
-      menuItem("Export Wrangling", tabName = "wrangle", icon = icon("book")),
-      
-      menuItem("Magic Spreadsheet", tabName = "magic", icon = icon("magic"),
-               menuSubItem("Upload Properties", tabName = "magic_upload"),
-               menuSubItem("Join Options", tabName = "magic_join"),
-               menuSubItem("Spreadsheet Cleanup", tabName = "magic_cleanup"),
-               menuSubItem("View", tabName = "magic_view"), 
-               menuSubItem("Download", tabName = "magic_download"))
+      menuItem("Export Wrangling", tabName = "wrangle", icon = icon("book"))
       
     ) 
     
@@ -3288,7 +3291,7 @@ server <- function(input, output, session) {
       
       content = function(file) {
         
-        write.csv(data_set, file, row.names = F)
+        write.csv(reactive_data(), file, row.names = F)
         
       }
       
