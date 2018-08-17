@@ -513,7 +513,8 @@ ui <- dashboardPage(
                 
                 fileInput(inputId = "file", label = "Please Input Desired File(s)", multiple = T), 
                 radioButtons(inputId = "deliminator", label = "Deliminator", choices = c(Comma = ",", Tab = "\t", Space = " ", Semicolon = ";"), selected = ","),
-                numericInput(inputId = "skip", label = "Number of lines you want to skip", value = "0"),
+                numericInput(inputId = "skip", label = "Number of lines you want to skip (optional)", value = "", min = 0),
+                numericInput(inputId = "magic_keep", label = "What is the last row you wish to keep? (optional)", value = "", min = 0),
                 radioButtons(inputId = "encode", label = "Encoding", choices = c("unknown", "UTF-8", "UTF-16", "UTF-32"), selected = "unknown"),
                 actionButton(inputId = "problems", label = "Save")
                 
@@ -2400,24 +2401,105 @@ server <- function(input, output, session) {
     # While I didn't know this at the time of scripting, you are able to have the functions non-embedded, which makes everything
     # so much easier because
     
-    file_to_read <- input$file
+    file_to_read <- isolate(input$file)
     
-    if(is.null(file_to_read)){
+    # if(is.null(file_to_read)){
+    #   
+    #   return()
+    #   
+    # }
+    
+    # browser()
+    
+    if(is.null(file_to_read)) {
       
-      return()
+      confirmSweetAlert(session = session,
+                        inputId = "no_magic_file",
+                        title = "Please upload 1 or 2 datasets!",
+                        btn_labels = "OK!",
+                        type = "warning",
+                        danger_mode = T)
+      
+    }else{
+      
+      if(nrow(input$file) > 2) {
+        
+        confirmSweetAlert(session = session,
+                          inputId = "too_many_magic_file",
+                          title = "Program can only handle 1 or 2 datasets!",
+                          btn_labels = "OK!",
+                          type = "warning",
+                          danger_mode = T)
+        
+      }else{
+        
+        # browser
+        
+        if(is.na(input$skip)) {
+          
+          skip_value <- 0
+          
+        }else{
+          
+          skip_value <- input$skip
+          
+        }
+    
+    data1 <<- isolate(try(read.csv(isolate(input$file)[[1, "datapath"]], skip = skip_value, sep = input$deliminator, encoding = input$encode), silent = T))
+    data2 <<- isolate(try(read.csv(isolate(input$file)[[2, "datapath"]], skip = skip_value, sep = input$deliminator, encoding = input$encode), silent = T))
+    
+    # browser()
+    
+    if(!is.na(input$magic_keep) & !((nrow(input$file) == 2 & (class(data1) == "try-error" | class(data2) == "try-error")) | (nrow(input$file) == 1 & class(data1) == "try-error"))){
+      
+      # browser()
+  
+        slice_number <- input$magic_keep - skip_value - 1
+        
+        if(nrow(input$file) == 2){
+          
+          if((class(data1) != "try-error") | (class(data2) != "try-error")) {
+            # browser()
+        data1 <- data1 %>% 
+          slice(1:slice_number)
+        data1 <- as.data.frame(data1)
+        data1 <<- isolate(data1)
+        
+        data2 <- data2 %>% 
+          slice(1:slice_number)
+        data2 <- as.data.frame(data2)
+        data2 <<- isolate(data2)
+        
+          }
+        
+        }else{
+          
+          if((class(data1) != "try-error")) {
+            
+          # browser()
+            
+          data1 <- data1 %>% 
+            slice(1:slice_number)
+          data1 <- as.data.frame(data1)
+          data1 <<- isolate(data1)
+          
+        }}
+        
+      
       
     }
     
-    data1 <<- try(read.csv(input$file[[1, "datapath"]], skip = input$skip, sep = input$deliminator, encoding = input$encode), silent = T)
-    data2 <<- try(read.csv(input$file[[2, "datapath"]], skip = input$skip, sep = input$deliminator, encoding = input$encode), silent = T)
-    
     # browser()
     
     # browser()
     
-    if(nrow(input$file) == 1) {
+    # if(nrow(input$file) == 1 & !(str_detect(data1[1], "empty") | !str_detect(data2[1], "empty"))) {
+    
+    # browser()
+    
+      if(nrow(input$file) == 1 & class(data1) != "try-error" | class(data2) != "try-error") {
 
-      data_set <<- data1
+      data_set <<- isolate(data1)
       
       updateSelectizeInput(session = session, inputId = "arrange_selectize", label = "Arrange by which column?", 
                            choices = colnames(data_set))
@@ -2435,7 +2517,7 @@ server <- function(input, output, session) {
       
       # browser()
       
-      if(str_detect(data1[1], "more columns than column names")|str_detect(data2[1], "more columns than column names")){
+      if(str_detect(data1[1], "more columns than column names")| str_detect(data2[1], "more columns than column names")){
         # browser()
         confirmSweetAlert(session = session, 
                           inputId = "bad_file",
@@ -2451,6 +2533,32 @@ server <- function(input, output, session) {
       }
     }else{
       
+      # browser()
+      if((nrow(input$file) == 2 & (class(data1) == "try-error" | class(data2) == "try-error")) | (nrow(input$file) == 1 & class(data1) == "try-error")) {
+      
+        # browser()
+        
+        confirmSweetAlert(session = session,
+                          inputId = "bad_error_file",
+                          type = "warning",
+                          title = "There was some error reading the file. Check to see if it is the desired file with desired settings!",
+                          btn_labels = "OK!", 
+                          danger_mode = T)
+     
+      }else{
+        
+        if(str_detect(data1[1], "empty") | str_detect(data2[1], "empty")){
+          
+          
+          confirmSweetAlert(session = session,
+                            inputId = "empty_file",
+                            type = "warning",
+                            title = "You have uploaded an empty file so the file will not show!",
+                            btn_labels = "OK!", 
+                            danger_mode = T)
+          
+        }else{
+      
       confirmSweetAlert(session = session,
                         inputId = "good_file",
                         type = "success",
@@ -2461,8 +2569,8 @@ server <- function(input, output, session) {
       updateSelectizeInput(session = session, inputId = "join_prop", label = "Join by which column(s)?", 
                            choices = intersect(colnames(data1), colnames(data2)), selected = NULL)
       
-    }
-    
+    }}
+    }}}
   })
   
   
@@ -2473,11 +2581,35 @@ server <- function(input, output, session) {
     
     if(length(input$file) > 0) {
       
+      if(nrow(input$file) > 2) {
+        
+        confirmSweetAlert(session = session,
+                          inputId = "combine_more_than_two",
+                          type = "warning",
+                          title = "Merges can only handle 2 spreadsheets!",
+                          btn_labels = "OK!",
+                          danger_mode = T)
+        
+      }else{
+      
+      if((nrow(input$file) == 2 & (class(data1) == "try-error" | class(data2) == "try-error")) | (nrow(input$file) == 1 & class(data1) == "try-error")) {
+
+        confirmSweetAlert(session = session,
+                          inputId = "combine_empty",
+                          type = "warning",
+                          title = "There was an error merging the file. Make sure that your file and configurations are set as desired!",
+                          btn_labels = "OK!",
+                          danger_mode = T)
+
+      }else{
+      
       if(input$combine_choice == "rbindlist" & nrow(input$file) > 1) {
+        
+        # browser()
         
         data_set <- try(rbind(data1, data2))
         
-        if(class(data_set) == "try-error") {
+        if(class(data_set) == "try-error" | class(data1) == "try-error" | class(data2) == "try-error") {
           
           confirmSweetAlert(session = session, 
                             inputId = "rbind_mess",
@@ -2485,6 +2617,16 @@ server <- function(input, output, session) {
                             title = "These two sheets do not have the same columns. Try a different operation maybe?",
                             btn_labels = "OK!",
                             danger_mode = T)
+          
+          # updateSelectizeInput(session = session, inputId = "arrange_selectize", label = "Arrange by which column?", 
+          #                      choices = NULL)
+          # 
+          # updateSelectizeInput(session = session, inputId = "filter_selectize", label = "Choose column to filter through:",
+          #                      choices = NULL)
+          # 
+          # updateSelectizeInput(session = session, inputId = "select_selectize", label = "Which columns do you want? (Order matters)",
+          #                      choices = NULL)
+          
           
         }else{
           
@@ -2562,6 +2704,7 @@ server <- function(input, output, session) {
                             inputId = "cbind_success",
                             type = "success",
                             title = "Successful cBind!",
+                            text = "If you had a predefined number of rows, cBind will always work. Proceed with caution!",
                             btn_labels = "OK!",
                             danger_mode = T)
           
@@ -2708,7 +2851,7 @@ server <- function(input, output, session) {
                           btn_labels = "OK!",
                           danger_mode = T)
         
-      }
+      }}}
     }else{
       
       # if(is.null(input$file)) {
@@ -2722,14 +2865,29 @@ server <- function(input, output, session) {
       
     }
     
+    if(class(data_set) == "try-error" | class(data1) == "try-error" | class(data2) == "try-error") {
+    
     updateSelectizeInput(session = session, inputId = "arrange_selectize", label = "Arrange by which column?", 
-                         choices = colnames(data_set))
+                         choices = NULL)
     
     updateSelectizeInput(session = session, inputId = "filter_selectize", label = "Choose column to filter through:",
-                         choices = colnames(data_set))
+                         choices = NULL)
     
     updateSelectizeInput(session = session, inputId = "select_selectize", label = "Which columns do you want? (Order matters)",
-                         choices = colnames(data_set))
+                         choices = NULL)
+    
+    }else{
+      
+      updateSelectizeInput(session = session, inputId = "arrange_selectize", label = "Arrange by which column?", 
+                           choices = colnames(data_set))
+      
+      updateSelectizeInput(session = session, inputId = "filter_selectize", label = "Choose column to filter through:",
+                           choices = colnames(data_set))
+      
+      updateSelectizeInput(session = session, inputId = "select_selectize", label = "Which columns do you want? (Order matters)",
+                           choices = colnames(data_set))
+      
+    }
     
   })
   
@@ -2744,6 +2902,7 @@ server <- function(input, output, session) {
                         btn_labels = "OK!",
                         danger_mode = T)
       
+    # }
     }
     
   })
@@ -2752,11 +2911,25 @@ server <- function(input, output, session) {
     
     # browser()
     
+    if(class(data_set) == "try-error") {
+      
+      confirmSweetAlert(session = session, 
+                        inputId = "different_kinds_cleanup",
+                        title = "Files cannot be merged. Cleanup is impossible!",
+                        type = "warning",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+    }else{
+    
+   
+    
+    
     if(is.null(data1) | is.null(data2)) {
       
       confirmSweetAlert(session = session, 
                         inputId = "cleanup_no_file",
-                        title = "Please upload 2 files first!", 
+                        title = "Please upload 1 or 2 files first!", 
                         type = "warning", 
                         btn_labels = "OK!", 
                         danger_mode = T)
@@ -2764,6 +2937,19 @@ server <- function(input, output, session) {
     }else{
       
       # browser()
+      
+      if(is.null(input$select_selectize) & is.null(input$filter_selectize) & is.null(input$arrange_selectize) & !is.null(data_set)) {
+        
+        # browser()
+
+        confirmSweetAlert(session = session,
+                          inputId = "cleanup_no_select",
+                          title = "Please choose an operation!",
+                          type = "warning",
+                          btn_labels = "OK!",
+                          danger_mode = T)
+
+      }else{
       
       if(!((!is.null(input$select_selectize) & !is.null(input$filter_selectize))|
          (!is.null(input$select_selectize) & !is.null(input$arrange_selectize))|
@@ -2773,14 +2959,38 @@ server <- function(input, output, session) {
       
       if(is.null(data_set)) {
         
+        if(class(data1) == "try-error"){
+          
+          confirmSweetAlert(session = session, 
+                            inputId = "cleanup_no_data",
+                            title = "No operations can be selected on this datset!",
+                            type = "warning",
+                            btn_labels = "OK!", 
+                            danger_mode = T)
+          
+        }else{
+        
         confirmSweetAlert(session = session, 
                           inputId = "cleanup_no_merge",
                           title = "Please merge datasets first!",
                           type = "warning",
                           btn_labels = "OK!", 
                           danger_mode = T)
+          
+        }
         
       }else{
+        
+        if((nrow(input$file) == 2 & (class(data1) == "try-error" | class(data2) == "try-error")) | (nrow(input$file) == 1 & class(data1) == "try-error")) {
+          
+          confirmSweetAlert(session = session, 
+                            inputId = "empty_cleanup",
+                            title = "Upload resulted in an error. Cleanup operations cannot be performed!",
+                            type = "warning",
+                            btn_labels = "OK!",
+                            danger_mode = T)
+          
+        }else{
         
         if(!is.null(input$arrange_selectize)) {
           
@@ -2807,6 +3017,7 @@ server <- function(input, output, session) {
           confirmSweetAlert(session = session,
                             inputId = "arrange_success",
                             title = "Dataset arranged as described!",
+                            btn_labels = "OK!",
                             type = "success",
                             danger_mode = T)
           
@@ -2904,7 +3115,7 @@ server <- function(input, output, session) {
         
       
       
-      }
+      }                 }
     }else{
       
       confirmSweetAlert(session = session, 
@@ -2914,39 +3125,137 @@ server <- function(input, output, session) {
                         danger_mode = T, 
                         btn_labels = "OK!")
       
+    }}
     }
+    updateTextInput(session = session, inputId = "filter_text", label = "What would you like to filter?", value = "")
+    
+    
+    
     }
   })
   
   observeEvent(input$real_table, {
     
-    output$selected_table <- renderTable({
-      
-      # This little bit is required for the view, because R does not know how to handle embedded
-      # values. There will probably be other things that I need to filter out, but for right now, this is
-      # a pretty simplistic fix.
-      
-      data_set[data_set == "\x89\xf6_"] <- NA
-      
-      data_set
-      
-    })
+    input$real_table
     
-    if(is.null(data_set)) {
+    if(class(data_set) != "try-error") {
       
-      confirmSweetAlert(session = session, 
-                        inputId = "magic_view_alert",
-                        text = "There is no data set to view!",
-                        type = "warning",
-                        btn_labels = "OK!",
-                        danger_mode = T)
-      
-    }else{
-      
-      "success"
+      if(!is.null(input$file)) {
+        
+        if(nrow(input$file) < 3) {
+          
+          if(!is.null(data_set)){
+            
+            # isolate(input$real_table)
+            
+            # browser()
+            
+            input$real_table
+            
+            data_set[data_set == "\x89\xf6_"] <- NA
+            data_set <<- data_set
+            
+            # reactive_data_set <<- isolate(reactive(data_set))
+            
+            # reactive_data_set()
+            
+          }
+          
+        }
+        
+      }
       
     }
     
+    output$selected_table <- isolate(renderTable({
+      
+    data_set
+      
+    }))
+    
+    if(class(data_set) == "try-error") {
+      
+      confirmSweetAlert(session = session, 
+                        inputId = "try_error_view",
+                        title = "Files cannot merge, so viewing is not possible!", 
+                        type = "warning", 
+                        danger_mode = T, 
+                        btn_labels = "OK!")
+      
+    }else{
+    
+    if(is.null(isolate(input$file))) {
+      
+      confirmSweetAlert(session = session, 
+                        inputId = "no_view_file",
+                        title = "Please save uploaded file first!", 
+                        type = "warning", 
+                        danger_mode = T, 
+                        btn_labels = "OK!")
+      
+    }else{
+      
+      if(nrow(input$file) > 2) {
+        
+        confirmSweetAlert(session = session, 
+                          inputId = "view_more_than_two",
+                          title = "Program cannot merge 3 files, so they cannot be viewed!", 
+                          type = "warning", 
+                          danger_mode = T, 
+                          btn_labels = "OK!")
+        
+      }else{
+      
+      if(is.null(data_set)) {
+        
+        if(class(data1) == "try-error" | class(data2) == "try-error"){
+          
+          confirmSweetAlert(session = session, 
+                            inputId = "empty_file",
+                            title = "File upload resulted in an error. Choose different file and/or check configurations!", 
+                            type = "warning", 
+                            danger_mode = T, 
+                            btn_labels = "OK!")
+          
+        }else{
+        
+        confirmSweetAlert(session = session, 
+                          inputId = "multiple_no_merge",
+                          title = "There appears to be several files. Please merge before viewing!", 
+                          type = "warning", 
+                          danger_mode = T, 
+                          btn_labels = "OK!")
+          
+        }
+        
+      }else{
+  
+        confirmSweetAlert(session = session, 
+                          inputId = "view_success",
+                          title = "File ready to View!", 
+                          type = "success", 
+                          danger_mode = T, 
+                          btn_labels = "OK!")
+        
+      }
+      
+    }}
+    
+    # if(is.null(data_set)) {
+    #   
+    #   confirmSweetAlert(session = session, 
+    #                     inputId = "magic_view_alert",
+    #                     text = "There is no data set to view!",
+    #                     type = "warning",
+    #                     btn_labels = "OK!",
+    #                     danger_mode = T)
+    #   
+    # }else{
+    #   
+    #   "success"
+    #   
+    # }
+    }
   })
   
   reactive_data <- reactive({data_set})
