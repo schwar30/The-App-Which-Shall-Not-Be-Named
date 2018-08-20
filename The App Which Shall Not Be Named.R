@@ -3048,15 +3048,31 @@ server <- function(input, output, session) {
         
         if(!is.null(input$arrange_selectize)) {
           
-          if(input$arrange_selectize %in% colnames(data_set))
+          if(length(input$arrange_selectize) > 1) {
+            
+            confirmSweetAlert(session = session,
+                              inputId = "cleanup_over_one_arrange",
+                              title = "Please only select one arrange entry!",
+                              text = "If you need to arrange by more than 1 column, alert Rob.",
+                              type = "warning",
+                              btn_labels = "OK!",
+                              danger_mode = T)
+            
+          }else{
+          
+          if(input$arrange_selectize %in% colnames(data_set)){
             
             # browser()
             
-            selected_column <- grep(paste0("^", noquote(input$arrange_selectize), "$"), colnames(data_set))
+            
+            # column_selection <- as.data.frame(colnames(data_set))
+            # selected_column <- grepl(paste0("^", noquote(input$arrange_selectize), "$"), colnames(data_set))
           # selected_column_name <- colnames(data_set[selected_column[1]])
-          
-          data_set <- data_set[order(data_set[selected_column], decreasing = input$arrange_checkbox),]
-          # data_set <- data_set[data_set[selected_column] != "",] 
+            
+            # browser()
+            data_set <- data_set[order(data_set[input$arrange_selectize], decreasing = input$arrange_checkbox),]
+            # data_set <- data_set[order(data_set[selected_column], decreasing = input$arrange_checkbox),]
+            # data_set <- data_set[data_set[selected_column] != "",] 
           data_set <<- data_set
           
           updateSelectizeInput(session = session, inputId = "arrange_selectize", label = "Arrange by which column?", 
@@ -3074,6 +3090,8 @@ server <- function(input, output, session) {
                             btn_labels = "OK!",
                             type = "success",
                             danger_mode = T)
+          
+        }}
           
         } 
         
@@ -3205,7 +3223,70 @@ server <- function(input, output, session) {
         
       
       
-      }                 }
+        }                 }
+        
+        if(input$real_table[1] > 0){
+          
+          output$magic_colnames_table <- renderDataTable(data_set_names, selection = "none", editable = T, rownames = F)
+          
+          output$magic_edit_table <- renderDataTable(data_set, selection = "none", editable = T, rownames = F)
+          
+          output$magic_remove_table <- renderDataTable(data_set, rownames = F)
+          
+          output$selected_table <- isolate(renderTable({data_set}))
+          
+          if(!is.null(input$filter_selectize)){
+            
+            confirmSweetAlert(session = session,
+                              inputId = "update_table_cleanup_filter_success",
+                              title = "Successfully filtered data!",
+                              text = "Tables are updated in view tabs",
+                              type = "success",
+                              btn_labels = "OK!",
+                              danger_mode = T)
+            
+          }
+          
+          if(!is.null(input$arrange_selectize)) {
+            
+            if(length(input$arrange_selectize) > 1) {
+            
+            confirmSweetAlert(session = session,
+                              inputId = "update_table_cleanup_arrange_failure",
+                              title = "Please only input one arrange value!",
+                              text = "If you need to arrange more than 1 value, alert Rob.",
+                              type = "warning",
+                              btn_labels = "OK!",
+                              danger_mode = T)
+              
+            }else{
+              
+              confirmSweetAlert(session = session,
+                                inputId = "update_table_cleanup_arrange_success",
+                                title = "Successfully arranged data!",
+                                text = "Tables are updated in view tabs",
+                                type = "success",
+                                btn_labels = "OK!",
+                                danger_mode = T)
+              
+            }
+            
+          }
+          
+          if(!is.null(input$select_selectize)) {
+            
+            confirmSweetAlert(session = session,
+                              inputId = "update_table_cleanup_select_success",
+                              title = "Successfully selected columns!",
+                              text = "Tables are updated in view tabs",
+                              type = "success",
+                              btn_labels = "OK!",
+                              danger_mode = T)
+            
+          }
+          
+        }
+        
     }else{
       
       confirmSweetAlert(session = session, 
@@ -3222,6 +3303,9 @@ server <- function(input, output, session) {
     
     
     }
+    
+    
+    
   })
   
   observeEvent(input$real_table, {
