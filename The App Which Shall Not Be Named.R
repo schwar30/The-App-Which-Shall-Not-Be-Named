@@ -604,7 +604,7 @@ ui <- dashboardPage(
               
               titlePanel("Edit Table"),
               
-              actionButton(inputId = "update_magic_edit", label = "Update all tables"),
+              # actionButton(inputId = "update_magic_edit", label = "Update all tables"),
               dataTableOutput("magic_edit_table")
               
               ),
@@ -614,7 +614,7 @@ ui <- dashboardPage(
               titlePanel("Remove Items From Table"),
               
               actionButton(inputId = "magic_remove_activate", label = "Delete Selected Rows"),
-              actionButton(inputId = "update_magic_remove", label = "Update all tables"),
+              # actionButton(inputId = "update_magic_remove", label = "Update all tables"),
               dataTableOutput("magic_remove_table")
               # selectizeInput(inputId = "magic_remove_selectize", label = "Choose Rows to remove:", choices = NULL, multiple = T),
               # actionButton(inputId = "magic_remove_activate", label = "Delete Selected Rows")
@@ -625,7 +625,7 @@ ui <- dashboardPage(
               
               titlePanel("Edit Column Names"),
               
-              actionButton(inputId = "update_magic_colnames", label = "Update all tables"),
+              # actionButton(inputId = "update_magic_colnames", label = "Update all tables"),
               dataTableOutput("magic_colnames_table"))
       
     )))
@@ -3081,6 +3081,17 @@ server <- function(input, output, session) {
           
           # browser()
           
+          if(length(input$filter_selectize) > 1){
+
+            confirmSweetAlert(session = session,
+                              inputId = "over_2_filter_selectize",
+                              title = "Please only select one column!",
+                              btn_labels = "OK!",
+                              type = "warning",
+                              danger_mode = T)
+
+          }else{
+          
           if(input$filter_toggle == F) {
             
             # data_set <- data_set[data_set[selected_column] != input$filter_text]
@@ -3089,7 +3100,17 @@ server <- function(input, output, session) {
             
             # browser()
             
+            if(input$filter_text == ""){
+              
+              data_set <- data_set[data_set[selected_column] != input$filter_text, ]
+              data_set <- data_set[!is.na(data_set[selected_column]), ]
+              
+              
+            }else{
+              
             data_set <- data_set[data_set[selected_column] != input$filter_text,]
+            
+            }
             
             # data_set <- data_set[!str_detect(data_set[selected_column], input$filter_text),]
             
@@ -3116,7 +3137,19 @@ server <- function(input, output, session) {
           }else{
             
             selected_column <- grep(paste0("^", noquote(input$filter_selectize), "$"), colnames(data_set))
-            data_set <- data_set[data_set[selected_column] == input$filter_text,]
+            
+            if(input$filter_text == ""){
+              
+              data_set <- data_set[data_set[selected_column] == input$filter_text, ]
+              data_set <- data_set[is.na(data_set[selected_column]), ]
+              
+              
+            }else{
+              
+              data_set <- data_set[data_set[selected_column] == input$filter_text,]
+              
+            }
+            
             data_set <<- data_set
             
             updateSelectizeInput(session = session, inputId = "arrange_selectize", label = "Arrange by which column?", 
@@ -3140,7 +3173,7 @@ server <- function(input, output, session) {
             # browser()
             
           }
-          
+        }
         } 
         
         if(!is.null(input$select_selectize)) {
@@ -3234,6 +3267,7 @@ server <- function(input, output, session) {
     
     data_set_names <- colnames(data_set)
     data_set_names <- as.data.frame(data_set_names)
+    # browser()
     colnames(data_set_names) <- "Column Names"
     # browser()
     data_set_names$`Column Names` <- as.character(data_set_names$`Column Names`)
@@ -3384,6 +3418,43 @@ server <- function(input, output, session) {
   
   observeEvent(input$magic_colnames_table_cell_edit, {
     
+    if(input$magic_colnames_table_cell_edit$value == "") {
+      
+      colname_proxy <- dataTableProxy("magic_colnames_table")
+      colname_info <- input$magic_colnames_table_cell_edit
+      colname_row <- colname_info$row
+      # colname_column <- colname_info$col
+      # colname_value <- colname_info$value
+      # data_set_value <- data_set_names[colname_row, 1]
+      data_set_names[colname_row, 1] <<- DT:::coerceValue(data_set_names[colname_row, 1], data_set_names[colname_row, 1])
+      replaceData(colname_proxy, data_set_names, resetPaging = F)
+      
+      output$magic_colnames_table <- renderDataTable(data_set_names, selection = "none", editable = T, rownames = F)
+      
+      output$magic_edit_table <- renderDataTable(data_set, selection = "none", editable = T, rownames = F)
+      
+      output$magic_remove_table <- renderDataTable(data_set, rownames = F)
+      
+      output$selected_table <- isolate(renderTable({data_set}))
+      
+      updateSelectizeInput(session = session, inputId = "arrange_selectize", label = "Arrange by which column?", 
+                           choices = colnames(data_set))
+      
+      updateSelectizeInput(session = session, inputId = "filter_selectize", label = "Choose column to filter through:",
+                           choices = colnames(data_set))
+      
+      updateSelectizeInput(session = session, inputId = "select_selectize", label = "Which columns do you want? (Order matters)",
+                           choices = colnames(data_set), selected = NULL)
+      
+      confirmSweetAlert(session = session,
+                        inputId = "no_edit_column_entry",
+                        title = "You need a name for a column!",
+                        type = "warning", 
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+    }else{
+    
     # browser()
     colname_proxy <- dataTableProxy("magic_colnames_table")
     colname_info <- input$magic_colnames_table_cell_edit
@@ -3391,10 +3462,6 @@ server <- function(input, output, session) {
     colname_column <- colname_info$col
     colname_value <- colname_info$value
     data_set_value <- data_set_names[colname_row, 1]
-    # browser()
-    # colname_value <- as.character(colname_value)
-    # data_set_names$`Column Names` <- as.character(data_set_names$`Column Names`)
-    # browser()
     data_set_names[colname_row, 1] <<- DT:::coerceValue(colname_value, data_set_names[colname_row, 1])
     replaceData(colname_proxy, data_set_names, resetPaging = F)
     
@@ -3428,9 +3495,140 @@ server <- function(input, output, session) {
                       type = "success",
                       btn_labels = "OK!", 
                       danger_mode = T)
-    
+    }
   })
   
+  observeEvent(input$magic_edit_table_cell_edit, {
+    
+    if(input$magic_edit_table_cell_edit$value == "") {
+      
+      edit_proxy <- dataTableProxy("magic_edit_table")
+      edit_info <- input$magic_edit_table_cell_edit
+      edit_row <- edit_info$row
+      # colname_column <- colname_info$col
+      # colname_value <- colname_info$value
+      # data_set_value <- data_set_names[colname_row, 1]
+      data_set[edit_row, 1] <<- DT:::coerceValue(data_set[edit_row, 1], data_set[edit_row, 1])
+      replaceData(edit_proxy, data_set, resetPaging = F)
+      
+      # output$magic_colnames_table <- renderDataTable(data_set_names, selection = "none", editable = T, rownames = F)
+      
+      output$magic_edit_table <- renderDataTable(data_set, selection = "none", editable = T, rownames = F)
+      
+      output$magic_remove_table <- renderDataTable(data_set, rownames = F)
+      
+      output$selected_table <- isolate(renderTable({data_set}))
+      
+      updateSelectizeInput(session = session, inputId = "arrange_selectize", label = "Arrange by which column?", 
+                           choices = colnames(data_set))
+      
+      updateSelectizeInput(session = session, inputId = "filter_selectize", label = "Choose column to filter through:",
+                           choices = colnames(data_set))
+      
+      updateSelectizeInput(session = session, inputId = "select_selectize", label = "Which columns do you want? (Order matters)",
+                           choices = colnames(data_set), selected = NULL)
+      
+      confirmSweetAlert(session = session,
+                        inputId = "no_edit_column_entry",
+                        title = "You need an entry for a cell!",
+                        type = "warning", 
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+    }else{
+      
+      # browser()
+      edit_proxy <- dataTableProxy("magic_edit_table")
+      edit_info <- input$magic_edit_table_cell_edit
+      edit_row <- edit_info$row
+      edit_column <- edit_info$col
+      edit_value <- edit_info$value
+      data_set_edit_value <- data_set[edit_row, 1]
+      data_set[edit_row, 1] <<- DT:::coerceValue(edit_value, data_set[edit_row, 1])
+      replaceData(edit_proxy, data_set, resetPaging = F)
+      
+      # browser()
+      
+      # output$magic_colnames_table <- renderDataTable(data_set_names, selection = "none", editable = T, rownames = F)
+      
+      # new_data_set_names <- data_set_names[, 1]
+      # colnames(data_set) <- new_data_set_names
+      data_set <<- data_set
+      
+      output$magic_edit_table <- renderDataTable(data_set, selection = "none", editable = T, rownames = F)
+      
+      output$magic_remove_table <- renderDataTable(data_set, rownames = F)
+      
+      output$selected_table <- isolate(renderTable({data_set}))
+      
+      updateSelectizeInput(session = session, inputId = "arrange_selectize", label = "Arrange by which column?", 
+                           choices = colnames(data_set))
+      
+      updateSelectizeInput(session = session, inputId = "filter_selectize", label = "Choose column to filter through:",
+                           choices = colnames(data_set))
+      
+      updateSelectizeInput(session = session, inputId = "select_selectize", label = "Which columns do you want? (Order matters)",
+                           choices = colnames(data_set), selected = NULL)
+      
+      confirmSweetAlert(session = session, 
+                        inputId = "col_edit_success",
+                        title = "Cell change successful!",
+                        text = "Check other view tabs to confirm",
+                        type = "success",
+                        btn_labels = "OK!", 
+                        danger_mode = T)
+    }
+  })
+  
+  observeEvent(input$magic_remove_activate, {
+    
+    # browser()
+    
+    if(is.null(input$magic_remove_table_rows_selected)) {
+      
+      confirmSweetAlert(session = session, 
+                        inputId = "col_remove_null",
+                        title = "Choose row(s) to delete!",
+                        # text = "Check other view tabs to confirm",
+                        type = "warning",
+                        btn_labels = "OK!", 
+                        danger_mode = T)
+      
+    }else{
+      
+      # browser()
+      
+      if(nrow(data_set) == length(input$magic_remove_table_rows_selected)){
+        
+        confirmSweetAlert(session = session, 
+                          inputId = "col_remove_full",
+                          title = "Don't delete your entire dataset!",
+                          # text = "Check other view tabs to confirm",
+                          type = "warning",
+                          btn_labels = "OK!", 
+                          danger_mode = T)
+        
+      }else{
+    
+    data_set <- data_set[-input$magic_remove_table_rows_selected,]
+    data_set <<- data_set
+   
+    output$magic_edit_table <- renderDataTable(data_set, selection = "none", editable = T, rownames = F)
+    
+    output$magic_remove_table <- renderDataTable(data_set, rownames = F)
+    
+    output$selected_table <- isolate(renderTable({data_set}))
+    
+    confirmSweetAlert(session = session,
+                      inputId = "magic_removal_success",
+                      title = "Successfully deleted row(s)!",
+                      type = "success",
+                      btn_labels = "OK!", 
+                      danger_mode = T)
+
+    }}
+    
+  })
   
 }
 
