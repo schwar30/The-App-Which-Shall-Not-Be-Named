@@ -70,6 +70,7 @@ data1 <- NULL
 data2 <- NULL
 data_set <- NULL
 date_ranges <- NULL
+data_set_names <- NULL
 
 ui <- dashboardPage(
   
@@ -86,7 +87,12 @@ ui <- dashboardPage(
                menuSubItem("Upload Properties", tabName = "magic_upload"),
                menuSubItem("Join Options", tabName = "magic_join"),
                menuSubItem("Spreadsheet Cleanup", tabName = "magic_cleanup"),
-               menuSubItem("View", tabName = "magic_view"), 
+               menuItem("Edit & View table", tabName = "magic_edit_view",
+               # menuItem("View", tabName = "magic_view",
+                           menuSubItem("View", tabName = "magic_view"),
+                           menuSubItem("Edit Column Names", tabName = "magic_colnames"),
+                           menuSubItem("Edit Table", tabName = "magic_edit"),
+                           menuSubItem("Remove Items", tabName = "magic_remove")), 
                menuSubItem("Download", tabName = "magic_download")),
       
       # There seems to be a huge dip in referral traffic for almost every site, so I 
@@ -592,7 +598,35 @@ ui <- dashboardPage(
               sidebarPanel(
                 textInput(inputId = "magic_download_name", label = "Input Download Name:", value = ""),
                 downloadButton(outputId = "download", label = "Download")
-              ))
+              )),
+      
+      tabItem(tabName = "magic_edit",
+              
+              titlePanel("Edit Table"),
+              
+              actionButton(inputId = "update_magic_edit", label = "Update all tables"),
+              dataTableOutput("magic_edit_table")
+              
+              ),
+      
+      tabItem(tabName = "magic_remove",
+              
+              titlePanel("Remove Items From Table"),
+              
+              actionButton(inputId = "magic_remove_activate", label = "Delete Selected Rows"),
+              actionButton(inputId = "update_magic_remove", label = "Update all tables"),
+              dataTableOutput("magic_remove_table")
+              # selectizeInput(inputId = "magic_remove_selectize", label = "Choose Rows to remove:", choices = NULL, multiple = T),
+              # actionButton(inputId = "magic_remove_activate", label = "Delete Selected Rows")
+              
+              ),
+      
+      tabItem(tabName = "magic_colnames",
+              
+              titlePanel("Edit Column Names"),
+              
+              actionButton(inputId = "update_magic_colnames", label = "Update all tables"),
+              dataTableOutput("magic_colnames_table"))
       
     )))
 
@@ -2448,8 +2482,8 @@ server <- function(input, output, session) {
           
         }
     
-    data1 <<- isolate(try(read.csv(isolate(input$file)[[1, "datapath"]], skip = skip_value, sep = input$deliminator, encoding = input$encode), silent = T))
-    data2 <<- isolate(try(read.csv(isolate(input$file)[[2, "datapath"]], skip = skip_value, sep = input$deliminator, encoding = input$encode), silent = T))
+    data1 <<- isolate(try(read.csv(isolate(input$file)[[1, "datapath"]], skip = skip_value, sep = input$deliminator, encoding = input$encode, stringsAsFactors = F), silent = T))
+    data2 <<- isolate(try(read.csv(isolate(input$file)[[2, "datapath"]], skip = skip_value, sep = input$deliminator, encoding = input$encode, stringsAsFactors = F), silent = T))
     
     # browser()
     
@@ -2511,7 +2545,7 @@ server <- function(input, output, session) {
                            choices = colnames(data_set))
       
       updateSelectizeInput(session = session, inputId = "select_selectize", label = "Which columns do you want? (Order matters)",
-                           choices = colnames(data_set))
+                           choices = colnames(data_set), selected = NULL)
 
     }
     
@@ -2894,7 +2928,7 @@ server <- function(input, output, session) {
                          choices = NULL)
     
     updateSelectizeInput(session = session, inputId = "select_selectize", label = "Which columns do you want? (Order matters)",
-                         choices = NULL)
+                         choices = NULL, selected = NULL)
     
     }else{
       
@@ -2905,7 +2939,7 @@ server <- function(input, output, session) {
                            choices = colnames(data_set))
       
       updateSelectizeInput(session = session, inputId = "select_selectize", label = "Which columns do you want? (Order matters)",
-                           choices = colnames(data_set))
+                           choices = colnames(data_set), selected = NULL)
       
     }
     
@@ -3032,7 +3066,7 @@ server <- function(input, output, session) {
                                choices = colnames(data_set))
           
           updateSelectizeInput(session = session, inputId = "select_selectize", label = "Which columns do you want? (Order matters)",
-                               choices = colnames(data_set))
+                               choices = colnames(data_set), selected = NULL)
           
           confirmSweetAlert(session = session,
                             inputId = "arrange_success",
@@ -3068,7 +3102,7 @@ server <- function(input, output, session) {
                                  choices = colnames(data_set))
             
             updateSelectizeInput(session = session, inputId = "select_selectize", label = "Which columns do you want? (Order matters)",
-                                 choices = colnames(data_set))
+                                 choices = colnames(data_set), selected = NULL)
             
             updateTextInput(session = session, inputId = "filter_text", label = "What would you like to filter?", value = "")
             
@@ -3092,7 +3126,7 @@ server <- function(input, output, session) {
                                  choices = colnames(data_set))
             
             updateSelectizeInput(session = session, inputId = "select_selectize", label = "Which columns do you want? (Order matters)",
-                                 choices = colnames(data_set))
+                                 choices = colnames(data_set), selected = NULL)
             
             updateTextInput(session = session, inputId = "filter_text", label = "What would you like to filter?", value = "")
             
@@ -3103,6 +3137,8 @@ server <- function(input, output, session) {
                               btn_labels = "OK!",
                               danger_mode = T)
             
+            # browser()
+            
           }
           
         } 
@@ -3111,8 +3147,8 @@ server <- function(input, output, session) {
           
           # browser()
           
-          selected_columns <- which(colnames(data_set) %in% input$filter_selectize)
-          data_set <- data_set[, input$select_selectize]
+          selected_columns <- which(colnames(data_set) %in% input$select_selectize)
+          data_set <- data_set[, input$select_selectize, drop = F]
           data_set <<- data_set
           
           updateSelectizeInput(session = session, inputId = "arrange_selectize", label = "Arrange by which column?", 
@@ -3122,8 +3158,9 @@ server <- function(input, output, session) {
                                choices = colnames(data_set))
           
           updateSelectizeInput(session = session, inputId = "select_selectize", label = "Which columns do you want? (Order matters)",
-                               choices = colnames(data_set))
+                               choices = colnames(data_set), selected = NULL)
           
+          # browser()
           
           confirmSweetAlert(session = session,
                             inputId = "select_success",
@@ -3192,6 +3229,21 @@ server <- function(input, output, session) {
     data_set
       
     }))
+    
+    # browser() 
+    
+    data_set_names <- colnames(data_set)
+    data_set_names <- as.data.frame(data_set_names)
+    colnames(data_set_names) <- "Column Names"
+    # browser()
+    data_set_names$`Column Names` <- as.character(data_set_names$`Column Names`)
+    data_set_names <<- data_set_names
+    
+    output$magic_edit_table <- renderDataTable(data_set, selection = "none", editable = T, rownames = F)
+    
+    output$magic_remove_table <- renderDataTable(data_set, rownames = F)
+    
+    output$magic_colnames_table <- renderDataTable(data_set_names, selection = "none", editable = T, rownames = F)
     
     if(class(data_set) == "try-error") {
       
@@ -3326,7 +3378,58 @@ server <- function(input, output, session) {
     #     
     #   }
     #   
-    # )    
+    # )   
+  
+  
+  
+  observeEvent(input$magic_colnames_table_cell_edit, {
+    
+    # browser()
+    colname_proxy <- dataTableProxy("magic_colnames_table")
+    colname_info <- input$magic_colnames_table_cell_edit
+    colname_row <- colname_info$row
+    colname_column <- colname_info$col
+    colname_value <- colname_info$value
+    data_set_value <- data_set_names[colname_row, 1]
+    # browser()
+    # colname_value <- as.character(colname_value)
+    # data_set_names$`Column Names` <- as.character(data_set_names$`Column Names`)
+    # browser()
+    data_set_names[colname_row, 1] <<- DT:::coerceValue(colname_value, data_set_names[colname_row, 1])
+    replaceData(colname_proxy, data_set_names, resetPaging = F)
+    
+    # browser()
+    
+    output$magic_colnames_table <- renderDataTable(data_set_names, selection = "none", editable = T, rownames = F)
+    
+    new_data_set_names <- data_set_names[, 1]
+    colnames(data_set) <- new_data_set_names
+    data_set <<- data_set
+    
+    output$magic_edit_table <- renderDataTable(data_set, selection = "none", editable = T, rownames = F)
+
+    output$magic_remove_table <- renderDataTable(data_set, rownames = F)
+
+    output$selected_table <- isolate(renderTable({data_set}))
+    
+    updateSelectizeInput(session = session, inputId = "arrange_selectize", label = "Arrange by which column?", 
+                         choices = colnames(data_set))
+    
+    updateSelectizeInput(session = session, inputId = "filter_selectize", label = "Choose column to filter through:",
+                         choices = colnames(data_set))
+    
+    updateSelectizeInput(session = session, inputId = "select_selectize", label = "Which columns do you want? (Order matters)",
+                         choices = colnames(data_set), selected = NULL)
+    
+    confirmSweetAlert(session = session, 
+                      inputId = "col_edit_success",
+                      title = "Column name change successful!",
+                      text = "Check other view tabs to confirm",
+                      type = "success",
+                      btn_labels = "OK!", 
+                      danger_mode = T)
+    
+  })
   
   
 }
