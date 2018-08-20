@@ -2703,13 +2703,30 @@ server <- function(input, output, session) {
           
         }else{
           
+          if(!is.na(input$magic_keep)) {
+            
+            # browser()
+            
+            confirmSweetAlert(session = session, 
+                              inputId = "cbind_success_keep",
+                              type = "success",
+                              title = "Successful cBind!",
+                              text = "A set number of rows were selected, so cbind works but may not be relevant. Proceed with caution!",
+                              btn_labels = "OK!",
+                              danger_mode = T)            
+          }else{
+            
+            # browser()
+          
           confirmSweetAlert(session = session, 
                             inputId = "cbind_success",
                             type = "success",
                             title = "Successful cBind!",
-                            text = "If you had a predefined number of rows, cBind will always work. Proceed with caution!",
+                            # text = "If you had a predefined number of rows, cBind will always work. Proceed with caution!",
                             btn_labels = "OK!",
                             danger_mode = T)
+            
+          }
           
         }
         
@@ -3281,21 +3298,35 @@ server <- function(input, output, session) {
     
   # download_text <- reactive({input$magic_download_name})
   
-    output$download <- downloadHandler(
-      
-      # browser(),
-      
-      filename = function(){
-        ifelse(input$magic_download_name == "", "Magic Spreadsheet.csv", paste0(input$magic_download_name, ""))
-        },
-      
-      content = function(file) {
-        
-        write.csv(reactive_data(), file, row.names = F)
-        
-      }
-      
-    )    
+  output$download <- downloadHandler(
+    
+    # Not too difficult, allows the breakout file to be named if there is an entry, and skips it if it does 
+    # not, and then downloads everything.
+    
+    filename = function() {
+      ifelse(input$magic_download_name == "", "Magic Spreadsheet.csv", paste0(input$magic_download_name, ".csv"))
+    },
+    
+    content = function(file) {
+      write.csv(reactive_data(), file, row.names = F)
+    }
+  )
+  
+    # output$download <- downloadHandler(
+    #   
+    #   # browser(),
+    #   
+    #   filename = function() {
+    #     paste0(ifelse(input$magic_download_name == "", "Magic Spreadsheet.csv", paste0(input$magic_download_name, "")))
+    #     },
+    #   
+    #   content = function(file) {
+    #     
+    #     write.csv(reactive_data(), file, row.names = F)
+    #     
+    #   }
+    #   
+    # )    
   
   
 }
