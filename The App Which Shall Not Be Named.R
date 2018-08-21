@@ -53,14 +53,14 @@ options(shiny.maxRequestSize = 30 * 1024^2)
 
 # I need this because I want the selectize option in the UI for API calls.
 
-client_csv <- read.csv("~/Desktop/Rob Scripts/Reference Files/client_website_ga_id.csv")
-client_csv <- client_csv %>% 
-  filter(str_detect(UA, "UA"))
+# client_csv <- read.csv("~/Desktop/Rob Scripts/Reference Files/client_website_ga_id.csv")
+# client_csv <- client_csv %>% 
+#   filter(str_detect(UA, "UA"))
 
 # This file isn't particularly updated with correct corresponding http:// or https:// starters,
 # so i just remove them initially so they actually match up.
 
-client_csv$name <- gsub("^.*\\/\\/", "", client_csv$name)
+# client_csv$name <- gsub("^.*\\/\\/", "", client_csv$name)
 
 # For the Magic Spreadsheet component, I make update selectize based off other inputs, but that 
 # still requires an initial value. I could directly set the choices equal to NULL, but having them
@@ -2454,6 +2454,21 @@ server <- function(input, output, session) {
                         type = "warning",
                         btn_labels = "OK!",
                         danger_mode = T)
+      
+      # updateSelectizeInput(session = session, inputId = "magic_file_order", label = "Select file to be read in first:", 
+      #                      choices = NULL)
+      # 
+      # updateSelectizeInput(session = session, inputId = "skip", label = "Number of lines you want to skip in first dataset (optional)", 
+      #                      choices = "")
+      # 
+      # updateSelectizeInput(session = session, inputId = "skip2", label = "Number of lines you want to skip in second dataset (optional)", 
+      #                      choices = "")
+      # 
+      # updateSelectizeInput(session = session, inputId = "magic_keep", label = "What is the last row you wish to keep in first dataset? (optional)", 
+      #                      choices = "")
+      # 
+      # updateSelectizeInput(session = session, inputId = "magic_keep2", label = "What is the last row you wish to keep in second dataset? (optional)", 
+      #                      choices = "")
       
     }else{
     
