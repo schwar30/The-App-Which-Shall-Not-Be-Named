@@ -3304,14 +3304,14 @@ server <- function(input, output, session) {
           updateSelectizeInput(session = session, inputId = "select_selectize", label = "Which columns do you want? (Order matters)",
                                choices = colnames(data_set), selected = NULL)
           
-          # browser()
-          
           confirmSweetAlert(session = session,
-                            inputId = "select_success",
-                            title = "Selected Columns Successfully!",
+                            inputId = "select_keep_success",
+                            title = "Data selected as Described!",
                             type = "success",
                             btn_labels = "OK!",
                             danger_mode = T)
+          
+       
         }
         
       
@@ -3319,6 +3319,14 @@ server <- function(input, output, session) {
         }                 }
         
         if(input$real_table[1] > 0){
+          
+          data_set_names <- colnames(data_set)
+          data_set_names <- as.data.frame(data_set_names)
+          # browser()
+          colnames(data_set_names) <- "Column Names"
+          # browser()
+          data_set_names$`Column Names` <- as.character(data_set_names$`Column Names`)
+          data_set_names <<- data_set_names
           
           output$magic_colnames_table <- renderDataTable(data_set_names, selection = "none", editable = T, rownames = F)
           
@@ -3367,6 +3375,29 @@ server <- function(input, output, session) {
           }
           
           if(!is.null(input$select_selectize)) {
+            
+            data_set_names <- colnames(data_set)
+            data_set_names <- as.data.frame(data_set_names)
+            # browser()
+            colnames(data_set_names) <- "Column Names"
+            # browser()
+            data_set_names$`Column Names` <- as.character(data_set_names$`Column Names`)
+            data_set_names <<- data_set_names
+            
+            output$magic_colnames_table <- renderDataTable(data_set_names, selection = "none", editable = T, rownames = F)
+            
+            output$magic_edit_table <- renderDataTable(data_set, selection = "none", editable = T, rownames = F)
+            
+            output$magic_remove_table <- renderDataTable(data_set, rownames = F)
+            
+            output$selected_table <- isolate(renderTable({data_set}))
+            
+            confirmSweetAlert(session = session,
+                              inputId = "select_success",
+                              title = "Selected Columns Successfully!",
+                              type = "success",
+                              btn_labels = "OK!",
+                              danger_mode = T)
             
             confirmSweetAlert(session = session,
                               inputId = "update_table_cleanup_select_success",
