@@ -2573,22 +2573,32 @@ server <- function(input, output, session) {
     
     if(class(data1) != "try-error") {
       
+      # browser()
+      
+      if(any(str_detect(colnames(data1), "X\\.*\\d*")) == T){
+
       data1 <<- data1[,colSums(is.na(data1)) < nrow(data1)]
+
+      }
       
     }else{
-      
+
       data1 <<- data1
-      
+
     }
-    
+
     if(class(data2) != "try-error") {
+
+      if(any(str_detect(colnames(data2), "X\\.*\\d*")) == T){
       
       data2 <<- data2[,colSums(is.na(data2)) < nrow(data2)]
+
+      }
       
     }else{
-      
+
       data2 <<- data2
-      
+
     }
     
     if(!is.na(input$magic_keep) & !((nrow(input$file) == 2 & (class(data1) == "try-error" | class(data2) == "try-error")) | (nrow(input$file) == 1 & class(data1) == "try-error"))){
