@@ -521,13 +521,24 @@ ui <- dashboardPage(
               sidebarPanel(
                 
                 fileInput(inputId = "file", label = "Please Input Desired File(s)", multiple = T), 
-                radioButtons(inputId = "deliminator", label = "Deliminator", choices = c(Comma = ",", Tab = "\t", Space = " ", Semicolon = ";"), selected = ","),
-                numericInput(inputId = "skip", label = "Number of lines you want to skip (optional)", value = "", min = 0),
-                numericInput(inputId = "magic_keep", label = "What is the last row you wish to keep? (optional)", value = "", min = 0),
-                radioButtons(inputId = "encode", label = "Encoding", choices = c("unknown", "UTF-8", "UTF-16", "UTF-32"), selected = "unknown"),
-                actionButton(inputId = "problems", label = "Save")
+                selectizeInput(inputId = "magic_file_order", label = "Select file to be read in first:", choices = NULL, selected = NULL),
+                textOutput("magic_order_text"),
+                numericInput(inputId = "skip", label = "Number of lines you want to skip in first dataset (optional)", value = "", min = 0),
+                numericInput(inputId = "magic_keep", label = "What is the last row you wish to keep in first dataset? (optional)", value = "", min = 0)
+                ),
+                # radioButtons(inputId = "deliminator", label = "Deliminator", choices = c(Comma = ",", Tab = "\t", Space = " ", Semicolon = ";"), selected = ","),
                 
-              )),
+              sidebarPanel(
+              
+                numericInput(inputId = "skip2", label = "Number of lines you want to skip in second dataset (optional)", value = "", min = 0),
+                numericInput(inputId = "magic_keep2", label = "What is the last row you wish to keep in second dataset? (optional)", value = "", min = 0),
+                radioButtons(inputId = "encode", label = "Encoding", choices = c("unknown", "UTF-8", "UTF-16", "UTF-32"), selected = "unknown")
+               
+              ),
+                
+                 column(12, actionButton(inputId = "problems", label = "Save"))
+                
+              ),
       
       tabItem(tabName = "magic_join",
               
@@ -538,7 +549,7 @@ ui <- dashboardPage(
                 radioButtons(inputId = "combine_choice", label = "Join Options", choices = c(rBind = "rbindlist",
                                                                                              cBind = "cbindlist",
                                                                                              "Left Join" = "left_join",
-                                                                                             "Right Join" = "right_join",
+                                                                                             # "Right Join" = "right_join",
                                                                                              "Inner Join" = "inner_join",
                                                                                              "Full Join" = "full_join")),
                 selectizeInput(inputId = "join_prop", label = "Join by which column?", choices = colnames(intersect(data1, data2)), multiple = T),
@@ -2431,6 +2442,38 @@ server <- function(input, output, session) {
     
   })
   
+  observeEvent(input$file, {
+    
+    # browser()
+    
+    if(nrow(input$file) > 2){
+      
+      confirmSweetAlert(session = session,
+                        inputId = "file_input_too_much",
+                        title = "Please only input 1 or 2 datasets!",
+                        type = "warning",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+    }else{
+    
+    updateSelectizeInput(session = session, inputId = "magic_file_order", label = "Select file to be read in first:", 
+                         choices = input$file$name)
+    }
+  })
+  
+  observeEvent(input$magic_file_order, {
+    
+    # browser()
+    
+    if(length(input$file) > 0){
+    
+    output$magic_order_text <- renderText(paste0(input$magic_file_order, " will be the first data set selected!"))
+    
+    }
+    
+  })
+  
   observeEvent(input$problems, {
     
     # Some of this can get harder to read than it probably should. Ultimately, having these notifications are kind of nice on 
@@ -2481,17 +2524,64 @@ server <- function(input, output, session) {
           skip_value <- input$skip
           
         }
+        
+        if(is.na(input$skip2)) {
+          
+          skip_value2 <- 0
+          
+        }else{
+          
+          skip_value2 <- input$skip2
+          
+        }
+        
+        # browser()
+        
+        if(input$magic_file_order == file_to_read$name[1]) {
+          
+          # browser()
+          
+          data1 <<- isolate(try(read.csv(isolate(input$file)[[1, "datapath"]], skip = skip_value, encoding = input$encode, stringsAsFactors = F), silent = T))
+          data2 <<- isolate(try(read.csv(isolate(input$file)[[2, "datapath"]], skip = skip_value2, encoding = input$encode, stringsAsFactors = F), silent = T))
+          
+        }else{
+          
+          data1 <<- isolate(try(read.csv(isolate(input$file)[[2, "datapath"]], skip = skip_value, encoding = input$encode, stringsAsFactors = F), silent = T))
+          data2 <<- isolate(try(read.csv(isolate(input$file)[[1, "datapath"]], skip = skip_value2, encoding = input$encode, stringsAsFactors = F), silent = T))
+          
+        }
+        
+        # browser()
     
-    data1 <<- isolate(try(read.csv(isolate(input$file)[[1, "datapath"]], skip = skip_value, sep = input$deliminator, encoding = input$encode, stringsAsFactors = F), silent = T))
-    data2 <<- isolate(try(read.csv(isolate(input$file)[[2, "datapath"]], skip = skip_value, sep = input$deliminator, encoding = input$encode, stringsAsFactors = F), silent = T))
+    # data1 <<- isolate(try(read.csv(isolate(input$file)[[1, "datapath"]], skip = skip_value, sep = input$deliminator, encoding = input$encode, stringsAsFactors = F), silent = T))
+    # data2 <<- isolate(try(read.csv(isolate(input$file)[[2, "datapath"]], skip = skip_value, sep = input$deliminator, encoding = input$encode, stringsAsFactors = F), silent = T))
     
-    # browser()
+    if(class(data1) != "try-error") {
+      
+      data1 <<- data1[,colSums(is.na(data1)) < nrow(data1)]
+      
+    }else{
+      
+      data1 <<- data1
+      
+    }
+    
+    if(class(data2) != "try-error") {
+      
+      data2 <<- data2[,colSums(is.na(data2)) < nrow(data2)]
+      
+    }else{
+      
+      data2 <<- data2
+      
+    }
     
     if(!is.na(input$magic_keep) & !((nrow(input$file) == 2 & (class(data1) == "try-error" | class(data2) == "try-error")) | (nrow(input$file) == 1 & class(data1) == "try-error"))){
       
       # browser()
   
         slice_number <- input$magic_keep - skip_value - 1
+        slice_number2 <- input$magic_keep2 - skip_value2 - 1
         
         if(nrow(input$file) == 2){
           
@@ -2503,7 +2593,7 @@ server <- function(input, output, session) {
         data1 <<- isolate(data1)
         
         data2 <- data2 %>% 
-          slice(1:slice_number)
+          slice(1:slice_number2)
         data2 <- as.data.frame(data2)
         data2 <<- isolate(data2)
         
@@ -2767,41 +2857,41 @@ server <- function(input, output, session) {
         
       }
       
-      if(input$combine_choice == "right_join" & nrow(input$file) > 1){
-        
-        data_set <<- try(right_join(data1, data2, by = input$join_prop))
-        
-        if(class(data_set) == "try-error") {
-          
-          confirmSweetAlert(session = session, 
-                            inputId = "rjoin_failure",
-                            type = "error",
-                            title = "Oh no! Those files do not seem to have any common columns!",
-                            btn_labels = "OK!",
-                            danger_mode = T)
-        }else{
-          
-          if(is.null(input$join_prop)) {
-            
-            confirmSweetAlert(session = session,
-                              inputId = "rightj_no_column",
-                              type = "warning",
-                              title = "There were no columns selected, so spreadsheets are joined by
-                              all common columns",
-                              btn_labels = "OK!",
-                              danger_mode = T)
-            
-          }else{
-            
-            confirmSweetAlert(session = session, 
-                              inputId = "rightj_success", 
-                              type = "success", 
-                              title = "Sucessful Right Join!",
-                              btn_labels = "OK!",
-                              danger_mode = T)
-          }
-        }
-      }
+      # if(input$combine_choice == "right_join" & nrow(input$file) > 1){
+      #   
+      #   data_set <<- try(right_join(data1, data2, by = input$join_prop))
+      #   
+      #   if(class(data_set) == "try-error") {
+      #     
+      #     confirmSweetAlert(session = session, 
+      #                       inputId = "rjoin_failure",
+      #                       type = "error",
+      #                       title = "Oh no! Those files do not seem to have any common columns!",
+      #                       btn_labels = "OK!",
+      #                       danger_mode = T)
+      #   }else{
+      #     
+      #     if(is.null(input$join_prop)) {
+      #       
+      #       confirmSweetAlert(session = session,
+      #                         inputId = "rightj_no_column",
+      #                         type = "warning",
+      #                         title = "There were no columns selected, so spreadsheets are joined by
+      #                         all common columns",
+      #                         btn_labels = "OK!",
+      #                         danger_mode = T)
+      #       
+      #     }else{
+      #       
+      #       confirmSweetAlert(session = session, 
+      #                         inputId = "rightj_success", 
+      #                         type = "success", 
+      #                         title = "Sucessful Right Join!",
+      #                         btn_labels = "OK!",
+      #                         danger_mode = T)
+      #     }
+      #   }
+      # }
       
       if(input$combine_choice == "inner_join" & nrow(input$file) > 1){
         
@@ -2942,6 +3032,9 @@ server <- function(input, output, session) {
                            choices = colnames(data_set), selected = NULL)
       
     }
+    
+    updateSelectizeInput(session = session, inputId = "join_prop", label = "Join by which column(s)?", 
+                         choices = intersect(colnames(data1), colnames(data2)), selected = NULL)
     
   })
   
@@ -3235,7 +3328,7 @@ server <- function(input, output, session) {
           
           output$selected_table <- isolate(renderTable({data_set}))
           
-          if(!is.null(input$filter_selectize)){
+          if(!is.null(input$filter_selectize) & length(input$filter_selectize) == 1){
             
             confirmSweetAlert(session = session,
                               inputId = "update_table_cleanup_filter_success",
@@ -3299,7 +3392,14 @@ server <- function(input, output, session) {
     }}
     }
     updateTextInput(session = session, inputId = "filter_text", label = "What would you like to filter?", value = "")
+    updateSelectizeInput(session = session, inputId = "arrange_selectize", label = "Arrange by which column?", 
+                         choices = colnames(data_set))
     
+    updateSelectizeInput(session = session, inputId = "filter_selectize", label = "Choose column to filter through:",
+                         choices = colnames(data_set))
+    
+    updateSelectizeInput(session = session, inputId = "select_selectize", label = "Which columns do you want? (Order matters)",
+                         choices = colnames(data_set), selected = NULL)
     
     
     }
