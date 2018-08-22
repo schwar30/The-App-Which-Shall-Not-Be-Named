@@ -30,6 +30,11 @@ library(googleAnalyticsR)
 
 library(ReporteRs)
 
+# It's time to start learning these bad boys
+
+library(officer)
+library(flextable)
+
 # Both are used for API calls
 
 library(RAdwords)
@@ -172,7 +177,9 @@ ui <- dashboardPage(
       
       # This allows the leads to be filtered either by phone number or website
       
-      menuItem("Export Wrangling", tabName = "wrangle", icon = icon("book"))
+      menuItem("Export Wrangling", tabName = "wrangle", icon = icon("book")),
+      
+      menuItem("Bing Slides", tabName = "bing", icon = icon("database"))
       
     ) 
     
@@ -637,7 +644,16 @@ ui <- dashboardPage(
               titlePanel("Edit Column Names"),
               
               # actionButton(inputId = "update_magic_colnames", label = "Update all tables"),
-              dataTableOutput("magic_colnames_table"))
+              dataTableOutput("magic_colnames_table")),
+      
+      tabItem(tabName = "bing",
+              
+              titlePanel("Bing Slide Generation"),
+              
+              fileInput(inputId = "bing_file", label = "Please insert collective bing keyword file"),
+              selectizeInput(inputId = "bing_campaign", label = "Please input the campaign you want:", choices = NULL, selected = NULL, multiple = T),
+              textInput(inputId = "bing_daterange", label = "Please input the date range of reporting:", value = ""),
+              actionButton(inputId = "bing_generate", label = "Generate Slide"))
       
     )))
 
@@ -3868,6 +3884,342 @@ server <- function(input, output, session) {
 
     }}
     
+  })
+  
+  observeEvent(input$bing_file, {
+    withProgress(message = "Loading File", value = 0, {
+    bing_keywords <- read.csv("~/Desktop/bing keywords.csv", skip = 3, stringsAsFactors = F)
+    
+    bing_keywords <- bing_keywords %>% 
+      select(Keyword, Campaign, Clicks, Impr., Clicks..Compare.to., Impr...Compare.to. ) %>% 
+      filter(str_detect(Campaign, "Culligan|culligan")) %>% 
+      filter(Impr. != 0) %>% 
+      select(Campaign, Keyword, Clicks, Clicks..Compare.to.)
+    
+    bing_keywords <<- bing_keywords
+    
+    choices <- as.data.frame(bing_keywords$Campaign)
+    choices <- choices %>% 
+      distinct()
+    
+    # browser()
+    
+    choices$`bing_keywords$Campaign` <- as.character(choices$`bing_keywords$Campaign`)
+    
+    bing_campaign_options <<- rbind(choices, "All Campaigns")
+    colnames(bing_campaign_options) <<- "Select Campaigns (all campaigns also available!)"
+    
+    # browser()
+    
+    
+    choices <- gsub("^Culligan\\s|\\s\\(.*$|\\sGrouped|\\sMetro", "", choices$`bing_keywords$Campaign`)
+    
+    # browser()
+    
+    updateSelectizeInput(session = session, inputId = "bing_campaign", label = "Please input the campaign you want:",
+                         choices = bing_campaign_options$`Select Campaigns (all campaigns also available!)`, selected = NULL)
+    })
+  })
+  
+  # bing_keywords <- read.csv("~/Desktop/bing keywords.csv", skip = 3)
+  # 
+  # bing_keywords <- bing_keywords %>% 
+  #   select(Keyword, Campaign, Clicks, Impr., Clicks..Compare.to., Impr...Compare.to. ) %>% 
+  #   filter(str_detect(Campaign, "Culligan|culligan")) %>% 
+  #   filter(Impr. != 0) %>% 
+  #   select(Campaign, Keyword, Clicks)
+  
+  
+  
+  observeEvent(input$bing_generate, {
+    
+    if(is.null(input$bing_file)){
+      
+      confirmSweetAlert(session = session,
+                        inputId = "bing_no_file",
+                        title = "Please input keyword export!",
+                        type = "warning",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+    }else{
+    
+    if(is.null(input$bing_campaign)) {
+      
+      confirmSweetAlert(session = session,
+                        inputId = "bing_no_campaign",
+                        title = "Please select a campaign!",
+                        type = "warning",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+    }else{
+      
+      if(input$bing_daterange == "" |!str_detect(input$bing_daterange, ".*-.*_.*")) {
+        
+        # browser()
+        
+        if(input$bing_daterange == "") {
+        
+        confirmSweetAlert(session = session,
+                          inputId = "bing_no_daterange",
+                          title = "Please input date range!",
+                          type = "warning",
+                          btn_labels = "OK!",
+                          danger_mode = T)
+          
+        }else{
+          
+          confirmSweetAlert(session = session,
+                            inputId = "bing_wrong_daterange",
+                            title = "Date format not recognized!",
+                            text = "Input date ranges in the format [first period]-[second period]_[year].",
+                            type = "warning",
+                            btn_labels = "OK!",
+                            danger_mode = T)
+          
+        }
+        
+      }else{
+    
+        # browser()
+        
+    # bing_keywords <- bing_keywords %>% 
+    #   select(Keyword, Campaign, Clicks, Impr.) %>% 
+    #   filter(str_detect(Campaign, "Culligan|culligan")) %>% 
+    #   filter(Impr. != 0) %>% 
+    #   select(Campaign, Keyword, Clicks)
+      # View(bing_keywords)
+      # browser()
+        
+      bing_campaign_selection <- input$bing_campaign
+      
+      if("All Campaigns" %in% bing_campaign_selection) {
+        
+        # browser()
+        
+        bing_campaign_selection <- bing_campaign_options %>% 
+          filter(`Select Campaigns (all campaigns also available!)` != "All Campaigns")
+        
+        bing_campaign_selection <- bing_campaign_selection$`Select Campaigns (all campaigns also available!)`
+        
+        
+      }else{
+        
+        bing_campaign_selection <- bing_campaign_selection
+        
+      }
+      
+      # browser()
+      
+      bing_website <- gsub("^.*\\(|\\).*$", "", bing_campaign_selection)
+      
+      
+      if(length(bing_campaign_selection) > 1) {
+        
+        # confirmSweetAlert(session = session,
+        #                   inputId = "bing_slide_download_success",
+        #                   title = "Powerpoint download setup successful!",
+        #                   text = "It may take a monent for the powerpoints to download.",
+        #                   type = "success",
+        #                   btn_labels = "OK!", 
+        #                   danger_mode = T)
+        
+        withProgress(message = "Downloading Files", {
+        
+        for(i in 1:length(bing_campaign_selection)){
+        
+        # browser()
+
+        bing_keywords_current_year <- bing_keywords %>% 
+          filter(Campaign == bing_campaign_selection[i]) %>% 
+          select(Keyword, Clicks) %>% 
+          # arrange(-Clicks) %>% 
+          filter(Clicks > 0) 
+        
+        bing_keywords_current_year$Keyword <- gsub("[[:punct:]]|^\\s", "", bing_keywords_current_year$Keyword)
+        bing_keywords_current_year$Keyword <- str_to_lower(bing_keywords_current_year$Keyword)
+        
+        bing_keywords_current_year <- bing_keywords_current_year %>% 
+          group_by(Keyword) %>% 
+          summarise(Clicks = sum(Clicks)) %>% 
+          arrange(-Clicks) %>%
+          slice(1:20)
+        
+        bing_keywords_prior_year <- bing_keywords %>% 
+          filter(Campaign == bing_campaign_selection[i]) %>% 
+          select(Keyword, Clicks..Compare.to.) %>% 
+          filter(Clicks..Compare.to. > 0)
+        
+        bing_keywords_prior_year$Keyword <- gsub("[[:punct:]]|^\\s", "", bing_keywords_prior_year$Keyword)
+        bing_keywords_prior_year$Keyword <- str_to_lower(bing_keywords_prior_year$Keyword)
+        
+        bing_keywords_prior_year <- bing_keywords_prior_year %>% 
+          group_by(Keyword) %>% 
+          summarize(Clicks = sum(Clicks..Compare.to.)) %>%
+          arrange(-Clicks) %>% 
+          slice(1:20)
+        
+        # browser()
+        
+        current_keyword_flextable <- regulartable(bing_keywords_current_year) %>% theme_zebra() %>% 
+          bg(bg = "#0A3C6E", part = "header") %>% fontsize(i = 1, part = "header", size = 12) %>% 
+          fontsize(size = 10, part = "body") %>% color(i = 1, part = "header", color = "white") %>% 
+          bold(part = "header") %>% width(width = c(2.5, 1.2)) %>% align(align = "left", part = "all", j = 1) %>% 
+          font(part = "all", fontname = "Arial") %>% 
+          height(part = "body", height = .05)
+        
+        prior_keyword_flextable <- regulartable(bing_keywords_prior_year) %>% theme_zebra() %>% 
+          bg(bg = "#0A3C6E", part = "header") %>% fontsize(i = 1, part = "header", size = 12) %>% 
+          fontsize(size = 10, part = "body") %>% color(i = 1, part = "header", color = "white") %>% 
+          bold(part = "header") %>% width(width = c(2.5, 1.2)) %>% align(align = "left", part = "all", j = 1) %>% 
+          font(part = "all", fontname = "Arial") %>% 
+          height(part = "body", height = .05)
+        
+        reporting_period <- gsub("_.*", "", input$bing_daterange)
+        current_year <- gsub(".*-.*_", "", input$bing_daterange)
+        current_year <- as.integer(current_year)
+        previous_year <- current_year - 1
+        
+        bing_powerpoint <<- read_pptx(path = "~/Desktop/Rob Scripts/Reference Files/BingSampleSlide.pptx")
+        
+        # browser()
+        
+        bing_powerpoint <<- bing_powerpoint %>% 
+          add_slide(layout = "Bing Keyword", master = "Default Theme") %>% 
+          ph_with_flextable(type = "tbl", value = current_keyword_flextable)%>% 
+          ph_with_text(type = "body", str = paste0(reporting_period, " ", current_year, " ", bing_website[i]), index = 10)%>% 
+          ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 1)
+        
+        pptx_name <- gsub("^Culligan\\s|\\s\\(.*$|\\sGrouped|\\sMetro", "", bing_campaign_selection[i]) 
+        
+        if(nrow(bing_keywords_prior_year) > 0) {
+          
+          bing_powerpoint <<- bing_powerpoint %>% 
+            add_slide(layout = "Bing Keyword", master = "Default Theme") %>% 
+            ph_with_flextable(type = "tbl", value = prior_keyword_flextable) %>% 
+            ph_with_text(type = "body", str = paste0(reporting_period, " ", previous_year, " ", bing_website[i]), index = 10) %>% 
+            ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 1)
+          
+        }else{
+          
+          # pptx_name <- gsub("^Culligan\\s|\\s\\(.*$|\\sGrouped|\\sMetro", "", input$bing_campaign[i]) 
+          
+          print(paste0("There is no data in the ", pptx_name, " prior year keyword table. No slide for this date range will be generated."))
+          
+        }
+        
+        # browser()
+        
+        powerpoint_name <- paste0("~/Desktop/Bing Powerpoints/", pptx_name, " Bing Slides.pptx")
+        
+        print(bing_powerpoint, powerpoint_name)
+        
+        
+        incProgress(1/length(bing_campaign_selection), detail = paste0("Downloading ", i))
+        
+        confirmSweetAlert(session = session,
+                          inputId = "bing_slide_download_success",
+                          title = "Powerpoint downloads successful!",
+                          # text = "It may take a monent for the powerpoints to download.",
+                          type = "success",
+                          btn_labels = "OK!", 
+                          danger_mode = T)
+        
+        }
+        })
+      }else{
+      
+      bing_keywords_current_year <- bing_keywords %>% 
+        filter(Campaign == bing_campaign_selection) %>% 
+        select(Keyword, Clicks) %>% 
+        # arrange(-Clicks) %>% 
+        filter(Clicks > 0) 
+      
+      bing_keywords_current_year$Keyword <- gsub("[[:punct:]]|^\\s", "", bing_keywords_current_year$Keyword)
+      bing_keywords_current_year$Keyword <- str_to_lower(bing_keywords_current_year$Keyword)
+      
+      bing_keywords_current_year <- bing_keywords_current_year %>% 
+        group_by(Keyword) %>% 
+        summarise(Clicks = sum(Clicks)) %>% 
+        arrange(-Clicks) %>%
+        slice(1:20)
+      
+      bing_keywords_prior_year <- bing_keywords %>% 
+        filter(Campaign == bing_campaign_selection) %>% 
+        select(Keyword, Clicks..Compare.to.) %>% 
+        filter(Clicks..Compare.to. > 0)
+      
+      bing_keywords_prior_year$Keyword <- gsub("[[:punct:]]|^\\s", "", bing_keywords_prior_year$Keyword)
+      bing_keywords_prior_year$Keyword <- str_to_lower(bing_keywords_prior_year$Keyword)
+      
+      bing_keywords_prior_year <- bing_keywords_prior_year %>% 
+        group_by(Keyword) %>% 
+        summarize(Clicks = sum(Clicks..Compare.to.)) %>%
+        arrange(-Clicks) %>% 
+        slice(1:20)
+
+      # browser()
+      
+      current_keyword_flextable <- regulartable(bing_keywords_current_year) %>% theme_zebra() %>% 
+        bg(bg = "#0A3C6E", part = "header") %>% fontsize(i = 1, part = "header", size = 12) %>% 
+        fontsize(size = 10, part = "body") %>% color(i = 1, part = "header", color = "white") %>% 
+        bold(part = "header") %>% width(width = c(2.5, 1.2)) %>% align(align = "left", part = "all", j = 1) %>% 
+        font(part = "all", fontname = "Arial") %>% 
+        height(part = "body", height = .05)
+      
+      prior_keyword_flextable <- regulartable(bing_keywords_prior_year) %>% theme_zebra() %>% 
+        bg(bg = "#0A3C6E", part = "header") %>% fontsize(i = 1, part = "header", size = 12) %>% 
+        fontsize(size = 10, part = "body") %>% color(i = 1, part = "header", color = "white") %>% 
+        bold(part = "header") %>% width(width = c(2.5, 1.2)) %>% align(align = "left", part = "all", j = 1) %>% 
+        font(part = "all", fontname = "Arial") %>% 
+        height(part = "body", height = .05)
+      
+      reporting_period <- gsub("_.*", "", input$bing_daterange)
+      current_year <- gsub(".*-.*_", "", input$bing_daterange)
+      current_year <- as.integer(current_year)
+      previous_year <- current_year - 1
+      current_year_text <- paste0(reporting_period, " ", current_year, " ", bing_website)
+      previous_year_text <- paste0(reporting_period, " ", previous_year, " ", bing_website)
+
+      bing_powerpoint <<- read_pptx(path = "~/Desktop/Rob Scripts/Reference Files/BingSampleSlide.pptx")
+      bing_powerpoint <<- bing_powerpoint %>% 
+        add_slide(layout = "Bing Keyword", master = "Default Theme") %>% 
+        ph_with_flextable(type = "tbl", value = current_keyword_flextable) %>% 
+        ph_with_text(type = "body", str = current_year_text, index = 10) %>% 
+        ph_with_text(type = "body", str = paste0("-", bing_campaign_selection), index = 1)
+      
+      if(nrow(bing_keywords_prior_year) > 0) {
+        
+        bing_powerpoint <<- bing_powerpoint %>% 
+          add_slide(layout = "Bing Keyword", master = "Default Theme") %>% 
+          ph_with_flextable(type = "tbl", value = prior_keyword_flextable) %>% 
+          ph_with_text(type = "body", str = previous_year_text, index = 10) %>% 
+          ph_with_text(type = "body", str = paste0("-", bing_campaign_selection), index = 1)
+        
+      }else{
+        
+        print("There is no data in the prior year keywords. No slide will be generated.")
+        
+      }
+      
+      # browser()
+      
+      powerpoint_name <- paste0("~/Desktop/Bing Powerpoints/", bing_campaign_selection, "Bing Slides.pptx")
+      
+      print(bing_powerpoint, powerpoint_name)
+      
+      confirmSweetAlert(session = session,
+                        inputId = "bing_slide_download_success",
+                        title = "Powerpoint download successful!",
+                        type = "success",
+                        btn_labels = "OK!", 
+                        danger_mode = T)
+      }  
+    }
+    }
+    }
+      
   })
   
 }
