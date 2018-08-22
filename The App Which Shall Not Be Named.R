@@ -653,7 +653,7 @@ ui <- dashboardPage(
               fileInput(inputId = "bing_file", label = "Please insert collective bing keyword file"),
               selectizeInput(inputId = "bing_campaign", label = "Please input the campaign you want:", choices = NULL, selected = NULL, multiple = T),
               textInput(inputId = "bing_daterange", label = "Please input the date range of reporting:", value = ""),
-              actionButton(inputId = "bing_generate", label = "Generate Slide"))
+              actionButton(inputId = "bing_generate", label = "Generate Slide(s)"))
       
     )))
 
@@ -4031,7 +4031,6 @@ server <- function(input, output, session) {
         
         # browser()
           
-          
           reporting_period <- gsub("_.*", "", input$bing_daterange)
           current_year <- gsub(".*-.*_", "", input$bing_daterange)
           current_year <- as.integer(current_year)
@@ -4065,7 +4064,7 @@ server <- function(input, output, session) {
           arrange(-Clicks) %>%
           slice(1:20) 
         
-        colnames(bing_keywords_current_year) <- c(current_title, "Clicks")
+        colnames(bing_keywords_current_year) <- c("Top Keywords Current Period", "Clicks")
         
         bing_keywords_prior_year$Keyword <- gsub("[[:punct:]]|^\\s", "", bing_keywords_prior_year$Keyword)
         bing_keywords_prior_year$Keyword <- str_to_lower(bing_keywords_prior_year$Keyword)
@@ -4076,7 +4075,7 @@ server <- function(input, output, session) {
           arrange(-Clicks) %>% 
           slice(1:20) 
         
-        colnames(bing_keywords_prior_year) <- c(previous_title, "Clicks")
+        colnames(bing_keywords_prior_year) <- c("Top Keywords Prior Period", "Clicks")
         
        }else{
             
@@ -4136,22 +4135,26 @@ server <- function(input, output, session) {
         
         if(nrow(bing_keywords_prior_year) > 0) {
           
+          # browser()
+          
           bing_powerpoint <<- bing_powerpoint %>% 
             add_slide(layout = "Bing Keyword YOY", master = "Default Theme") %>% 
             ph_with_flextable(type = "tbl", value = prior_keyword_flextable, index = 1) %>% 
             ph_with_flextable(type = "tbl", value = current_keyword_flextable, index = 2) %>% 
-            ph_with_text(type = "body", str = previous_year_text, index = 22) %>% 
-            ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 17)
+            ph_with_text(type = "body", str = previous_year_text, index = 29) %>% 
+            ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 28)
           
         }else{
           
           # pptx_name <- gsub("^Culligan\\s|\\s\\(.*$|\\sGrouped|\\sMetro", "", input$bing_campaign[i]) 
           
+          # browser()
+          
           bing_powerpoint <<- bing_powerpoint %>% 
             add_slide(layout = "Bing Keyword No YOY", master = "Default Theme") %>% 
             ph_with_flextable(type = "tbl", value = current_keyword_flextable) %>% 
-            ph_with_text(type = "body", str =current_year_text, index = 24) %>% 
-            ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 10)
+            ph_with_text(type = "body", str =current_year_text, index = 12) %>% 
+            ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 18)
           
           # print("There is no data in the prior year keywords. No YOY table will be generated.")
           
@@ -4220,7 +4223,7 @@ server <- function(input, output, session) {
             arrange(-Clicks) %>%
             slice(1:20) 
           
-          colnames(bing_keywords_current_year) <- c(current_title, "Clicks")
+          colnames(bing_keywords_current_year) <- c("Top Keywords Current Period", "Clicks")
           
           bing_keywords_prior_year$Keyword <- gsub("[[:punct:]]|^\\s", "", bing_keywords_prior_year$Keyword)
           bing_keywords_prior_year$Keyword <- str_to_lower(bing_keywords_prior_year$Keyword)
@@ -4231,7 +4234,7 @@ server <- function(input, output, session) {
             arrange(-Clicks) %>% 
             slice(1:20) 
           
-          colnames(bing_keywords_prior_year) <- c(previous_title, "Clicks")
+          colnames(bing_keywords_prior_year) <- c("Top Keywords Previous Period", "Clicks")
           
         }else{
           
@@ -4300,8 +4303,8 @@ server <- function(input, output, session) {
           add_slide(layout = "Bing Keyword YOY", master = "Default Theme") %>% 
           ph_with_flextable(type = "tbl", value = prior_keyword_flextable, index = 1) %>% 
           ph_with_flextable(type = "tbl", value = current_keyword_flextable, index = 2) %>% 
-          ph_with_text(type = "body", str = previous_year_text, index = 22) %>% 
-          ph_with_text(type = "body", str = paste0("-", bing_campaign_selection), index = 17)
+          ph_with_text(type = "body", str = previous_year_text, index = 29) %>% 
+          ph_with_text(type = "body", str = paste0("-", bing_campaign_selection), index = 28)
         
         # print(bing_powerpoint, "~/Desktop/test.pptx")
         
@@ -4314,8 +4317,8 @@ server <- function(input, output, session) {
         bing_powerpoint <<- bing_powerpoint %>% 
           add_slide(layout = "Bing Keyword No YOY", master = "Default Theme") %>% 
           ph_with_flextable(type = "tbl", value = current_keyword_flextable) %>% 
-          ph_with_text(type = "body", str =current_year_text, index = 24) %>% 
-          ph_with_text(type = "body", str = paste0("-", bing_campaign_selection), index = 10)
+          ph_with_text(type = "body", str =current_year_text, index = 12) %>% 
+          ph_with_text(type = "body", str = paste0("-", bing_campaign_selection), index = 18)
         
         print("There is no data in the prior year keywords. No YOY table will be generated.")
         
