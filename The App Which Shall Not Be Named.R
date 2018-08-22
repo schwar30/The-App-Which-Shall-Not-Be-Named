@@ -4161,7 +4161,14 @@ server <- function(input, output, session) {
         
         # browser()
         
-        powerpoint_name <- paste0("~/Desktop/Bing Powerpoints/", pptx_name, " Bing Slides.pptx")
+        if(!dir.exists(paste0("/Volumes/Front/Adam/Reporting/Bing Campaigns/", reporting_period, " ", current_year, " Bing Slides/"))){
+          
+          dir.create(paste0("/Volumes/Front/Adam/Reporting/Bing Campaigns/", reporting_period, " ", current_year, " Bing Slides/"))
+          
+        }
+        
+        powerpoint_name <- paste0("/Volumes/Front/Adam/Reporting/Bing Campaigns/", reporting_period, " ", current_year, " Bing Slides/",
+                                  pptx_name, " Bing Slides.pptx")
         
         print(bing_powerpoint, powerpoint_name)
         
@@ -4316,7 +4323,14 @@ server <- function(input, output, session) {
       
       # browser()
       
-      powerpoint_name <- paste0("~/Desktop/Bing Powerpoints/", pptx_name, " Bing Slides.pptx")
+      if(!dir.exists(paste0("/Volumes/Front/Adam/Reporting/Bing Campaigns/", reporting_period, " ", current_year, " Bing Slides/"))){
+        
+        dir.create(paste0("/Volumes/Front/Adam/Reporting/Bing Campaigns/", reporting_period, " ", current_year, " Bing Slides/"))
+        
+      }
+      
+      powerpoint_name <- paste0("/Volumes/Front/Adam/Reporting/Bing Campaigns/", reporting_period, " ", current_year, " Bing Slides/",
+                                pptx_name, " Bing Slides.pptx")
       
       print(bing_powerpoint, powerpoint_name)
       
