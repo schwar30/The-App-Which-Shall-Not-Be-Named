@@ -3888,7 +3888,9 @@ server <- function(input, output, session) {
   
   observeEvent(input$bing_file, {
     withProgress(message = "Loading File", value = 0, {
+      incProgress(1, detail = "This may take some time...")
     bing_keywords <- read.csv("~/Desktop/bing keywords.csv", skip = 3, stringsAsFactors = F)
+    })
     
     bing_keywords <- bing_keywords %>% 
       select(Keyword, Campaign, Clicks, Impr., Clicks..Compare.to., Impr...Compare.to. ) %>% 
@@ -3918,7 +3920,7 @@ server <- function(input, output, session) {
     
     updateSelectizeInput(session = session, inputId = "bing_campaign", label = "Please input the campaign you want:",
                          choices = bing_campaign_options$`Select Campaigns (all campaigns also available!)`, selected = NULL)
-    })
+   
   })
   
   # bing_keywords <- read.csv("~/Desktop/bing keywords.csv", skip = 3)
@@ -4025,11 +4027,11 @@ server <- function(input, output, session) {
         #                   btn_labels = "OK!", 
         #                   danger_mode = T)
         
-        withProgress(message = "Downloading Files", value = 0, {
+        withProgress(message = "Downloading Powerpoints", value = 0, {
         
         for(i in 1:length(bing_campaign_selection)){
           
-          incProgress(1/length(bing_campaign_selection), detail = paste0("Downloading ", i))
+          incProgress(1/length(bing_campaign_selection), detail = paste0("Downloading ", i, " of ", length(bing_campaign_selection)))
         
         # browser()
           
