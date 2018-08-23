@@ -649,8 +649,19 @@ ui <- dashboardPage(
       tabItem(tabName = "bing",
               
               titlePanel("Bing Slide Generation"),
+              h4("Make sure you are signed into Kserve first!"),
               
               fileInput(inputId = "bing_file", label = "Please insert collective bing keyword file"),
+              prettyToggle(inputId = "bing_performance_toggle",
+                           label_on = "Include Performance Slide",
+                           icon_on = icon("check"),
+                           status_on = "success",
+                           status_off = "danger",
+                           label_off = "Exclude Performance Slide",
+                           icon_off = icon("remove")),
+              conditionalPanel(condition = "input.bing_performance_toggle == true",
+                               fileInput(inputId = "bing_full_export", label = "Please upload current dealer inquiry file"),
+                               fileInput(inputId = "bing_prior_export", label = "Please upload prior year dealer inquiry file")),
               selectizeInput(inputId = "bing_campaign", label = "Please input the campaign you want:", choices = NULL, selected = NULL, multiple = T),
               textInput(inputId = "bing_daterange", label = "Please input the date range of reporting:", value = ""),
               actionButton(inputId = "bing_generate", label = "Generate Slide(s)"))
@@ -3889,10 +3900,12 @@ server <- function(input, output, session) {
   observeEvent(input$bing_file, {
     withProgress(message = "Loading File", value = 0, {
       incProgress(1, detail = "This may take some time...")
-    bing_keywords <- read.csv("~/Desktop/bing keywords.csv", skip = 3, stringsAsFactors = F)
+    bing_keywords_upload <- read.csv(input$bing_file$datapath, skip = 3, stringsAsFactors = F)
     })
     
-    bing_keywords <- bing_keywords %>% 
+    bing_keywords_upload <<- bing_keywords_upload
+    
+    bing_keywords <- bing_keywords_upload %>% 
       select(Keyword, Campaign, Clicks, Impr., Clicks..Compare.to., Impr...Compare.to. ) %>% 
       filter(str_detect(Campaign, "Culligan|culligan")) %>% 
       filter(Impr. != 0) %>% 
@@ -3921,6 +3934,34 @@ server <- function(input, output, session) {
     updateSelectizeInput(session = session, inputId = "bing_campaign", label = "Please input the campaign you want:",
                          choices = bing_campaign_options$`Select Campaigns (all campaigns also available!)`, selected = NULL)
    
+  })
+  
+  observeEvent(input$bing_full_export, {
+    
+    withProgress(message = "Loading Export", value = 0, {
+      
+      incProgress(1, detail = "This may take some time...")
+      
+      bing_lead_export <- read.csv(input$bing_full_export$datapath)
+      bing_lead_export <<- bing_lead_export
+      
+    })
+    
+    
+  })
+  
+  observeEvent(input$bing_prior_export, {
+    
+    withProgress(message = "Loading Export", value = 0, {
+      
+      incProgress(1, detail = "This may take some time...")
+      
+      bing_lead_export_prior <- read.csv(input$bing_prior_export$datapath)
+      bing_lead_export_prior <<- bing_lead_export_prior
+      
+    })
+    
+    
   })
   
   # bing_keywords <- read.csv("~/Desktop/bing keywords.csv", skip = 3)
@@ -3983,6 +4024,17 @@ server <- function(input, output, session) {
         }
         
       }else{
+        
+        if((is.null(input$bing_full_export)|is.null(input$bing_prior_export)) & input$bing_performance_toggle == T){
+          
+          confirmSweetAlert(session = session, 
+                            inputId = "no_bing_export_file",
+                            title = "Please input a comprehensive export!",
+                            type = "warning",
+                            btn_labels = "OK!",
+                            danger_mode = T)
+          
+        }else{
     
         # browser()
         
@@ -4312,6 +4364,8 @@ server <- function(input, output, session) {
       
       if(nrow(bing_keywords_prior_year) > 0) {
         
+        # browser()
+        # 
         # layout_properties(bing_powerpoint, layout = "Bing Keyword YOY", master = "Default Theme")
         
         bing_powerpoint <<- bing_powerpoint %>% 
@@ -4319,7 +4373,7 @@ server <- function(input, output, session) {
           ph_with_flextable(type = "tbl", value = prior_keyword_flextable, index = 1) %>% 
           ph_with_flextable(type = "tbl", value = current_keyword_flextable, index = 2) %>% 
           ph_with_text(type = "body", str = previous_year_text, index = 29) %>% 
-          ph_with_text(type = "body", str = paste0("-", bing_campaign_selection), index = 28)
+          ph_with_text(type = "body", str = paste0("-", bing_campaign_selection), index = 1)
         
         # print(bing_powerpoint, "~/Desktop/test.pptx")
         
@@ -4339,18 +4393,211 @@ server <- function(input, output, session) {
         
       }
       
-      # browser()
-      
-      if(!dir.exists(paste0("/Volumes/Front/Adam/Reporting/Bing Campaigns/", reporting_period, " ", current_year, " Bing Slides/"))){
+      if(input$bing_performance_toggle == T) {
         
-        dir.create(paste0("/Volumes/Front/Adam/Reporting/Bing Campaigns/", reporting_period, " ", current_year, " Bing Slides/"))
+      # if(is.null(input$bing_lead_export)) {
+      #   
+      #   confirmSweetAlert(session = session,
+      #                     inputId = "no_lead_export",
+      #                     text = "")
+      #   
+      # }        
+        bing_keywords_campaign_filtered <-  bing_keywords_upload %>% 
+          filter(Campaign == input$bing_campaign)
+        
+        bing_keywords_campaign_filtered <<- bing_keywords_campaign_filtered
+      
+      bing_total_clicks <- bing_keywords_campaign_filtered %>% 
+        # filter(Campaign == input$bing_campaign) %>% 
+        select(Clicks) %>% 
+        summarise("Total Clicks" = sum(Clicks))
+      
+      bing_total_clicks <- bing_total_clicks[1, 1]
+      # bing_total_clicks <- prettyNum(bing_total_clicks)
+      
+      bing_prev_total_clicks <- bing_keywords_campaign_filtered %>% 
+        # filter(Campaign == input$bing_campaign) %>% 
+        select(Clicks..Compare.to.) %>% 
+        summarise("Total Clicks" = sum(Clicks..Compare.to.))
+      
+      bing_prev_total_clicks <- bing_prev_total_clicks[1, 1]
+      bing_prev_click_entry <- paste0(bing_prev_total_clicks, " Previous Year")
+      
+      bing_total_cost <- bing_keywords_campaign_filtered %>% 
+        select(Spend) %>% 
+        summarise("Total Cost" = sum(Spend))
+      
+      bing_total_cost <- bing_total_cost[1, 1]
+      
+      bing_prev_total_cost <- bing_keywords_campaign_filtered %>% 
+        select(Spend..Compare.to.) %>% 
+        summarise("Total Cost" = sum(Spend..Compare.to.))
+      
+      bing_prev_total_cost <- bing_prev_total_cost[1, 1]
+      
+      coop_associations <- read.csv("~/shiny-server/shiny_app/MasterData/other_files/coop_temp.csv")
+      coop_associations$Coop <- as.character(coop_associations$Coop)
+      
+      exclusive_names <- gsub("Culligan | \\(.*| Metro| Grouped| Water Residential", "", bing_campaign_selection)
+      exclusive_names <- strsplit(exclusive_names, split = ", ")
+      
+      if(class(exclusive_names) == "list"){
+      
+      exclusive_names <- exclusive_names[[1]]
+      
+      }
+      
+      if("GreenBay" %in% exclusive_names){
+        
+        exclusive_names <- replace(exclusive_names, exclusive_names == "GreenBay", "Green Bay")
+                        
+      }
+      
+      if("La Crosse" %in% exclusive_names) {
+        
+        exclusive_names <- replace(exclusive_names, exclusive_names == "La Crosse", "La Crosse / Eau Claire")
         
       }
       
+      if("Lincoln Kearney" %in% exclusive_names) {
+        
+        exclusive_names <- replace(exclusive_names, exclusive_names == "Lincoln Kearney", "Lincoln / Hastings / Kearney")
+        
+      }
+      
+      if("Grand Rapids" %in% exclusive_names) {
+        
+        exclusive_names <- replace(exclusive_names, exclusive_names == "Grand Rapids", "Grand Rapids / Kalamazoo")
+        
+      }
+      
+      if("Scottsbluff" %in% exclusive_names) {
+        
+        exclusive_names <- replace(exclusive_names, exclusive_names == "Scottsbluff", "Cheyenne/Scottsbluff")
+        
+      }
+      
+      if("Phoenix" %in% exclusive_names) {
+        
+        exclusive_names <- replace(exclusive_names, exclusive_names == "Phoenix", "Phoenix Co-op")
+        
+      }
+      
+      if("Tucson" %in% exclusive_names) {
+        
+        exclusive_names <- replace(exclusive_names, exclusive_names == "Tucson", "Tucson Co-op")
+        
+      }
+      
+      if("Milwaukee" %in% exclusive_names) {
+        
+        exclusive_names <- replace(exclusive_names, exclusive_names == "Milwaukee", "Milwaukee Co-op")
+        
+      }
+      
+      if(exclusive_names == "McCardel") {
+        
+        # browser()
+        
+        coop_associations <- coop_associations %>% 
+          filter(str_detect(Dealers, "Alpena")|str_detect(Dealers, "Big Rapids")|str_detect(Dealers, "Petoskey")|str_detect(Dealers, "Ludington")|str_detect(Dealers, "Traverse City"))
+       
+         coop_associations <- coop_associations %>% 
+          select(Dealers) %>% 
+          distinct()
+        coop_associations <- coop_associations$Dealers
+        coop_associations <- as.character(coop_associations)
+        coop_associations <<- coop_associations
+        
+      }else{
+      
+      coop_associations <- coop_associations[coop_associations$Coop %in% exclusive_names, ]
+      coop_associations <- coop_associations %>% 
+        select(Dealers) %>% 
+        distinct()
+      coop_associations <- coop_associations$Dealers
+      coop_associations <- as.character(coop_associations)
+      coop_associations <<- coop_associations
+      
+      }
+      
+      # browser()
+      
+      bing_lead_export <- bing_lead_export[bing_lead_export$SentTo %in% coop_associations, ]
+      
+      bing_lead_export <- bing_lead_export %>% 
+        filter(str_detect(PageLink, "promobing")|str_detect(PageLink, "promominnb")|IVR.Number == 8779576577|IVR.Number == 8779361556)
+      
+      bing_paid_search_contacts <- nrow(bing_lead_export)
+      
+      bing_lead_export_prior <- bing_lead_export_prior[bing_lead_export_prior$SentTo %in% coop_associations, ]
+      
+      bing_lead_export_prior <- bing_lead_export_prior %>% 
+        filter(str_detect(PageLink, "promobing")|str_detect(PageLink, "promominnb")|IVR.Number == 8779576577|IVR.Number == 8779361556)
+      
+      bing_paid_search_contacts_prior <- nrow(bing_lead_export_prior)
+      
+      # browser()
+      
+      bing_cpc_current <- bing_total_cost / bing_total_clicks * 1.25
+      bing_cpc_prior <- bing_prev_total_cost / bing_prev_total_clicks * 1.25
+      
+      bing_current_conversion_rate <- bing_paid_search_contacts / bing_total_clicks * 100
+      bing_prior_conversion_rate <- bing_paid_search_contacts_prior / bing_prev_total_clicks * 100
+      
+      # browser()
+      
+      current_clicks_text <- prettyNum(bing_total_clicks, big.mark = ",")
+      prior_clicks_text <- paste0(prettyNum(bing_prev_total_clicks, big.mark = ","), " Prior Year")
+      
+      current_cpc_text <- paste0("$", round(bing_cpc_current, 2))
+      prior_cpc_text <- paste0("$", round(bing_cpc_prior, 2), " Prior Year")
+      
+      paid_search_current <- as.character(bing_paid_search_contacts)
+      paid_search_prior <- paste0(bing_paid_search_contacts_prior, " Prior Year")
+      
+      current_conv_rate_text <- paste0(round(bing_current_conversion_rate, 1), "%")
+      prior_conv_rate_text <- paste0(round(bing_prior_conversion_rate, 1), "% Prior Year")
+      
+      if(bing_prev_total_cost != 0) {
+        
+        # browser()
+        
+        # bing_campaign_selection
+        # current_year_text
+        
+        # layout_properties(bing_powerpoint, layout = "Bing Performance YOY", master = "Default Theme")
+        
+        bing_powerpoint <<- bing_powerpoint %>% 
+          add_slide(layout = "Bing Performance YOY", master = "Default Theme") %>% 
+          # ph_with_flextable(type = "tbl", value = current_keyword_flextable) %>% 
+          ph_with_text(type = "body", str = current_year_text, index = 96) %>% 
+          ph_with_text(type = "body", str = paste0("-", bing_campaign_selection), index = 54) %>% 
+          ph_with_text(type = "body", str = paid_search_prior, index = 45) %>% 
+          ph_with_text(type = "body", str = prior_conv_rate_text, index = 50) %>% 
+          ph_with_text(type = "body", str = current_clicks_text, index = 70) %>% 
+          ph_with_text(type = "body", str = current_cpc_text, index = 75) %>% 
+          ph_with_text(type = "body", str = paid_search_current, index = 79) %>% 
+          ph_with_text(type = "body", str = current_conv_rate_text, index = 83) %>% 
+          ph_with_text(type = "body", str = prior_clicks_text, index = 87) %>% 
+          ph_with_text(type = "body", str = prior_cpc_text, index = 90)
+        
+      }
+      
+      }
+      
+      if(!dir.exists(paste0("/Volumes/Front/Adam/Reporting/Bing Campaigns/", reporting_period, " ", current_year, " Bing Slides/"))){
+
+        dir.create(paste0("/Volumes/Front/Adam/Reporting/Bing Campaigns/", reporting_period, " ", current_year, " Bing Slides/"))
+
+      }
+
       powerpoint_name <- paste0("/Volumes/Front/Adam/Reporting/Bing Campaigns/", reporting_period, " ", current_year, " Bing Slides/",
                                 pptx_name, " Bing Slides.pptx")
-      
+
       print(bing_powerpoint, powerpoint_name)
+
+      # print(coop_associations)
       
       confirmSweetAlert(session = session,
                         inputId = "bing_slide_download_success",
@@ -4359,6 +4606,7 @@ server <- function(input, output, session) {
                         btn_labels = "OK!", 
                         danger_mode = T)
       }  
+      }
     }
     }
     }
