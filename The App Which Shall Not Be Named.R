@@ -4025,9 +4025,11 @@ server <- function(input, output, session) {
         #                   btn_labels = "OK!", 
         #                   danger_mode = T)
         
-        withProgress(message = "Downloading Files", {
+        withProgress(message = "Downloading Files", value = 0, {
         
         for(i in 1:length(bing_campaign_selection)){
+          
+          incProgress(1/length(bing_campaign_selection), detail = paste0("Downloading ", i))
         
         # browser()
           
@@ -4164,6 +4166,8 @@ server <- function(input, output, session) {
         
         # browser()
         
+        # This only works if you have access immediately to the server
+        
         if(!dir.exists(paste0("/Volumes/Front/Adam/Reporting/Bing Campaigns/", reporting_period, " ", current_year, " Bing Slides/"))){
           
           dir.create(paste0("/Volumes/Front/Adam/Reporting/Bing Campaigns/", reporting_period, " ", current_year, " Bing Slides/"))
@@ -4176,17 +4180,26 @@ server <- function(input, output, session) {
         print(bing_powerpoint, powerpoint_name)
         
         
-        incProgress(1/length(bing_campaign_selection), detail = paste0("Downloading ", i))
+        # incProgress(1/length(bing_campaign_selection), detail = paste0("Downloading ", i))
         
-        confirmSweetAlert(session = session,
-                          inputId = "bing_slide_download_success",
-                          title = "Powerpoint downloads successful!",
-                          # text = "It may take a monent for the powerpoints to download.",
-                          type = "success",
-                          btn_labels = "OK!", 
-                          danger_mode = T)
+        # confirmSweetAlert(session = session,
+        #                   inputId = "bing_slide_download_success",
+        #                   title = "Powerpoint downloads successful!",
+        #                   # text = "It may take a monent for the powerpoints to download.",
+        #                   type = "success",
+        #                   btn_labels = "OK!", 
+        #                   danger_mode = T)
         
         }
+          
+          confirmSweetAlert(session = session,
+                            inputId = "bing_slide_download_success",
+                            title = "Powerpoint downloads successful!",
+                            # text = "It may take a monent for the powerpoints to download.",
+                            type = "success",
+                            btn_labels = "OK!",
+                            danger_mode = T)
+          
         })
       }else{
       
