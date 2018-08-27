@@ -4376,8 +4376,8 @@ server <- function(input, output, session) {
 
           bing_prev_total_cost <- bing_prev_total_cost[1, 1]
 
-          coop_associations <- read.csv("~/Desktop/Bing Associations.csv")
-
+          coop_associations <- read.csv("~/Desktop/Rob Scripts/Reference Files/Bing Associations.csv")
+          
           # browser()
 
           coop_associations <- coop_associations %>%
@@ -4784,7 +4784,7 @@ server <- function(input, output, session) {
       
       bing_prev_total_cost <- bing_prev_total_cost[1, 1]
       
-      coop_associations <- read.csv("~/Desktop/Bing Associations.csv")
+      coop_associations <- read.csv("~/Desktop/Rob Scripts/Reference Files/Bing Associations.csv")
       
       # browser()
       
@@ -4893,6 +4893,8 @@ server <- function(input, output, session) {
       
       bing_lead_export_prior <- bing_lead_export_prior %>% 
         filter(str_detect(PageLink, "promobing")|str_detect(PageLink, "promominnb")|IVR.Number == 8779576577|IVR.Number == 8779361556)
+      
+      # browser()
       
       bing_paid_search_contacts_prior <- nrow(bing_lead_export_prior)
       
