@@ -77,6 +77,7 @@ data_set <- NULL
 date_ranges <- NULL
 data_set_names <- NULL
 
+
 ui <- dashboardPage(
   
   dashboardHeader(title = "\nThe\nApp\nWhich\nShall\nNot\nBe\nNamed", titleWidth = 400),
@@ -3900,10 +3901,27 @@ server <- function(input, output, session) {
   observeEvent(input$bing_file, {
     withProgress(message = "Loading File", value = 0, {
       incProgress(1, detail = "This may take some time...")
-    bing_keywords_upload <- read.csv(input$bing_file$datapath, skip = 3, stringsAsFactors = F)
+    bing_keywords_upload <- try(read.csv(input$bing_file$datapath, skip = 3, stringsAsFactors = F))
     })
     
+    if(class(bing_keywords_upload) == "try-error") {
+      
+      confirmSweetAlert(session = session, 
+                        inputId = "keyword_bing_upload_fail",
+                        title = "This is not a keyword export!",
+                        type = "warning",
+                        btn_labels = "OK!",
+                        danger_mode = T0)
+      
+    }else{
+    
     bing_keywords_upload <<- bing_keywords_upload
+    
+    bing_keyword_columns <- c("Campaign", "Keyword", "Clicks", "Clicks..Compare.to.")
+    
+    # browser()
+    
+    if(all(bing_keyword_columns %in% colnames(bing_keywords_upload))) {
     
     bing_keywords <- bing_keywords_upload %>% 
       select(Keyword, Campaign, Clicks, Impr., Clicks..Compare.to., Impr...Compare.to. ) %>% 
@@ -3933,7 +3951,19 @@ server <- function(input, output, session) {
     
     updateSelectizeInput(session = session, inputId = "bing_campaign", label = "Please input the campaign you want:",
                          choices = bing_campaign_options$`Select Campaigns (all campaigns also available!)`, selected = NULL)
-   
+    }else{
+      
+      bing_keywords_upload <<- NULL
+      
+      confirmSweetAlert(session = session,
+                        inputId = "wrong_bing_keyword_file",
+                        title = "This is not a Bing keyword export!",
+                        text = "If you are sure it is, make sure you have all relevant columns.",
+                        type = "warning",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+    }
+    }
   })
   
   observeEvent(input$bing_full_export, {
@@ -3942,8 +3972,42 @@ server <- function(input, output, session) {
       
       incProgress(1, detail = "This may take some time...")
       
-      bing_lead_export <- read.csv(input$bing_full_export$datapath)
-      bing_lead_export <<- bing_lead_export
+      bing_lead_export <- try(read.csv(input$bing_full_export$datapath))
+      if(class(bing_lead_export) == "try-error") {
+        
+        confirmSweetAlert(session = session,
+                          inputId = "lead_import_bing_fail",
+                          title = "There was an issue reading in the file!",
+                          text = "This is likely not a raw export.",
+                          type = "warning",
+                          btn_labels = "OK!",
+                          danger_mode = T)
+        
+      }else{
+        
+        export_names <- read.csv("~/Desktop/Rob Scripts/Reference Files/Export Names.csv")
+        
+        export_names <- export_names$names
+        
+        if(all(export_names %in% colnames(bing_lead_export))) {
+          
+          bing_lead_export <<- bing_lead_export
+          
+        }else{
+          
+          bing_lead_export <<- NULL
+          
+          confirmSweetAlert(session = session,
+                            inputId = "not_current_bing_export",
+                            title = "This is not a lead export!",
+                            type = "warning",
+                            btn_labels = "OK!",
+                            danger_mode = T)
+          
+        }
+        
+      }
+      
       
     })
     
@@ -3956,8 +4020,43 @@ server <- function(input, output, session) {
       
       incProgress(1, detail = "This may take some time...")
       
-      bing_lead_export_prior <- read.csv(input$bing_prior_export$datapath)
-      bing_lead_export_prior <<- bing_lead_export_prior
+      bing_lead_export_prior <- try(read.csv(input$bing_prior_export$datapath))
+      
+      if(class(bing_lead_export_prior) == "try-error") {
+        
+        confirmSweetAlert(session = session,
+                          inputId = "lead_import_bing_fail2",
+                          title = "There was an issue reading in the file!",
+                          text = "This is likely not a raw export.",
+                          type = "warning",
+                          btn_labels = "OK!",
+                          danger_mode = T)
+        
+      }else{
+        
+        export_names <- read.csv("~/Desktop/Rob Scripts/Reference Files/Export Names.csv")
+        
+        export_names <- export_names$names
+        
+        if(all(export_names %in% colnames(bing_lead_export_prior))) {
+          
+          bing_lead_export_prior <<- bing_lead_export_prior
+          
+        }else{
+          
+          bing_lead_export_prior <<- NULL
+          
+          confirmSweetAlert(session = session,
+                            inputId = "not_current_bing_export2",
+                            title = "This is not a lead export!",
+                            type = "warning",
+                            btn_labels = "OK!",
+                            danger_mode = T)
+          
+        }
+        
+      }
+    
       
     })
     
@@ -3975,6 +4074,20 @@ server <- function(input, output, session) {
   
   
   observeEvent(input$bing_generate, {
+    
+    # browser()
+    
+    if(class(bing_lead_export) == "try-error" | class(bing_lead_export_prior) == "try-error" | class(bing_keywords_upload) == "try-error" | is.null(bing_keywords_upload) |
+     (input$bing_performance_toggle == T & is.null(bing_lead_export)) | (input$bing_performance_toggle == T & is.null(bing_lead_export_prior))) {
+
+      confirmSweetAlert(session = session,
+                        title = "Something is wrong with the files!",
+                        text = "No powerpoints will be made",
+                        inputId = "no_bing_pptx",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+    }else{
     
     if(is.null(input$bing_file)){
       
@@ -4057,7 +4170,7 @@ server <- function(input, output, session) {
         
         bing_campaign_selection <- bing_campaign_selection$`Select Campaigns (all campaigns also available!)`
         
-        browser()
+        # browser()
         
       }else{
         
@@ -4876,7 +4989,7 @@ server <- function(input, output, session) {
     }
     }
     }
-      
+  }
   })
   
 }
