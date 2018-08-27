@@ -4057,6 +4057,7 @@ server <- function(input, output, session) {
         
         bing_campaign_selection <- bing_campaign_selection$`Select Campaigns (all campaigns also available!)`
         
+        browser()
         
       }else{
         
@@ -4093,7 +4094,7 @@ server <- function(input, output, session) {
           previous_year <- current_year - 1
           current_year_text <- paste0(reporting_period, " ", current_year, " ", bing_website[i])
           previous_year_text <- paste0(reporting_period, " YOY ", bing_website[i])
-          pptx_name <- gsub("^Culligan\\s|\\s\\(.*$|\\sGrouped|\\sMetro", "", bing_campaign_selection[i]) 
+          pptx_name <<- gsub("^Culligan\\s|\\s\\(.*$|\\sGrouped|\\sMetro", "", bing_campaign_selection[i]) 
           
           bing_keywords_prior_year <- bing_keywords %>% 
             filter(Campaign == bing_campaign_selection[i]) %>% 
@@ -4197,8 +4198,8 @@ server <- function(input, output, session) {
             add_slide(layout = "Bing Keyword YOY", master = "Default Theme") %>% 
             ph_with_flextable(type = "tbl", value = prior_keyword_flextable, index = 1) %>% 
             ph_with_flextable(type = "tbl", value = current_keyword_flextable, index = 2) %>% 
-            ph_with_text(type = "body", str = previous_year_text, index = 29) %>% 
-            ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 28)
+            ph_with_text(type = "body", str = previous_year_text, index = 23) %>% 
+            ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 20)
           
         }else{
           
@@ -4209,8 +4210,8 @@ server <- function(input, output, session) {
           bing_powerpoint <<- bing_powerpoint %>% 
             add_slide(layout = "Bing Keyword No YOY", master = "Default Theme") %>% 
             ph_with_flextable(type = "tbl", value = current_keyword_flextable) %>% 
-            ph_with_text(type = "body", str =current_year_text, index = 12) %>% 
-            ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 18)
+            ph_with_text(type = "body", str =current_year_text, index = 24) %>% 
+            ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 10)
           
           # print("There is no data in the prior year keywords. No YOY table will be generated.")
           
@@ -4218,9 +4219,234 @@ server <- function(input, output, session) {
           
         }
         
-        # browser()
-        
-        # This only works if you have access immediately to the server
+        if(input$bing_performance_toggle == T) {
+
+
+          # for(i in 1:length(bing_campaign_selection)) {
+          # if(is.null(input$bing_lead_export)) {
+          #
+          #   confirmSweetAlert(session = session,
+          #                     inputId = "no_lead_export",
+          #                     text = "")
+          #
+          # }
+          bing_keywords_campaign_filtered <-  bing_keywords_upload %>%
+            filter(Campaign == bing_campaign_selection[i])
+
+          bing_keywords_campaign_filtered <<- bing_keywords_campaign_filtered
+
+          bing_total_clicks <- bing_keywords_campaign_filtered %>%
+            # filter(Campaign == input$bing_campaign) %>%
+            select(Clicks) %>%
+            summarise("Total Clicks" = sum(Clicks))
+
+          bing_total_clicks <- bing_total_clicks[1, 1]
+          # bing_total_clicks <- prettyNum(bing_total_clicks)
+
+          bing_prev_total_clicks <- bing_keywords_campaign_filtered %>%
+            # filter(Campaign == input$bing_campaign) %>%
+            select(Clicks..Compare.to.) %>%
+            summarise("Total Clicks" = sum(Clicks..Compare.to.))
+
+          bing_prev_total_clicks <- bing_prev_total_clicks[1, 1]
+          bing_prev_click_entry <- paste0(bing_prev_total_clicks, " Previous Year")
+
+          bing_total_cost <- bing_keywords_campaign_filtered %>%
+            select(Spend) %>%
+            summarise("Total Cost" = sum(Spend))
+
+          bing_total_cost <- bing_total_cost[1, 1]
+
+          bing_prev_total_cost <- bing_keywords_campaign_filtered %>%
+            select(Spend..Compare.to.) %>%
+            summarise("Total Cost" = sum(Spend..Compare.to.))
+
+          bing_prev_total_cost <- bing_prev_total_cost[1, 1]
+
+          coop_associations <- read.csv("~/Desktop/Bing Associations.csv")
+
+          # browser()
+
+          coop_associations <- coop_associations %>%
+            filter(Bing_Campaign == bing_campaign_selection[i]) %>%
+            select(Dealers) %>%
+            distinct()
+
+          coop_associations <- as.character(coop_associations$Dealers)
+          
+          # if(i == 2) {browser()}
+
+          # coop_associations$Coop <- as.character(coop_associations$Coop)
+          #
+          # exclusive_names <- gsub("Culligan | \\(.*| Metro| Grouped| Water Residential", "", bing_campaign_selection)
+          # exclusive_names <- strsplit(exclusive_names, split = ", ")
+          #
+          # if(class(exclusive_names) == "list"){
+          #
+          # exclusive_names <- exclusive_names[[1]]
+          #
+          # }
+          #
+          # if("GreenBay" %in% exclusive_names){
+          #
+          #   exclusive_names <- replace(exclusive_names, exclusive_names == "GreenBay", "Green Bay")
+          #
+          # }
+          #
+          # if("La Crosse" %in% exclusive_names) {
+          #
+          #   exclusive_names <- replace(exclusive_names, exclusive_names == "La Crosse", "La Crosse / Eau Claire")
+          #
+          # }
+          #
+          # if("Lincoln Kearney" %in% exclusive_names) {
+          #
+          #   exclusive_names <- replace(exclusive_names, exclusive_names == "Lincoln Kearney", "Lincoln / Hastings / Kearney")
+          #
+          # }
+          #
+          # if("Grand Rapids" %in% exclusive_names) {
+          #
+          #   exclusive_names <- replace(exclusive_names, exclusive_names == "Grand Rapids", "Grand Rapids / Kalamazoo")
+          #
+          # }
+          #
+          # if("Scottsbluff" %in% exclusive_names) {
+          #
+          #   exclusive_names <- replace(exclusive_names, exclusive_names == "Scottsbluff", "Cheyenne/Scottsbluff")
+          #
+          # }
+          #
+          # if("Phoenix" %in% exclusive_names) {
+          #
+          #   exclusive_names <- replace(exclusive_names, exclusive_names == "Phoenix", "Phoenix Co-op")
+          #
+          # }
+          #
+          # if("Tucson" %in% exclusive_names) {
+          #
+          #   exclusive_names <- replace(exclusive_names, exclusive_names == "Tucson", "Tucson Co-op")
+          #
+          # }
+          #
+          # if("Milwaukee" %in% exclusive_names) {
+          #
+          #   exclusive_names <- replace(exclusive_names, exclusive_names == "Milwaukee", "Milwaukee Co-op")
+          #
+          # }
+          #
+          # if(exclusive_names == "McCardel") {
+          #
+          #   # browser()
+          #
+          #   coop_associations <- coop_associations %>%
+          #     filter(str_detect(Dealers, "Alpena")|str_detect(Dealers, "Big Rapids")|str_detect(Dealers, "Petoskey")|str_detect(Dealers, "Ludington")|str_detect(Dealers, "Traverse City"))
+          #
+          #    coop_associations <- coop_associations %>%
+          #     select(Dealers) %>%
+          #     distinct()
+          #   coop_associations <- coop_associations$Dealers
+          #   coop_associations <- as.character(coop_associations)
+          #   coop_associations <<- coop_associations
+          #
+          # }else{
+          #
+          # coop_associations <- coop_associations[coop_associations$Coop %in% exclusive_names, ]
+          # coop_associations <- coop_associations %>%
+          #   select(Dealers) %>%
+          #   distinct()
+          # coop_associations <- coop_associations$Dealers
+          # coop_associations <- as.character(coop_associations)
+          # coop_associations <<- coop_associations
+          #
+          # }
+
+          # browser()
+
+          
+          bing_lead_export_filtered <- bing_lead_export[bing_lead_export$SentTo %in% coop_associations, ]
+
+          bing_lead_export_filtered <- bing_lead_export_filtered %>%
+            filter(str_detect(PageLink, "promobing")|str_detect(PageLink, "promominnb")|IVR.Number == 8779576577|IVR.Number == 8779361556)
+
+          bing_paid_search_contacts <- nrow(bing_lead_export_filtered)
+
+          bing_lead_export_prior_filtered <- bing_lead_export_prior[bing_lead_export_prior$SentTo %in% coop_associations, ]
+
+          bing_lead_export_prior_filtered <- bing_lead_export_prior_filtered %>%
+            filter(str_detect(PageLink, "promobing")|str_detect(PageLink, "promominnb")|IVR.Number == 8779576577|IVR.Number == 8779361556)
+
+          bing_paid_search_contacts_prior <- nrow(bing_lead_export_prior_filtered)
+
+          # browser()
+
+          bing_cpc_current <- bing_total_cost / bing_total_clicks * 1.25
+          bing_cpc_prior <- bing_prev_total_cost / bing_prev_total_clicks * 1.25
+
+          bing_current_conversion_rate <- bing_paid_search_contacts / bing_total_clicks * 100
+          bing_prior_conversion_rate <- bing_paid_search_contacts_prior / bing_prev_total_clicks * 100
+
+          # browser()
+
+          current_clicks_text <- prettyNum(bing_total_clicks, big.mark = ",")
+          prior_clicks_text <- paste0(prettyNum(bing_prev_total_clicks, big.mark = ","), " Prior Year")
+
+          current_cpc_text <- paste0("$", round(bing_cpc_current, 2))
+          prior_cpc_text <- paste0("$", round(bing_cpc_prior, 2), " Prior Year")
+
+          paid_search_current <- as.character(bing_paid_search_contacts)
+          paid_search_prior <- paste0(bing_paid_search_contacts_prior, " Prior Year")
+
+          current_conv_rate_text <- paste0(round(bing_current_conversion_rate, 1), "%")
+          prior_conv_rate_text <- paste0(round(bing_prior_conversion_rate, 1), "% Prior Year")
+          
+          # browser()
+
+          if(bing_prev_total_cost != 0) {
+
+            # browser()
+
+            # bing_campaign_selection
+            # current_year_text
+
+            # layout_properties(bing_powerpoint, layout = "Bing Performance YOY", master = "Default Theme") %>% distinct()
+
+            bing_powerpoint <<- bing_powerpoint %>%
+              add_slide(layout = "Bing Performance YOY", master = "Default Theme") %>%
+              # ph_with_flextable(type = "tbl", value = current_keyword_flextable) %>%
+              ph_with_text(type = "body", str = current_year_text, index = 70) %>%
+              ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 40) %>%
+              ph_with_text(type = "body", str = paid_search_prior, index = 90) %>%
+              ph_with_text(type = "body", str = prior_conv_rate_text, index = 96) %>%
+              ph_with_text(type = "body", str = current_clicks_text, index = 60) %>%
+              ph_with_text(type = "body", str = current_cpc_text, index = 75) %>%
+              ph_with_text(type = "body", str = paid_search_current, index = 80) %>%
+              ph_with_text(type = "body", str = current_conv_rate_text, index = 65) %>%
+              ph_with_text(type = "body", str = prior_clicks_text, index = 84) %>%
+              ph_with_text(type = "body", str = prior_cpc_text, index = 85)
+
+          }else{
+
+            # browser()
+
+            # layout_properties(bing_powerpoint, layout = "Bing Performance No YOY", master = "Default Theme") %>% distinct()
+
+            bing_powerpoint <<- bing_powerpoint %>%
+              add_slide(layout = "Bing Performance No YOY", master = "Default Theme") %>%
+              # ph_with_flextable(type = "tbl", value = current_keyword_flextable) %>%
+              ph_with_text(type = "body", str = current_year_text, index = 80) %>%
+              ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 43) %>%
+              # ph_with_text(type = "body", str = paid_search_prior, index = 45) %>%
+              # ph_with_text(type = "body", str = prior_conv_rate_text, index = 50) %>%
+              ph_with_text(type = "body", str = current_clicks_text, index = 61) %>%
+              ph_with_text(type = "body", str = current_cpc_text, index = 65) %>%
+              ph_with_text(type = "body", str = paid_search_current, index = 70) %>%
+              ph_with_text(type = "body", str = current_conv_rate_text, index = 75)
+            # ph_with_text(type = "body", str = prior_clicks_text, index = 87) %>%
+            # ph_with_text(type = "body", str = prior_cpc_text, index = 90)
+
+          }
+        }
         
         if(!dir.exists(paste0("/Volumes/Front/Adam/Reporting/Bing Campaigns/", reporting_period, " ", current_year, " Bing Slides/"))){
           
@@ -4231,7 +4457,17 @@ server <- function(input, output, session) {
         powerpoint_name <- paste0("/Volumes/Front/Adam/Reporting/Bing Campaigns/", reporting_period, " ", current_year, " Bing Slides/",
                                   pptx_name, " Bing Slides.pptx")
         
+        # browser()
+        
         print(bing_powerpoint, powerpoint_name)
+        
+        }
+        
+        # browser()
+        
+        # This only works if you have access immediately to the server
+        
+       
         
         
         # incProgress(1/length(bing_campaign_selection), detail = paste0("Downloading ", i))
@@ -4244,7 +4480,7 @@ server <- function(input, output, session) {
         #                   btn_labels = "OK!", 
         #                   danger_mode = T)
         
-        }
+        # }
           
           confirmSweetAlert(session = session,
                             inputId = "bing_slide_download_success",
@@ -4403,7 +4639,7 @@ server <- function(input, output, session) {
       #   
       # }        
         bing_keywords_campaign_filtered <-  bing_keywords_upload %>% 
-          filter(Campaign == input$bing_campaign)
+          filter(Campaign == bing_campaign_selection)
         
         bing_keywords_campaign_filtered <<- bing_keywords_campaign_filtered
       
@@ -4435,91 +4671,101 @@ server <- function(input, output, session) {
       
       bing_prev_total_cost <- bing_prev_total_cost[1, 1]
       
-      coop_associations <- read.csv("~/shiny-server/shiny_app/MasterData/other_files/coop_temp.csv")
-      coop_associations$Coop <- as.character(coop_associations$Coop)
+      coop_associations <- read.csv("~/Desktop/Bing Associations.csv")
       
-      exclusive_names <- gsub("Culligan | \\(.*| Metro| Grouped| Water Residential", "", bing_campaign_selection)
-      exclusive_names <- strsplit(exclusive_names, split = ", ")
+      # browser()
       
-      if(class(exclusive_names) == "list"){
-      
-      exclusive_names <- exclusive_names[[1]]
-      
-      }
-      
-      if("GreenBay" %in% exclusive_names){
-        
-        exclusive_names <- replace(exclusive_names, exclusive_names == "GreenBay", "Green Bay")
-                        
-      }
-      
-      if("La Crosse" %in% exclusive_names) {
-        
-        exclusive_names <- replace(exclusive_names, exclusive_names == "La Crosse", "La Crosse / Eau Claire")
-        
-      }
-      
-      if("Lincoln Kearney" %in% exclusive_names) {
-        
-        exclusive_names <- replace(exclusive_names, exclusive_names == "Lincoln Kearney", "Lincoln / Hastings / Kearney")
-        
-      }
-      
-      if("Grand Rapids" %in% exclusive_names) {
-        
-        exclusive_names <- replace(exclusive_names, exclusive_names == "Grand Rapids", "Grand Rapids / Kalamazoo")
-        
-      }
-      
-      if("Scottsbluff" %in% exclusive_names) {
-        
-        exclusive_names <- replace(exclusive_names, exclusive_names == "Scottsbluff", "Cheyenne/Scottsbluff")
-        
-      }
-      
-      if("Phoenix" %in% exclusive_names) {
-        
-        exclusive_names <- replace(exclusive_names, exclusive_names == "Phoenix", "Phoenix Co-op")
-        
-      }
-      
-      if("Tucson" %in% exclusive_names) {
-        
-        exclusive_names <- replace(exclusive_names, exclusive_names == "Tucson", "Tucson Co-op")
-        
-      }
-      
-      if("Milwaukee" %in% exclusive_names) {
-        
-        exclusive_names <- replace(exclusive_names, exclusive_names == "Milwaukee", "Milwaukee Co-op")
-        
-      }
-      
-      if(exclusive_names == "McCardel") {
-        
-        # browser()
-        
-        coop_associations <- coop_associations %>% 
-          filter(str_detect(Dealers, "Alpena")|str_detect(Dealers, "Big Rapids")|str_detect(Dealers, "Petoskey")|str_detect(Dealers, "Ludington")|str_detect(Dealers, "Traverse City"))
-       
-         coop_associations <- coop_associations %>% 
-          select(Dealers) %>% 
-          distinct()
-        coop_associations <- coop_associations$Dealers
-        coop_associations <- as.character(coop_associations)
-        coop_associations <<- coop_associations
-        
-      }else{
-      
-      coop_associations <- coop_associations[coop_associations$Coop %in% exclusive_names, ]
       coop_associations <- coop_associations %>% 
+        filter(Bing_Campaign == bing_campaign_selection) %>% 
         select(Dealers) %>% 
         distinct()
-      coop_associations <- coop_associations$Dealers
-      coop_associations <- as.character(coop_associations)
-      coop_associations <<- coop_associations
       
-      }
+      coop_associations <- as.character(coop_associations$Dealers)
+      
+      # coop_associations$Coop <- as.character(coop_associations$Coop)
+      # 
+      # exclusive_names <- gsub("Culligan | \\(.*| Metro| Grouped| Water Residential", "", bing_campaign_selection)
+      # exclusive_names <- strsplit(exclusive_names, split = ", ")
+      # 
+      # if(class(exclusive_names) == "list"){
+      # 
+      # exclusive_names <- exclusive_names[[1]]
+      # 
+      # }
+      # 
+      # if("GreenBay" %in% exclusive_names){
+      #   
+      #   exclusive_names <- replace(exclusive_names, exclusive_names == "GreenBay", "Green Bay")
+      #                   
+      # }
+      # 
+      # if("La Crosse" %in% exclusive_names) {
+      #   
+      #   exclusive_names <- replace(exclusive_names, exclusive_names == "La Crosse", "La Crosse / Eau Claire")
+      #   
+      # }
+      # 
+      # if("Lincoln Kearney" %in% exclusive_names) {
+      #   
+      #   exclusive_names <- replace(exclusive_names, exclusive_names == "Lincoln Kearney", "Lincoln / Hastings / Kearney")
+      #   
+      # }
+      # 
+      # if("Grand Rapids" %in% exclusive_names) {
+      #   
+      #   exclusive_names <- replace(exclusive_names, exclusive_names == "Grand Rapids", "Grand Rapids / Kalamazoo")
+      #   
+      # }
+      # 
+      # if("Scottsbluff" %in% exclusive_names) {
+      #   
+      #   exclusive_names <- replace(exclusive_names, exclusive_names == "Scottsbluff", "Cheyenne/Scottsbluff")
+      #   
+      # }
+      # 
+      # if("Phoenix" %in% exclusive_names) {
+      #   
+      #   exclusive_names <- replace(exclusive_names, exclusive_names == "Phoenix", "Phoenix Co-op")
+      #   
+      # }
+      # 
+      # if("Tucson" %in% exclusive_names) {
+      #   
+      #   exclusive_names <- replace(exclusive_names, exclusive_names == "Tucson", "Tucson Co-op")
+      #   
+      # }
+      # 
+      # if("Milwaukee" %in% exclusive_names) {
+      #   
+      #   exclusive_names <- replace(exclusive_names, exclusive_names == "Milwaukee", "Milwaukee Co-op")
+      #   
+      # }
+      # 
+      # if(exclusive_names == "McCardel") {
+      #   
+      #   # browser()
+      #   
+      #   coop_associations <- coop_associations %>% 
+      #     filter(str_detect(Dealers, "Alpena")|str_detect(Dealers, "Big Rapids")|str_detect(Dealers, "Petoskey")|str_detect(Dealers, "Ludington")|str_detect(Dealers, "Traverse City"))
+      #  
+      #    coop_associations <- coop_associations %>% 
+      #     select(Dealers) %>% 
+      #     distinct()
+      #   coop_associations <- coop_associations$Dealers
+      #   coop_associations <- as.character(coop_associations)
+      #   coop_associations <<- coop_associations
+      #   
+      # }else{
+      # 
+      # coop_associations <- coop_associations[coop_associations$Coop %in% exclusive_names, ]
+      # coop_associations <- coop_associations %>% 
+      #   select(Dealers) %>% 
+      #   distinct()
+      # coop_associations <- coop_associations$Dealers
+      # coop_associations <- as.character(coop_associations)
+      # coop_associations <<- coop_associations
+      # 
+      # }
       
       # browser()
       
