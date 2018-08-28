@@ -2177,12 +2177,21 @@ server <- function(input, output, session) {
   
   observeEvent(input$corp_view, {
     
+    if(input$corpID == "" & input$corp_dealer == "") {
+      
+      confirmSweetAlert(session = session,
+                        inputId = "no_corp_input",
+                        title = "Please input a corporate ID or Co-op Group!",
+                        type = "warning",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+    }else{
+    
     isolate(input$corp_view)
     # isolate(input$corpID)
     # isolate(input$corp_dealer)
     
-    output$corp_table <- renderTable({
-      
     data_table <- read.csv("~/Desktop/Rob Scripts/Reference Files/zip codes.csv")
     
     data_table <- data_table %>% 
@@ -2198,18 +2207,18 @@ server <- function(input, output, session) {
       
       data_table <- data_table %>% 
         filter(str_detect(Dealer, corpID))
-
+      
     }
     
     # The conditionals need to be isolated otherwise they will auto update
-
+    
     if(isolate(input$corp_dealer) != "") {
-
+      
       dealer <- isolate(input$corp_dealer)
-
+      
       data_table <- data_table %>%
         filter(str_detect(PAR.Name, dealer))
-
+      
     }
     
     data_table <- data_table %>% 
@@ -2219,9 +2228,68 @@ server <- function(input, output, session) {
       rename("Zipcode" = FSA.ZIP.Code) %>% 
       rename("Percentage of Zipcode\nAssigned" = Percentage.of.FSA.ZIP)
     
+    if(nrow(data_table) == 0) {
+      
+      if(input$corpID != "" & input$corp_dealer != ""){
+        
+        confirmSweetAlert(session = session,
+                          inputId = "not_same_group",
+                          title = "The Corporate ID and Co-op Name do not match!",
+                          text = "All Co-op names must be capitalized",
+                          type = "warning",
+                          btn_labels = "OK!",
+                          danger_mode = T)
+        
+        
+        
+      }else{
+        
+        if(input$corp_dealer != ""){
+          
+          confirmSweetAlert(session = session, 
+                            inputId = "wrong_dealer_name_corp",
+                            title = paste0(input$corp_dealer, " is not in the database!"),
+                            text = "If you are sure it is, make sure the Co-op name is capitalized",
+                            type = "warning",
+                            btn_labels = "OK!",
+                            danger_mode = T)
+          
+        }else{
+          
+          confirmSweetAlert(session = session,
+                            inputId = "wrong_corp_id",
+                            title = "This corporate ID is not in the database!",
+                            type = "warning",
+                            btn_labels = "OK!",
+                            danger_mode = T)
+          
+        }
+        
+      }
+      
+      data_table <- NULL
+      
+    }else{
+      
+      confirmSweetAlert(session = session,
+                        inputId = "success_corp_zip",
+                        title = paste0(nrow(data_table), " zipcode(s) associated to Co-op!"),
+                        type = "success",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+    }
+    
+    updateTextInput(session = session, inputId = "corpID", label = "Corporate ID", value = "")
+    updateTextInput(session = session, inputId = "corp_dealer", label = "Dealer Name", value = "")
+    
+    output$corp_table <- renderTable({
+    
     data_table
       
     })
+    
+  }
     
   })
   
