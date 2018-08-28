@@ -155,7 +155,10 @@ ui <- dashboardPage(
       # More of a basic reporting kind of thing that Stullzy wants to lay out. It's not difficult, but the problem
       # is I don't explicitly know everything to filter, but I think it's pretty decent.
       
-      menuItem("Paid Search", tabName = "paid_search", icon = icon("cog")),
+      # Nothing has been discussed about this since its inception, so I'm getting the feeling that it is no longer something
+      # that is particularly worth much value. Sunset 8/28/2018
+      
+      # menuItem("Paid Search", tabName = "paid_search", icon = icon("cog")),
       
       # A hot mess of garbage. It's not that I couldn't get it to work, but that it's going to be ineffective because of 
       # the limitations of Google's API. Every cell is considered a request, and only 500 requests are available every 100
@@ -435,18 +438,18 @@ ui <- dashboardPage(
       #         ),
       
       
-      tabItem(tabName = "paid_search",
-              
-              # Just a leads export and a download button
-              
-              titlePanel("Paid Search"),
-              
-              sidebarPanel(
-                
-                fileInput(inputId = "paid_search_file", label = "Input export file"),
-                downloadButton(outputId = "paid_search_download")
-                
-              )),
+      # tabItem(tabName = "paid_search",
+      #         
+      #         # Just a leads export and a download button
+      #         
+      #         titlePanel("Paid Search"),
+      #         
+      #         sidebarPanel(
+      #           
+      #           fileInput(inputId = "paid_search_file", label = "Input export file"),
+      #           downloadButton(outputId = "paid_search_download")
+      #           
+      #         )),
       
       # All of this stuff is still in "development", which generally means its not going to get touched
       # unless I really want to, which I'm not sure if I do since its only helpful in limited scenarios.
