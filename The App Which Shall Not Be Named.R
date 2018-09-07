@@ -5337,7 +5337,7 @@ server <- function(input, output, session) {
         full_voc <- full_voc %>%
           slice(1:5)
         # 
-        # # browser()
+        # browser()
         # 
         full_voc <- as.data.frame(lapply(full_voc, as.character), stringsAsFactors = F)
         
@@ -5360,17 +5360,34 @@ server <- function(input, output, session) {
           # file = paste0("~/Desktop/test/ ",dat$citySt[i], ".pptx")
           # writeDoc(mydoc, file)
           
-          mydoc = pptx(template ="~/shiny-server/shiny_app/MasterData/other_files/Co-op_template.pptx")
-          mydoc=addSlide(mydoc,slide.layout = "VOC Title")
-          mydoc=addSlide(mydoc,slide.layout = "VOC Info")
-          mydoc <- mydoc %>%
-            addParagraph(full_voc$Total.views[i]) %>%
-            addParagraph(full_voc$Phone.call.actions[i]) %>%
-            addParagraph(full_voc$Directions.actions[i]) %>%
-            addParagraph(full_voc$Website.actions[i]) %>%
-            addParagraph(full_voc$Average.Star.Rating[i]) %>%
-            addParagraph(full_voc$Number.of.Reviews[i]) %>%
-            addParagraph(full_voc$city_state[i])
+          voc_powerpoint_doc <- read_pptx(path = "~/shiny-server/shiny_app/MasterData/other_files/Co-op_template.pptx") %>% 
+            add_slide(layout = "VOC Title", master = "Office Theme") %>% 
+            add_slide(layout = "VOC Info", master = "Office Theme") %>% 
+            ph_with_text(type = "body", str = full_voc$Total.views[i], index = 8) %>% 
+            ph_with_text(type = "body", str = full_voc$Phone.call.actions[i], index = 9) %>% 
+            ph_with_text(type = "body", str = full_voc$Directions.actions[i], index = 10) %>% 
+            ph_with_text(type = "body", str = full_voc$Website.actions[i], index = 15) %>% 
+            ph_with_text(type = "body", str = full_voc$Average.Star.Rating[i], index = 16) %>% 
+            ph_with_text(type = "body", str = full_voc$Number.of.Reviews[i], index = 17) %>% 
+            ph_with_text(type = "body", str = full_voc$city_state[i], index = 18)
+          
+          # browser()
+          
+          save_file <- paste0("~/Desktop/test/", full_voc$city_state[i], ".pptx")
+          print(voc_powerpoint_doc, save_file)
+            
+          
+          # mydoc = pptx(template ="~/shiny-server/shiny_app/MasterData/other_files/Co-op_template.pptx")
+          # mydoc=addSlide(mydoc,slide.layout = "VOC Title")
+          # mydoc=addSlide(mydoc,slide.layout = "VOC Info")
+          # mydoc <- mydoc %>%
+          #   addParagraph(full_voc$Total.views[i]) %>%
+          #   addParagraph(full_voc$Phone.call.actions[i]) %>%
+          #   addParagraph(full_voc$Directions.actions[i]) %>%
+          #   addParagraph(full_voc$Website.actions[i]) %>%
+          #   addParagraph(full_voc$Average.Star.Rating[i]) %>%
+          #   addParagraph(full_voc$Number.of.Reviews[i]) %>%
+          #   addParagraph(full_voc$city_state[i])
           
           
           # mydoc = addParagraph(mydoc,dat$Total.views[i])
@@ -5380,10 +5397,10 @@ server <- function(input, output, session) {
           # mydoc = addParagraph(mydoc,dat$Average.Star.Rating[i])
           # mydoc = addParagraph(mydoc,dat$Number.of.Reviews[i])
           # mydoc = addParagraph(mydoc,dat$city_state[i])
-          file = paste0("~/Desktop/test/", full_voc$city_state[i], ".pptx")
-          writeDoc(mydoc, file)
-          
-          print("Powerpoint Created")
+          # file = paste0("~/Desktop/test/", full_voc$city_state[i], ".pptx")
+          # writeDoc(mydoc, file)
+          # 
+          # print("Powerpoint Created")
           
         }
         
