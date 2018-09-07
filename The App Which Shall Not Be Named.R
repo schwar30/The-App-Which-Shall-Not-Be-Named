@@ -183,7 +183,9 @@ ui <- dashboardPage(
       
       menuItem("Export Wrangling", tabName = "wrangle", icon = icon("book")),
       
-      menuItem("Bing Slides", tabName = "bing", icon = icon("database"))
+      menuItem("Bing Slides", tabName = "bing", icon = icon("database")),
+      
+      menuItem("VOC Experimental", tabName = "voc_all", icon = icon("cube"))
       
     ) 
     
@@ -668,7 +670,15 @@ ui <- dashboardPage(
                                fileInput(inputId = "bing_prior_export", label = "Please upload prior year dealer inquiry file")),
               selectizeInput(inputId = "bing_campaign", label = "Please input the campaign you want:", choices = NULL, selected = NULL, multiple = T),
               textInput(inputId = "bing_daterange", label = "Please input the date range of reporting:", value = ""),
-              actionButton(inputId = "bing_generate", label = "Generate Slide(s)"))
+              actionButton(inputId = "bing_generate", label = "Generate Slide(s)")),
+      
+      tabItem(tabName = "voc_all",
+              
+              titlePanel("Experimental Generate VOC slides"),
+              h4("Please use with caution!"),
+              
+              fileInput(inputId = "exp_voc_file", label = "Please insert GMB and ReviewTracker Files:", multiple = T),
+              actionButton(inputId = "exp_voc_gen", label = "Generate VOC Slides"))
       
     )))
 
@@ -4993,12 +5003,12 @@ server <- function(input, output, session) {
       
       if(bing_prev_total_cost != 0) {
         
-        # browser()
+        browser()
         
         # bing_campaign_selection
         # current_year_text
         
-        # layout_properties(bing_powerpoint, layout = "Bing Performance YOY", master = "Default Theme") %>% distinct()
+        layout_properties(bing_powerpoint, layout = "Bing Performance YOY", master = "Default Theme") %>% distinct()
         
         bing_powerpoint <<- bing_powerpoint %>% 
           add_slide(layout = "Bing Performance YOY", master = "Default Theme") %>% 
@@ -5063,6 +5073,327 @@ server <- function(input, output, session) {
     }
     }
   }
+  })
+  
+  observeEvent(input$exp_voc_file, {
+    
+    # browser()
+    
+    gmb_col_names <- c("Store.code", "Business.name", "Address", "Labels", "Total.searches", "Direct.searches", "Discovery.searches",
+                       "Discovery.searches", "Total.views", "Search.views", "Maps.views", "Total.actions", "Website.actions",
+                       "Directions.actions", "Phone.call.actions")
+    
+    review_tracker_col_names <- c("Location.ID", "Dealer.ID", "Store.Number..External.ID.", "Location.Name", "Location.Address",
+                                  "Location.City", "Location.State", "Location.Zip.Code", "Location.Added.On.Date", "Average.Star.Rating",
+                                  "Response.Rate", "Number.of.Reviews")
+    
+    if(nrow(input$exp_voc_file) != 2) {
+      
+      # browser()
+      
+      confirmSweetAlert(session = session,
+                        inputId = "exp_voc_file_lessthan_two",
+                        title = "Please Input GMB AND ReviewTracker files!",
+                        text = "This will not work with less than or more than 2 files.",
+                        type = "warning",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+    }else{
+      
+      # browser()
+      
+      voc_data1 <- try(read.csv(input$exp_voc_file$datapath[1]))
+      voc_data2 <- try(read.csv(input$exp_voc_file$datapath[2]))
+      
+      if(class(voc_data1) == "try-error" | class(voc_data2) == "try-error") {
+      
+      if(class(voc_data1) == "try-error") {
+        
+        voc_data1 <- read.csv(input$exp_voc_file$datapath[1], stringsAsFactors = T, fileEncoding = "latin1")
+        # gmb <- voc_data2
+        
+        if(all(review_tracker_col_names %in% colnames(voc_data1))) {
+          
+          review_tracker <<- voc_data1 
+          
+          if(all(gmb_col_names %in% colnames(voc_data2))) {
+            
+            gmb <<- voc_data2 
+            review_tracker <<- voc_data1 
+            
+            
+          }else{
+            
+            # browser()
+            
+            voc_data1 <- NULL
+            voc_data2 <- NULL
+            
+            # browser()
+            
+            confirmSweetAlert(session = session,
+                              inputId = "not_gmb_fail_2",
+                              title = "This is not GMB file!",
+                              text = "If the export changed to not include some data, update the script.",
+                              type = "warning",
+                              btn_labels = "OK!",
+                              danger_mode = T)
+            
+          }
+          
+        }else{
+          
+          voc_data1 <- NULL
+          voc_data2 <- NULL
+          
+          confirmSweetAlert(session = session,
+                            inputId = "not_review_fail_1",
+                            title = "This is not a Review Tracker file!",
+                            text = "If the export changed to not include some data, update the script.",
+                            type = "warning",
+                            btn_labels = "OK!",
+                            danger_mode = T)
+          
+        }
+        
+      }
+      
+      # if(class(voc_data2))
+      
+      if(class(voc_data2) == "try-error") {
+        
+        voc_data2 <- read.csv(input$exp_voc_file$datapath[2], stringsAsFactors = T, fileEncoding = "latin1")
+        # gmb <- voc_data2
+        
+        # browser()
+        
+        if(all(review_tracker_col_names %in% colnames(voc_data2))) {
+          
+          
+          if(all(gmb_col_names %in% colnames(voc_data1))) {
+            
+            gmb <<- voc_data1 
+            review_tracker <<- voc_data2 
+            
+            
+          }else{
+            
+            # browser()
+            
+            voc_data1 <- NULL
+            voc_data2 <- NULL
+            
+            # browser()
+            
+            confirmSweetAlert(session = session,
+                              inputId = "not_gmb_fail_2",
+                              title = "This is not GMB file!",
+                              text = "If the export changed to not include some data, update the script.",
+                              type = "warning",
+                              btn_labels = "OK!",
+                              danger_mode = T)
+            
+          }
+          
+        }else{
+          
+          voc_data2 <- NULL
+          
+          confirmSweetAlert(session = session,
+                            inputId = "not_review_fail_2",
+                            title = "This is not a Review Tracker file!",
+                            text = "If the export changed to not include some data, update the script.",
+                            type = "warning",
+                            btn_labels = "OK!",
+                            danger_mode = T)
+          
+        }
+        
+      }
+    
+    # for (i in nrow(input$exp_voc_file)) {
+    #   
+    #   browser()
+    #   
+    #   if(gmb_col_names %in% input$exp_voc_file[i]){}
+    #   
+    #   
+    #   
+    # }
+      
+      }else{
+        
+        if(all(gmb_col_names %in% colnames(voc_data1))) {
+          
+          gmb <<- voc_data1
+          
+        }else{
+          
+          if(all(gmb_col_names %in% colnames(voc_data2))) {
+            
+            gmb <<- voc_data2
+            
+          }else{
+            
+            confirmSweetAlert(session = session,
+                              inputId = "weird_voc_no_gmb_file",
+                              title = "This is not a GMB file!",
+                              text = "There is likely not a ReviewTracker file either!",
+                              type = "warning",
+                              btn_labels = "OK!",
+                              danger_mode = T)
+            
+          }
+          
+        }
+        
+        if(all(review_tracker_col_names %in% colnames(voc_data1))) {
+          
+          review_tracker <<- voc_data1
+          
+        }else{
+          
+          if(all(review_tracker_col_names %in% colnames(voc_data2))) {
+            
+            review_tracker <<- voc_data2
+            
+          }else{
+            
+            confirmSweetAlert(session = session,
+                              inputId = "weird_voc_no_review_file",
+                              title = "This is not a reviewTracker file!",
+                              # text = "There is likely not a ReviewTracker file either!",
+                              type = "warning",
+                              btn_labels = "OK!",
+                              danger_mode = T)
+            
+          }
+          
+        }
+        
+      }
+      
+    }
+    
+    # if(gmb_col_names) {}
+    
+  })
+  
+  observeEvent(input$exp_voc_gen, {
+    
+    if(is.null(review_tracker) | is.null(gmb)) {
+      
+      confirmSweetAlert(session = session,
+                        inputId = "stop_voc_generation1",
+                        title = "There are not GMB and/or ReviewTracker files to use!",
+                        type = "warning",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+    }else{
+      
+      # browser()
+      
+      voc_associations <- read.csv("~/Desktop/Rob Scripts/Reference Files/VOC Associations Final.csv")
+      
+      review_tracker <- left_join(review_tracker, voc_associations, by = c("Location.Name", "Location.Address"))
+      
+      review_tracker <- review_tracker %>% 
+        mutate(city_state = paste0(Location.City, " ", Location.State))
+      
+      gmb <- gmb %>% 
+        filter(Business.name != "") %>% 
+        filter(!str_detect(Business.name, "NOT DOWNLOADABLE")) %>% 
+        filter(str_detect(Business.name, "Culligan|culligan"))
+      
+      gmb <- left_join(gmb, voc_associations, by = c("Business.name", "Address"))
+      
+      review_tracker <- review_tracker %>% 
+        select(Store.code, Location.Name, Business.name, Location.Address, Address, city_state, Average.Star.Rating, Number.of.Reviews)
+      review_tracker_filtered <- review_tracker %>% 
+        filter(is.na(Store.code))
+      
+      gmb <- gmb %>% 
+        select(Store.code.y, Location.Name, Business.name, Location.Address, Address, Total.views, Phone.call.actions, Directions.actions, Website.actions) %>% 
+        rename("Store.code" = Store.code.y)
+      gmb_filtered <- gmb %>% 
+        filter(is.na(Store.code))
+    
+      full_voc <- full_join(review_tracker, gmb, by = "Store.code")
+      
+      if(nrow(gmb_filtered) > 0 | nrow(review_tracker_filtered) > 0) {
+        
+        confirmSweetAlert(session = session,
+                          inputId = "update_voc_association_doc",
+                          title = "There appear to be more campaigns on GMB or Review Tracker!",
+                          text = "Please update the VOC associations doc.",
+                          type = "warning",
+                          btn_labels = "OK!",
+                          danger_mode = T)
+        
+      }else{
+        
+        full_voc <- full_voc %>%
+          slice(1:5)
+        # 
+        # # browser()
+        # 
+        full_voc <- as.data.frame(lapply(full_voc, as.character), stringsAsFactors = F)
+        
+        # dat <- full_voc
+        # 
+        # dat=as.data.frame(lapply(dat, as.character), stringsAsFactors=F)
+        
+        for(i in 1:nrow(full_voc)) {
+          
+          # mydoc = pptx(template ="~/shiny-server/shiny_app/MasterData/other_files/Co-op_template.pptx")
+          # mydoc=addSlide(mydoc,slide.layout = "VOC Title")
+          # mydoc=addSlide(mydoc,slide.layout = "VOC Info")
+          # mydoc = addParagraph(mydoc,dat$Total.views[i])
+          # mydoc = addParagraph(mydoc,dat$Phone.call.actions[i])
+          # mydoc = addParagraph(mydoc,dat$Directions.actions[i])
+          # mydoc = addParagraph(mydoc,dat$Website.actions[i])
+          # mydoc = addParagraph(mydoc,dat$Average.Star.Rating[i])
+          # mydoc = addParagraph(mydoc,dat$Number.of.Reviews[i])
+          # mydoc = addParagraph(mydoc,dat$city_state[i])
+          # file = paste0("~/Desktop/test/ ",dat$citySt[i], ".pptx")
+          # writeDoc(mydoc, file)
+          
+          mydoc = pptx(template ="~/shiny-server/shiny_app/MasterData/other_files/Co-op_template.pptx")
+          mydoc=addSlide(mydoc,slide.layout = "VOC Title")
+          mydoc=addSlide(mydoc,slide.layout = "VOC Info")
+          mydoc <- mydoc %>%
+            addParagraph(full_voc$Total.views[i]) %>%
+            addParagraph(full_voc$Phone.call.actions[i]) %>%
+            addParagraph(full_voc$Directions.actions[i]) %>%
+            addParagraph(full_voc$Website.actions[i]) %>%
+            addParagraph(full_voc$Average.Star.Rating[i]) %>%
+            addParagraph(full_voc$Number.of.Reviews[i]) %>%
+            addParagraph(full_voc$city_state[i])
+          
+          
+          # mydoc = addParagraph(mydoc,dat$Total.views[i])
+          # mydoc = addParagraph(mydoc,dat$Phone.call.actions[i])
+          # mydoc = addParagraph(mydoc,dat$Directions.actions[i])
+          # mydoc = addParagraph(mydoc,dat$Website.actions[i])
+          # mydoc = addParagraph(mydoc,dat$Average.Star.Rating[i])
+          # mydoc = addParagraph(mydoc,dat$Number.of.Reviews[i])
+          # mydoc = addParagraph(mydoc,dat$city_state[i])
+          file = paste0("~/Desktop/test/", full_voc$city_state[i], ".pptx")
+          writeDoc(mydoc, file)
+          
+          print("Powerpoint Created")
+          
+        }
+        
+      }
+      
+      
+    }
+    
+  
+    
   })
   
 }
