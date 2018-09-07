@@ -5360,16 +5360,16 @@ server <- function(input, output, session) {
           # file = paste0("~/Desktop/test/ ",dat$citySt[i], ".pptx")
           # writeDoc(mydoc, file)
           
-          voc_powerpoint_doc <- read_pptx(path = "~/shiny-server/shiny_app/MasterData/other_files/Co-op_template.pptx") %>% 
-            add_slide(layout = "VOC Title", master = "Office Theme") %>% 
-            add_slide(layout = "VOC Info", master = "Office Theme") %>% 
-            ph_with_text(type = "body", str = full_voc$Total.views[i], index = 8) %>% 
-            ph_with_text(type = "body", str = full_voc$Phone.call.actions[i], index = 9) %>% 
-            ph_with_text(type = "body", str = full_voc$Directions.actions[i], index = 10) %>% 
-            ph_with_text(type = "body", str = full_voc$Website.actions[i], index = 15) %>% 
-            ph_with_text(type = "body", str = full_voc$Average.Star.Rating[i], index = 16) %>% 
-            ph_with_text(type = "body", str = full_voc$Number.of.Reviews[i], index = 17) %>% 
-            ph_with_text(type = "body", str = full_voc$city_state[i], index = 18)
+          voc_powerpoint_doc <- read_pptx(path = "~/shiny-server/shiny_app/MasterData/other_files/Master_template.pptx") %>% 
+            add_slide(layout = "VOC Title", master = "Title Slide") %>% 
+            add_slide(layout = "VOC Info", master = "Title Slide") %>% 
+            ph_with_text(type = "body", str = full_voc$Total.views[i], index = 17) %>% 
+            ph_with_text(type = "body", str = full_voc$Phone.call.actions[i], index = 18) %>% 
+            ph_with_text(type = "body", str = full_voc$Directions.actions[i], index = 19) %>% 
+            ph_with_text(type = "body", str = full_voc$Website.actions[i], index = 3) %>% 
+            ph_with_text(type = "body", str = full_voc$Average.Star.Rating[i], index = 4) %>% 
+            ph_with_text(type = "body", str = full_voc$Number.of.Reviews[i], index = 5) %>% 
+            ph_with_text(type = "body", str = full_voc$city_state[i], index = 6)
           
           # browser()
           
