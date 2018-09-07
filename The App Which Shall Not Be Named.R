@@ -678,6 +678,7 @@ ui <- dashboardPage(
               h4("Please use with caution!"),
               
               fileInput(inputId = "exp_voc_file", label = "Please insert GMB and ReviewTracker Files:", multiple = T),
+              textInput(inputId = "exp_voc_date_range", label = "Date Range for VOC Slides:"),
               actionButton(inputId = "exp_voc_gen", label = "Generate VOC Slides"))
       
     )))
@@ -5334,18 +5335,31 @@ server <- function(input, output, session) {
         
       }else{
         
-        full_voc <- full_voc %>%
-          slice(1:5)
+        # full_voc <- full_voc %>%
+        #   slice(1:5)
         # 
         # browser()
         # 
+        
+        dir.create(paste0("/Volumes/Front/Culligan/Local Website Reporting/VOC ", input$exp_voc_date_range))
+        
         full_voc <- as.data.frame(lapply(full_voc, as.character), stringsAsFactors = F)
         
         # dat <- full_voc
         # 
         # dat=as.data.frame(lapply(dat, as.character), stringsAsFactors=F)
         
+        # withProgress(message = "Downloading Powerpoints", value = 0, {
+        #   
+        #   for(i in 1:length(bing_campaign_selection)){
+        #     
+        #     incProgress(1/length(bing_campaign_selection), detail = paste0("Downloading ", i, " of ", length(bing_campaign_selection)))
+        
+        withProgress(message = "Downloading Powerpoints", value = 0, {
+        
         for(i in 1:nrow(full_voc)) {
+          
+          incProgress(1/nrow(full_voc), detail = paste0("Downloading ", i, " of ", nrow(full_voc)))
           
           # mydoc = pptx(template ="~/shiny-server/shiny_app/MasterData/other_files/Co-op_template.pptx")
           # mydoc=addSlide(mydoc,slide.layout = "VOC Title")
@@ -5372,8 +5386,8 @@ server <- function(input, output, session) {
             ph_with_text(type = "body", str = full_voc$city_state[i], index = 6)
           
           # browser()
-          
-          save_file <- paste0("~/Desktop/test/", full_voc$city_state[i], ".pptx")
+          save_file <- paste0("/Volumes/Front/Culligan/Local Website Reporting/VOC ", input$exp_voc_date_range, "/", full_voc$city_state[i], ".pptx")
+          # save_file <- paste0("~/Desktop/test/", full_voc$city_state[i], ".pptx")
           print(voc_powerpoint_doc, save_file)
             
           
@@ -5403,6 +5417,8 @@ server <- function(input, output, session) {
           # print("Powerpoint Created")
           
         }
+        
+      })
         
       }
       
