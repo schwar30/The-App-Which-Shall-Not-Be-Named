@@ -138,7 +138,7 @@ ui <- dashboardPage(
       # For local reporting, we need to generate slides for VOC, and its a total pain to find,
       # so I just wanted it put in a place I know I won't lose it.
       
-      menuItem("VOC Slides", tabName = "voc", icon = icon("bomb")),
+      menuItem("VOC Beta", tabName = "voc", icon = icon("bomb")),
       
       # Currently a misnomer, since generally speaking all of the bot traffic is actually through 
       # direct traffic, not organic, but it doesn't really matter since everything is done the same
@@ -191,7 +191,7 @@ ui <- dashboardPage(
       
       menuItem("Bing Slides", tabName = "bing", icon = icon("database")),
       
-      menuItem("VOC Experimental", tabName = "voc_exp_all", icon = icon("cube"),
+      menuItem("VOC Plus", tabName = "voc_exp_all", icon = icon("cube"),
                menuSubItem("VOC Upload / Generate Slides", tabName = "voc_all"),
                menuSubItem("View Differences", tabName = "voc_all_differences"),
                menuSubItem("VOC Association Edit", tabName = "voc_all_edit"),
@@ -363,7 +363,7 @@ ui <- dashboardPage(
       
       tabItem(tabName = "voc",
               
-              titlePanel("VOC Slides"),
+              titlePanel("VOC Beta"),
               
               sidebarPanel(
                 
@@ -685,7 +685,7 @@ ui <- dashboardPage(
       
       tabItem(tabName = "voc_all",
               
-              titlePanel("Experimental Generate VOC slides"),
+              titlePanel("VOC Plus"),
               h4("Please use with caution!"),
               
               fileInput(inputId = "exp_voc_file", label = "Please insert GMB and ReviewTracker Files:", multiple = T),
