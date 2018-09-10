@@ -723,8 +723,10 @@ ui <- dashboardPage(
               
               h4("Use with caution. This feature should be rarely or never used."),
               
-              dataTableOutput("voc_all_delete_table"),
-              actionButton(inputId = "voc_delete_row", label = "Delete Rows")),
+              actionButton(inputId = "voc_delete_row", label = "Delete Rows"),
+              dataTableOutput("voc_all_delete_table")
+              
+              ),
       
       tabItem(tabName = "voc_all_differences",
               
@@ -5354,6 +5356,8 @@ server <- function(input, output, session) {
       
       voc_associations <<- read.csv("~/Desktop/Rob Scripts/Reference Files/VOC Associations Final.csv")
       
+      output$voc_all_delete_table <- renderDataTable(datatable(voc_associations, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
+      
       review_tracker <- left_join(review_tracker, voc_associations, by = c("Location.Name", "Location.Address"))
       
       review_tracker <- review_tracker %>% 
@@ -5718,7 +5722,8 @@ server <- function(input, output, session) {
         
       write.csv(voc_associations, "~/Desktop/Rob Scripts/Reference Files/VOC Associations Final.csv", row.names = F)
       output$voc_all_add_table <- renderTable(voc_associations)
-        
+      output$voc_all_delete_table <- renderDataTable(datatable(voc_associations, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
+      
       
       confirmSweetAlert(session = session,
                         inputId = "voc_added_row_confirm",
@@ -5735,6 +5740,39 @@ server <- function(input, output, session) {
                         inputId = "voc_reject_add",
                         title = "New row will not be added.",
                         type = "info",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+    }
+    
+  })
+  
+  # output$voc_all_delete_table <- renderDataTable(datatable(voc_associations))
+  
+  observeEvent(input$voc_delete_row, {
+    
+    # browser()
+    
+    if(is.null(input$voc_all_delete_table_rows_selected)) {
+      
+      confirmSweetAlert(session = session,
+                        inputId = "no_voc_delete_selected",
+                        title = "Please choose row(s) to delete!",
+                        type = "warning",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+    }else{
+      
+      voc_associations <- voc_associations[-input$voc_all_delete_table_rows_selected,]
+      output$voc_all_delete_table <- renderDataTable(datatable(voc_associations, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
+      output$voc_all_add_table <- renderTable(voc_associations)
+      write.csv(voc_associations, "~/Desktop/Rob Scripts/Reference Files/VOC Associations Final.csv", row.names = F)
+      
+      confirmSweetAlert(session = session,
+                        inputId = "voc_delete_selected_confirm",
+                        title = "Entries Now deleted!",
+                        type = "success",
                         btn_labels = "OK!",
                         danger_mode = T)
       
