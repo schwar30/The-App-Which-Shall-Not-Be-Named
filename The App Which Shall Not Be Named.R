@@ -26,7 +26,9 @@ library(googleAnalyticsR)
 
 # I don't think I use any relevant things from this either.
 # Even if I did, I should be using the packages officer and
-# FlexTable
+# FlexTable. The important slides (VOC Experimental and Bing Slides)
+# only use the current officer package. Migrating away from the ReporteRs
+# package and the VOC tab in would be wonderful, needed additions.
 
 library(ReporteRs)
 
@@ -706,10 +708,12 @@ ui <- dashboardPage(
               textInput(inputId = "voc_business_name", label = "Please input EXPLICIT GMB name:"),
               textInput(inputId = "voc_location_name", label = "Please input EXPLICIT ReviewTracker name:"),
               textInput(inputId = "voc_address", label = "Please input EXPLICIT GMB Address:"),
-              textInput(inputId = "voc_location_address", label = "Please input EXPLICIT ReviewTracker name:")
+              textInput(inputId = "voc_location_address", label = "Please input EXPLICIT ReviewTracker name:"),
+              actionButton(inputId = "voc_add_rbind", label = "Add Row To Associations Doc")
+              
               ),
               
-              dataTableOutput("voc_all_add_table")
+              tableOutput("voc_all_add_table")
               
               ),
       
@@ -723,6 +727,8 @@ ui <- dashboardPage(
               actionButton(inputId = "voc_delete_row", label = "Delete Rows")),
       
       tabItem(tabName = "voc_all_differences",
+              
+              titlePanel("Unmatched Businesses"),
               
               actionButton(inputId = "voc_gmb_differences", label = "Show GMB Differences"),
               actionButton(inputId = "voc_review_differences", label = "Show ReviewTracker Differences"),
@@ -5346,7 +5352,7 @@ server <- function(input, output, session) {
       
       # browser()
       
-      voc_associations <- read.csv("~/Desktop/Rob Scripts/Reference Files/VOC Associations Final.csv")
+      voc_associations <<- read.csv("~/Desktop/Rob Scripts/Reference Files/VOC Associations Final.csv")
       
       review_tracker <- left_join(review_tracker, voc_associations, by = c("Location.Name", "Location.Address"))
       
@@ -5600,6 +5606,137 @@ server <- function(input, output, session) {
         }
         
       }
+      
+    }
+    
+  })
+  
+  observeEvent(input$voc_add_rbind, {
+    
+    # browser()
+    
+    if(is.null(input$exp_voc_gen) | is.null(gmb) | is.null(review_tracker) | is.null(input$voc_gmb_differences) |
+       is.null(input$voc_review_differences)) {
+      
+      confirmSweetAlert(session = session, 
+                        inputId = "voc_upload_file_first",
+                        title = "Please upload GMB and ReviewTracker Files first!",
+                        text = "Viewing the differences will let you know what needs to be added to Association Doc.",
+                        type = "warning",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+    }else{
+      
+      if(input$voc_store_code == "") {
+        
+        confirmSweetAlert(session = session, 
+                          inputId = "voc_no_store_code",
+                          title = "Please input corporate ID!",
+                          text = "This will take some manual searching, but is required since this is how things are matched.",
+                          type = "warning",
+                          btn_labels = "OK!",
+                          danger_mode = T)
+        
+      }else{
+        
+        if((input$voc_location_name != "" & input$voc_location_address == "") | (input$voc_location_address != "" & input$voc_location_name == "")) {
+          
+          confirmSweetAlert(session = session, 
+                            inputId = "voc_review_missing",
+                            title = "Please input both location and address!",
+                            text = "Both pieces of information are needed for an addition.",
+                            type = "warning",
+                            btn_labels = "OK!",
+                            danger_mode = T)
+          
+        }else{
+          
+          if((input$voc_business_name != "" & input$voc_address == "") | (input$voc_address != "" & input$voc_business_name == "")) {
+            
+            confirmSweetAlert(session = session, 
+                              inputId = "voc_review_missing",
+                              title = "Please input both location and address!",
+                              text = "Both pieces of information are needed for an addition.",
+                              type = "warning",
+                              btn_labels = "OK!",
+                              danger_mode = T)
+            
+          }else{
+            
+            confirmSweetAlert(session = session, 
+                              inputId = "voc_confirm_add",
+                              title = "Are you sure you want to add the row?",
+                              text = "Current association doc will be overwritten.",
+                              type = "warning",
+                              btn_labels = c("No", "Yes"),
+                              danger_mode = T)
+            
+            # voc_add_row <- c(input$voc_store_code, input$voc_business_name, input$voc_location_name, input$voc_address, input$voc_location_address)
+            
+            
+          }
+          
+        }
+        
+      }
+      
+    }
+    
+  })
+  
+  observeEvent(input$voc_confirm_add, {
+    
+    # browser()
+    
+    if(input$voc_confirm_add == T){
+      
+      # browser()
+      voc_associations <- read.csv("~/Desktop/Rob Scripts/Reference Files/VOC Associations Final.csv")
+      voc_add_row <- c(input$voc_store_code, input$voc_business_name, input$voc_location_name, input$voc_address, input$voc_location_address)
+      voc_add_row <- as.data.frame(t(as.data.frame(voc_add_row)))
+      colnames(voc_add_row) <- colnames(voc_associations)
+      original_voc_row_number <- nrow(voc_associations)
+      test <- voc_associations
+      voc_associations <- rbind(voc_associations, voc_add_row)
+      voc_associations <- voc_associations %>% 
+        distinct()
+      after_voc_row_number <- nrow(voc_associations)
+      
+      # browser()
+      
+      if(original_voc_row_number == after_voc_row_number) {
+        
+        confirmSweetAlert(session = session, 
+                          inputId = "voc_already_present",
+                          title = "This entry is already in the doc!",
+                          type = "warning",
+                          btn_labels = "OK!",
+                          danger_mode = T)
+        
+      }else{
+        
+      write.csv(voc_associations, "~/Desktop/Rob Scripts/Reference Files/VOC Associations Final.csv", row.names = F)
+      output$voc_all_add_table <- renderTable(voc_associations)
+        
+      
+      confirmSweetAlert(session = session,
+                        inputId = "voc_added_row_confirm",
+                        title = "Association now added in doc!",
+                        type = "success",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+      }
+      
+    }else{
+      
+      confirmSweetAlert(session = session,
+                        inputId = "voc_reject_add",
+                        title = "New row will not be added.",
+                        type = "info",
+                        btn_labels = "OK!",
+                        danger_mode = T)
       
     }
     
