@@ -76,6 +76,10 @@ data2 <- NULL
 data_set <- NULL
 date_ranges <- NULL
 data_set_names <- NULL
+gmb <- NULL
+review_tracker <- NULL
+gmb_filtered <- NULL
+review_tracker_filtered <- NULL
 
 
 ui <- dashboardPage(
@@ -185,7 +189,12 @@ ui <- dashboardPage(
       
       menuItem("Bing Slides", tabName = "bing", icon = icon("database")),
       
-      menuItem("VOC Experimental", tabName = "voc_all", icon = icon("cube"))
+      menuItem("VOC Experimental", tabName = "voc_exp_all", icon = icon("cube"),
+               menuSubItem("VOC Upload / Generate Slides", tabName = "voc_all"),
+               menuSubItem("View Differences", tabName = "voc_all_differences"),
+               menuSubItem("VOC Association Edit", tabName = "voc_all_edit"),
+               menuSubItem("VOC Association Add", tabName = "voc_all_add"),
+               menuSubItem("VOC Association Delete", tabName = "voc_all_delete"))
       
     ) 
     
@@ -679,7 +688,48 @@ ui <- dashboardPage(
               
               fileInput(inputId = "exp_voc_file", label = "Please insert GMB and ReviewTracker Files:", multiple = T),
               textInput(inputId = "exp_voc_date_range", label = "Date Range for VOC Slides:"),
-              actionButton(inputId = "exp_voc_gen", label = "Generate VOC Slides"))
+              actionButton(inputId = "exp_voc_gen", label = "Generate VOC Slides")),
+      
+      tabItem(tabName = "voc_all_edit",
+              
+              titlePanel("Edit VOC Association Doc"),
+              
+              dataTableOutput("voc_all_edit_table")),
+      
+      tabItem(tabName = "voc_all_add",
+              
+              titlePanel("Add Entry to Association Doc"),
+              
+              sidebarPanel(
+              
+              textInput(inputId = "voc_store_code", label = "Please input Corporate ID:"),
+              textInput(inputId = "voc_business_name", label = "Please input EXPLICIT GMB name:"),
+              textInput(inputId = "voc_location_name", label = "Please input EXPLICIT ReviewTracker name:"),
+              textInput(inputId = "voc_address", label = "Please input EXPLICIT GMB Address:"),
+              textInput(inputId = "voc_location_address", label = "Please input EXPLICIT ReviewTracker name:")
+              ),
+              
+              dataTableOutput("voc_all_add_table")
+              
+              ),
+      
+      tabItem(tabName = "voc_all_delete",
+              
+              titlePanel("Remove Entry from Assoication Doc"),
+              
+              h4("Use with caution. This feature should be rarely or never used."),
+              
+              dataTableOutput("voc_all_delete_table"),
+              actionButton(inputId = "voc_delete_row", label = "Delete Rows")),
+      
+      tabItem(tabName = "voc_all_differences",
+              
+              actionButton(inputId = "voc_gmb_differences", label = "Show GMB Differences"),
+              actionButton(inputId = "voc_review_differences", label = "Show ReviewTracker Differences"),
+              textOutput("voc_difference_text"),
+              tableOutput("voc_difference_table")
+              # tableOutput("voc_review_difference_table")
+              )
       
     )))
 
@@ -5312,13 +5362,13 @@ server <- function(input, output, session) {
       
       review_tracker <- review_tracker %>% 
         select(Store.code, Location.Name, Business.name, Location.Address, Address, city_state, Average.Star.Rating, Number.of.Reviews)
-      review_tracker_filtered <- review_tracker %>% 
+      review_tracker_filtered <<- review_tracker %>% 
         filter(is.na(Store.code))
       
       gmb <- gmb %>% 
         select(Store.code.y, Location.Name, Business.name, Location.Address, Address, Total.views, Phone.call.actions, Directions.actions, Website.actions) %>% 
         rename("Store.code" = Store.code.y)
-      gmb_filtered <- gmb %>% 
+      gmb_filtered <<- gmb %>% 
         filter(is.na(Store.code))
     
       full_voc <- full_join(review_tracker, gmb, by = "Store.code")
@@ -5426,6 +5476,132 @@ server <- function(input, output, session) {
     }
     
   
+    
+  })
+  
+  observeEvent(input$voc_gmb_differences, {
+    
+    # browser()
+    
+    # gmb_test <- try(gmb_filtered)
+    # review_test <- try(review_tracker_filtered)
+    
+    if(is.null(input$exp_voc_gen) | is.null(gmb) | is.null(review_tracker)) {
+      
+      confirmSweetAlert(session = session, 
+                        inputId = "voc_upload_file_first",
+                        title = "Please upload GMB and ReviewTracker Files first!",
+                        type = "warning",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+    }else{
+      
+      if(is.null(gmb_filtered)) {
+
+        confirmSweetAlert(session = session,
+                          inputId = "voc_null_filtered_gmb",
+                          title = "There are no discrepencies!",
+                          type = "warning",
+                          btn_labels = "OK!",
+                          danger_mode = T)
+
+        output$voc_gmb_difference_table <- renderDataTable({NULL})
+
+      }else{
+        
+        if(nrow(gmb_filtered) == 0) {
+          
+          confirmSweetAlert(session = session,
+                            inputId = "voc_zero_filtered_gmb",
+                            title = "There are no discrepencies!",
+                            type = "warning",
+                            btn_labels = "OK!",
+                            danger_mode = T)
+          
+          output$voc_gmb_difference_table <- renderDataTable({NULL})
+          
+        }else{
+          
+          # browser()
+          
+          gmb_filtered_dt <- gmb_filtered %>% 
+            select(Business.name, Address) %>% 
+            rename("Unmatched Businesses" = Business.name)
+          
+          # gmb_filtered_dt <- datatable(gmb_filtered)
+          
+          output$voc_difference_text <- renderText("GMB Association Discrepencies:")
+          output$voc_difference_table <- renderTable({gmb_filtered_dt})
+          
+          # browser()
+          
+        }
+        
+      }
+      
+    }
+    
+  })
+  
+  observeEvent(input$voc_review_differences, {
+    
+    if(is.null(input$exp_voc_gen) | is.null(gmb) | is.null(review_tracker)) {
+      
+      confirmSweetAlert(session = session, 
+                        inputId = "voc_upload_file_first",
+                        title = "Please upload GMB and ReviewTracker Files first!",
+                        type = "warning",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+    }else{
+      
+      if(is.null(review_tracker_filtered)) {
+        
+        confirmSweetAlert(session = session,
+                          inputId = "voc_null_filtered_review",
+                          title = "There are no discrepencies!",
+                          type = "warning",
+                          btn_labels = "OK!",
+                          danger_mode = T)
+        
+        output$voc_difference_table <- renderDataTable({NULL})
+        
+      }else{
+        
+        if(nrow(review_tracker_filtered) == 0) {
+          
+          confirmSweetAlert(session = session,
+                            inputId = "voc_zero_filtered_review",
+                            title = "There are no discrepencies!",
+                            type = "warning",
+                            btn_labels = "OK!",
+                            danger_mode = T)
+          
+          output$voc_difference_table <- renderDataTable({NULL})
+          
+        }else{
+          
+          # browser()
+          
+          review_tracker_filtered_dt <- review_tracker_filtered %>% 
+            select(Location.Name, Location.Address) %>% 
+            rename("Unmatched Businesses" = Location.Name) %>% 
+            rename("Address" = Location.Address)
+          
+          # gmb_filtered_dt <- datatable(gmb_filtered)
+          
+          output$voc_difference_text <- renderText("Review Tracker Association Discrepencies:")
+          output$voc_difference_table <- renderTable({review_tracker_filtered_dt})
+          
+          # browser()
+          
+        }
+        
+      }
+      
+    }
     
   })
   
