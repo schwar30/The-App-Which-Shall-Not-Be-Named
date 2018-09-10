@@ -704,11 +704,18 @@ ui <- dashboardPage(
               
               sidebarPanel(
               
+              # textInput(inputId = "voc_store_code", label = "Please input Corporate ID:"),
+              # textInput(inputId = "voc_business_name", label = "Please input EXPLICIT GMB name:"),
+              # textInput(inputId = "voc_location_name", label = "Please input EXPLICIT ReviewTracker name:"),
+              # textInput(inputId = "voc_address", label = "Please input EXPLICIT GMB Address:"),
+              # textInput(inputId = "voc_location_address", label = "Please input EXPLICIT ReviewTracker name:"),
+              
               textInput(inputId = "voc_store_code", label = "Please input Corporate ID:"),
-              textInput(inputId = "voc_business_name", label = "Please input EXPLICIT GMB name:"),
-              textInput(inputId = "voc_location_name", label = "Please input EXPLICIT ReviewTracker name:"),
-              textInput(inputId = "voc_address", label = "Please input EXPLICIT GMB Address:"),
-              textInput(inputId = "voc_location_address", label = "Please input EXPLICIT ReviewTracker name:"),
+              selectizeInput(inputId = "voc_business_name", label = "Please input GMB name:", choices = NULL, selected = NULL, multiple = T),
+              selectizeInput(inputId = "voc_location_name", label = "Please input ReviewTracker name:", choices = NULL, selected = NULL, multiple = T),
+              selectizeInput(inputId = "voc_address", label = "Please input GMB Address:", choices = NULL, selected = NULL, multiple = T),
+              selectizeInput(inputId = "voc_location_address", label = "Please input ReviewTracker address:", choices = NULL, selected = NULL, multiple = T),
+              
               actionButton(inputId = "voc_add_rbind", label = "Add Row To Associations Doc")
               
               ),
@@ -5356,6 +5363,8 @@ server <- function(input, output, session) {
       
       voc_associations <<- read.csv("~/Desktop/Rob Scripts/Reference Files/VOC Associations Final.csv", stringsAsFactors = F)
       
+      # browser()
+      
       output$voc_all_delete_table <- renderDataTable(datatable(voc_associations, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
       output$voc_all_edit_table <- renderDataTable(datatable(voc_associations, editable = T, selection = "none", rownames = F, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
       
@@ -5385,6 +5394,12 @@ server <- function(input, output, session) {
       full_voc <- full_join(review_tracker, gmb, by = "Store.code")
       
       if(nrow(gmb_filtered) > 0 | nrow(review_tracker_filtered) > 0) {
+        
+        # updateSelectizeInput(session = session, inputId = "voc_store_code", label = "Please input Corporate ID:", choices = gmb$Store.code, selected = NULL)
+        updateSelectizeInput(session = session, inputId = "voc_business_name", label = "Please input GMB name:", choices = gmb$Business.name, selected = NULL)
+        updateSelectizeInput(session = session, inputId = "voc_location_name", label = "Please input ReviewTracker name:", choices = review_tracker$Location.Name, selected = NULL)
+        updateSelectizeInput(session = session, input = "voc_address", label = "Please input GMB Address:", choices = gmb$Address, selected = NULL)
+        updateSelectizeInput(session = session, input = "voc_location_address", label = "Please input ReviewTracker address:", choices = review_tracker$Location.Address, selected = NULL)
         
         confirmSweetAlert(session = session,
                           inputId = "update_voc_association_doc",
@@ -5480,6 +5495,13 @@ server <- function(input, output, session) {
         }
         
       })
+        
+        confirmSweetAlert(session = session,
+                          inputId = "voc_slide_download_complete",
+                          title = "VOC slide download complete!",
+                          type = "success",
+                          btn_labels = "OK!",
+                          danger_mode = T)
         
       }
       
@@ -5633,19 +5655,35 @@ server <- function(input, output, session) {
       
     }else{
       
+      # browser()
+      
       if(input$voc_store_code == "") {
         
         confirmSweetAlert(session = session, 
                           inputId = "voc_no_store_code",
                           title = "Please input corporate ID!",
-                          text = "This will take some manual searching, but is required since this is how things are matched.",
+                          text = "This will take some manual searching, but is required since this is how dealers are matched.",
                           type = "warning",
                           btn_labels = "OK!",
                           danger_mode = T)
         
       }else{
         
-        if((input$voc_location_name != "" & input$voc_location_address == "") | (input$voc_location_address != "" & input$voc_location_name == "")) {
+        if(length(input$voc_business_name) > 1 | length(input$voc_location_name) > 1 | length(input$voc_location_address) > 1| length(input$voc_address) > 1) {
+          
+          confirmSweetAlert(session = session,
+                            inputId = "voc_too_many_entries",
+                            title = "There are too many entries in these inputs!",
+                            text = "Please only put one name in each field.",
+                            type = "warning",
+                            btn_labels = "OK!", 
+                            danger_mode = T)
+          
+        }else{
+          
+        if((!is.null(input$voc_location_name) & is.null(input$voc_location_address)) | (!is.null(input$voc_location_address) & is.null(input$voc_location_name))) {
+        
+        # if((input$voc_location_name != "" & input$voc_location_address == "") | (input$voc_location_address != "" & input$voc_location_name == "")) {
           
           confirmSweetAlert(session = session, 
                             inputId = "voc_review_missing",
@@ -5657,7 +5695,11 @@ server <- function(input, output, session) {
           
         }else{
           
-          if((input$voc_business_name != "" & input$voc_address == "") | (input$voc_address != "" & input$voc_business_name == "")) {
+          # browser()
+          
+          if((!is.null(input$voc_business_name) & is.null(input$voc_address)) | (!is.null(input$voc_address) & is.null(input$voc_business_name))) {
+          
+          # if((input$voc_business_name != "" & input$voc_address == "") | (input$voc_address != "" & input$voc_business_name == "")) {
             
             confirmSweetAlert(session = session, 
                               inputId = "voc_review_missing",
@@ -5685,6 +5727,8 @@ server <- function(input, output, session) {
         }
         
       }
+      
+    }
       
     }
     
