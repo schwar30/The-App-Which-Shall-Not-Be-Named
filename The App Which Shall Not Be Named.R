@@ -5354,9 +5354,10 @@ server <- function(input, output, session) {
       
       # browser()
       
-      voc_associations <<- read.csv("~/Desktop/Rob Scripts/Reference Files/VOC Associations Final.csv")
+      voc_associations <<- read.csv("~/Desktop/Rob Scripts/Reference Files/VOC Associations Final.csv", stringsAsFactors = F)
       
       output$voc_all_delete_table <- renderDataTable(datatable(voc_associations, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
+      output$voc_all_edit_table <- renderDataTable(datatable(voc_associations, editable = T, selection = "none", rownames = F, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
       
       review_tracker <- left_join(review_tracker, voc_associations, by = c("Location.Name", "Location.Address"))
       
@@ -5696,7 +5697,7 @@ server <- function(input, output, session) {
     if(input$voc_confirm_add == T){
       
       # browser()
-      voc_associations <- read.csv("~/Desktop/Rob Scripts/Reference Files/VOC Associations Final.csv")
+      voc_associations <- read.csv("~/Desktop/Rob Scripts/Reference Files/VOC Associations Final.csv", stringsAsFactors = F)
       voc_add_row <- c(input$voc_store_code, input$voc_business_name, input$voc_location_name, input$voc_address, input$voc_location_address)
       voc_add_row <- as.data.frame(t(as.data.frame(voc_add_row)))
       colnames(voc_add_row) <- colnames(voc_associations)
@@ -5723,7 +5724,7 @@ server <- function(input, output, session) {
       write.csv(voc_associations, "~/Desktop/Rob Scripts/Reference Files/VOC Associations Final.csv", row.names = F)
       output$voc_all_add_table <- renderTable(voc_associations)
       output$voc_all_delete_table <- renderDataTable(datatable(voc_associations, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
-      
+      output$voc_all_edit_table <- renderDataTable(datatable(voc_associations, editable = T, selection = "none", rownames = F, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
       
       confirmSweetAlert(session = session,
                         inputId = "voc_added_row_confirm",
@@ -5755,6 +5756,8 @@ server <- function(input, output, session) {
     
     if(is.null(input$voc_all_delete_table_rows_selected)) {
       
+      # browser()
+      
       confirmSweetAlert(session = session,
                         inputId = "no_voc_delete_selected",
                         title = "Please choose row(s) to delete!",
@@ -5767,6 +5770,8 @@ server <- function(input, output, session) {
       voc_associations <- voc_associations[-input$voc_all_delete_table_rows_selected,]
       output$voc_all_delete_table <- renderDataTable(datatable(voc_associations, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
       output$voc_all_add_table <- renderTable(voc_associations)
+      output$voc_all_edit_table <- renderDataTable(datatable(voc_associations, editable = T, selection = "none", rownames = F, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
+      
       write.csv(voc_associations, "~/Desktop/Rob Scripts/Reference Files/VOC Associations Final.csv", row.names = F)
       
       confirmSweetAlert(session = session,
@@ -5775,6 +5780,91 @@ server <- function(input, output, session) {
                         type = "success",
                         btn_labels = "OK!",
                         danger_mode = T)
+      
+    }
+    
+  })
+  
+  observeEvent(input$voc_all_edit_table_cell_edit, {
+    
+    # browser()
+    
+    if(input$voc_all_edit_table_cell_edit$value == "") {
+      
+      edit_proxy <- dataTableProxy("voc_all_edit_table")
+      edit_info <- input$voc_all_edit_table_cell_edit
+      edit_row <- edit_info$row
+      edit_column <- edit_info$col
+      edit_value <- edit_info$value
+      # browser()
+      voc_associations[edit_row, edit_column + 1] <<- DT::coerceValue(voc_associations[edit_row, edit_column + 1], voc_associations[edit_row, edit_column + 1])
+      replaceData(edit_proxy, voc_associations, resetPaging = F)
+      
+      output$voc_all_edit_table <- renderDataTable(datatable(voc_associations, editable = T, selection = "none", rownames = F, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
+      output$voc_all_add_table <- renderTable(voc_associations)
+      output$voc_all_delete_table <- renderDataTable(datatable(voc_associations, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
+      write.csv(voc_associations, "~/Desktop/no rewrite.csv", row.names = F)
+      
+      confirmSweetAlert(session = session,
+                        inputId = "voc_empty_edit",
+                        title = "You need to have a value input to make an edit!",
+                        text = "If you'd like to remove the row, go to the delete tab.",
+                        type = "warning",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+      # browser()
+      
+    }else{
+      
+     
+      confirmSweetAlert(session = session,
+                        inputId = "voc_edit_change",
+                        title = "Are you sure you want to make this edit?",
+                        text = "You will not be able to revert and have to manually change back if this is not desired.",
+                        type = "info",
+                        btn_labels = c("No", "Yes"),
+                        danger_mode = T)
+      
+    }
+    
+  })
+  
+  observeEvent(input$voc_edit_change, {
+    
+    # browser()
+    
+    if(input$voc_edit_change == T) {
+    
+    edit_proxy <- dataTableProxy("voc_all_edit_table")
+    edit_info <- input$voc_all_edit_table_cell_edit
+    edit_row <- edit_info$row
+    edit_column <- edit_info$col
+    edit_value <- edit_info$value
+    
+    voc_associations[edit_row, edit_column + 1] <<- DT::coerceValue(edit_value, voc_associations[edit_row, edit_column + 1])
+    replaceData(edit_proxy, voc_associations, resetPaging = F)
+    
+    output$voc_all_edit_table <- renderDataTable(datatable(voc_associations, editable = T, selection = "none", rownames = F, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
+    output$voc_all_add_table <- renderTable(voc_associations)
+    output$voc_all_delete_table <- renderDataTable(datatable(voc_associations, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
+    write.csv(voc_associations, "~/Desktop/Rob Scripts/Reference Files/VOC Associations Final.csv", row.names = F)
+    
+    }else{
+      
+      edit_proxy <- dataTableProxy("voc_all_edit_table")
+      edit_info <- input$voc_all_edit_table_cell_edit
+      edit_row <- edit_info$row
+      edit_column <- edit_info$col
+      edit_value <- edit_info$value
+      # browser()
+      voc_associations[edit_row, edit_column + 1] <<- DT::coerceValue(voc_associations[edit_row, edit_column + 1], voc_associations[edit_row, edit_column + 1])
+      replaceData(edit_proxy, voc_associations, resetPaging = F)
+      
+      output$voc_all_edit_table <- renderDataTable(datatable(voc_associations, editable = T, selection = "none", rownames = F, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
+      output$voc_all_add_table <- renderTable(voc_associations)
+      output$voc_all_delete_table <- renderDataTable(datatable(voc_associations, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
+      write.csv(voc_associations, "~/Desktop/Rob Scripts/Reference Files/VOC Associations Final.csv", row.names = F)
       
     }
     
