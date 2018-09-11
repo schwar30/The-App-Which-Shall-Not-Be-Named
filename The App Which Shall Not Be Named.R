@@ -99,7 +99,7 @@ ui <- dashboardPage(
                menuSubItem("Upload Properties", tabName = "magic_upload"),
                menuSubItem("Join Options", tabName = "magic_join"),
                menuSubItem("Spreadsheet Cleanup", tabName = "magic_cleanup"),
-               menuItem("Edit & View table", tabName = "magic_edit_view",
+               menuItem("Edit & View Table", tabName = "magic_edit_view",
                # menuItem("View", tabName = "magic_view",
                            menuSubItem("View", tabName = "magic_view"),
                            menuSubItem("Edit Column Names", tabName = "magic_colnames"),
@@ -189,7 +189,7 @@ ui <- dashboardPage(
       
       menuItem("Export Wrangling", tabName = "wrangle", icon = icon("book")),
       
-      menuItem("Bing Slides", tabName = "bing", icon = icon("database")),
+      menuItem("Bing Slides Beta", tabName = "bing", icon = icon("database")),
       
       menuItem("VOC Plus", tabName = "voc_exp_all", icon = icon("cube"),
                menuSubItem("VOC Upload / Generate Slides", tabName = "voc_all"),
@@ -556,7 +556,7 @@ ui <- dashboardPage(
               
                 numericInput(inputId = "skip2", label = "Number of lines you want to skip in second dataset (optional)", value = "", min = 0),
                 numericInput(inputId = "magic_keep2", label = "What is the last row you wish to keep in second dataset? (optional)", value = "", min = 0),
-                radioButtons(inputId = "encode", label = "Encoding", choices = c("unknown", "UTF-8", "UTF-16", "UTF-32"), selected = "unknown")
+                radioButtons(inputId = "encode", label = "Encoding", choices = c("unknown", "UTF-8", "UTF-16", "UTF-32", "latin1"), selected = "unknown")
                
               ),
                 
@@ -5069,7 +5069,7 @@ server <- function(input, output, session) {
       
       if(bing_prev_total_cost != 0) {
         
-        browser()
+        # browser()
         
         # bing_campaign_selection
         # current_year_text
@@ -5478,8 +5478,6 @@ server <- function(input, output, session) {
           #   addParagraph(full_voc$Average.Star.Rating[i]) %>%
           #   addParagraph(full_voc$Number.of.Reviews[i]) %>%
           #   addParagraph(full_voc$city_state[i])
-          
-          
           # mydoc = addParagraph(mydoc,dat$Total.views[i])
           # mydoc = addParagraph(mydoc,dat$Phone.call.actions[i])
           # mydoc = addParagraph(mydoc,dat$Directions.actions[i])
@@ -5505,10 +5503,7 @@ server <- function(input, output, session) {
         
       }
       
-      
     }
-    
-  
     
   })
   
