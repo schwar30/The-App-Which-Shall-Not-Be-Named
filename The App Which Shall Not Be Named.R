@@ -92,8 +92,25 @@ ui <- dashboardPage(
     
     sidebarMenu(
       
-      # This tab is my most expansive and most useful project, which definitely puts it at the top
-      # of the app.
+      # This currently generates all of our Bing slides. No API, but it's much better than manually
+      # compiling everything
+      
+      menuItem("Bing Slides Beta", tabName = "bing", icon = icon("database")),
+      
+      # This is a tab that shows and allows downloads for the breakout of corporate zipcodes
+      
+      menuItem("Corporate Zipcode Breakdown", tabName = "corporate", icon = icon("steam")),
+      
+      # Allows for numbers from Dialog Tech to be found and exported very quickly and nicely
+      
+      menuItem("Dialog Numbers", tabName = "dialog", icon = icon("gamepad")),
+      
+      # This allows the leads to be filtered either by phone number or website
+      
+      menuItem("Export Wrangling", tabName = "wrangle", icon = icon("book")),
+      
+      # It seemed more important when I made it, but its still a worthwhile app, it's just not as helpful
+      # as Bing Slides or VOC Plus for instance.
       
       menuItem("Magic Spreadsheet", tabName = "magic", icon = icon("magic"),
                menuSubItem("Upload Properties", tabName = "magic_upload"),
@@ -106,6 +123,12 @@ ui <- dashboardPage(
                            menuSubItem("Edit Table", tabName = "magic_edit"),
                            menuSubItem("Remove Items", tabName = "magic_remove")), 
                menuSubItem("Download", tabName = "magic_download")),
+      
+      # Currently a misnomer, since generally speaking all of the bot traffic is actually through 
+      # direct traffic, not organic, but it doesn't really matter since everything is done the same
+      # way.
+      
+      menuItem("Organic Bounce Rates", tabName = "bounce", icon = icon("bolt")),
       
       # There seems to be a huge dip in referral traffic for almost every site, so I 
       # wanted a way to quantify the losses
@@ -126,25 +149,14 @@ ui <- dashboardPage(
       #          menuSubItem("Paused & Removed Keywords", tabName = "totals_keyword"),
       #          menuSubItem("Summaries", tabName = "summary_keyword")),
       
-      # On occassion we will be asked about inquiry zipcode breakouts, which isn't very common, but it 
-      # would take like half an hour or so to finalize, and this is just easier since its now generalized
-      
-      menuItem("Zipcode Breakout", tabName = "zipcode", icon = icon("empire")),
-      
-      # Allows for numbers from Dialog Tech to be found and exported very quickly and nicely
-      
-      menuItem("Dialog Numbers", tabName = "dialog", icon = icon("gamepad")),
-      
       # For local reporting, we need to generate slides for VOC, and its a total pain to find,
       # so I just wanted it put in a place I know I won't lose it.
       
+      # I am happy to say that this is not something that we really need to use anymore. After a few cycles
+      # of local reporting, I am probably going to sunset this as well. It's very barebones and VOC Plus is 
+      # much much more helpful.
+      
       menuItem("VOC Beta", tabName = "voc", icon = icon("bomb")),
-      
-      # Currently a misnomer, since generally speaking all of the bot traffic is actually through 
-      # direct traffic, not organic, but it doesn't really matter since everything is done the same
-      # way.
-      
-      menuItem("Organic Bounce Rates", tabName = "bounce", icon = icon("bolt")),
       
       # More of a testing thing than anything else. Playing around with some of the API stuff is probably
       # a good idea for here and beyond just incase something breaks or a new call is needed. The stuff I
@@ -181,22 +193,23 @@ ui <- dashboardPage(
       #          menuSubItem("Edit Google Sheet", tabName = "edit_gsheet"),
       #          menuSubItem("Remove Google Sheet", tabName = "remove_gsheet")),
       
-      # This is a tab that shows and allows downloads for the breakout of corporate zipcodes
-      
-      menuItem("Corporate Zipcode Breakdown", tabName = "corporate", icon = icon("steam")),
-      
-      # This allows the leads to be filtered either by phone number or website
-      
-      menuItem("Export Wrangling", tabName = "wrangle", icon = icon("book")),
-      
-      menuItem("Bing Slides Beta", tabName = "bing", icon = icon("database")),
+      # This is one of the most helpful apps encountered in this app. Before, the olds script used outdated programs and had horrible
+      # naming conventions (although that's not a particular reason to toss a functioning script). All in all, this was built in an 
+      # effort to automate the VOC slides which took a fairly long time to actually merge, but now if the association doc is updated,
+      # everything should run. Even if it is not, there are tools to interact with the script to dynamically update the associations doc.
+      # Anyone using this should give me a big "thank you" because this will save like 2 days of work and now takes like 5 minutes, max.
       
       menuItem("VOC Plus", tabName = "voc_exp_all", icon = icon("cube"),
                menuSubItem("VOC Upload / Generate Slides", tabName = "voc_all"),
                menuSubItem("View Differences", tabName = "voc_all_differences"),
                menuSubItem("VOC Association Edit", tabName = "voc_all_edit"),
                menuSubItem("VOC Association Add", tabName = "voc_all_add"),
-               menuSubItem("VOC Association Delete", tabName = "voc_all_delete"))
+               menuSubItem("VOC Association Delete", tabName = "voc_all_delete")),
+      
+      # On occassion we will be asked about inquiry zipcode breakouts, which isn't very common, but it 
+      # would take like half an hour or so to finalize, and this is just easier since its now generalized
+      
+      menuItem("Zipcode Breakout", tabName = "zipcode", icon = icon("empire"))
       
     ) 
     
