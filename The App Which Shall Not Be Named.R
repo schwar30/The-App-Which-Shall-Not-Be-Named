@@ -82,6 +82,8 @@ gmb <- NULL
 review_tracker <- NULL
 gmb_filtered <- NULL
 review_tracker_filtered <- NULL
+shiny_qui_pptx <- officer::read_pptx("~/Desktop/shinyqui test.pptx")
+shiny_pptx_selected <- read.csv("~/Desktop/Slide Order.csv")
 
 
 ui <- dashboardPage(
@@ -148,6 +150,8 @@ ui <- dashboardPage(
       #          menuSubItem("Count of Paused Keywords", tabName = "count_keyword"),
       #          menuSubItem("Paused & Removed Keywords", tabName = "totals_keyword"),
       #          menuSubItem("Summaries", tabName = "summary_keyword")),
+      
+      menuItem("Shiny Qui Order Input", tabName = "qui", icon = icon("question")),
       
       # For local reporting, we need to generate slides for VOC, and its a total pain to find,
       # so I just wanted it put in a place I know I won't lose it.
@@ -699,7 +703,7 @@ ui <- dashboardPage(
       tabItem(tabName = "voc_all",
               
               titlePanel("VOC Plus"),
-              h4("Please use with caution!"),
+              # h4("Please use with caution!"),
               
               fileInput(inputId = "exp_voc_file", label = "Please insert GMB and ReviewTracker Files:", multiple = T),
               textInput(inputId = "exp_voc_date_range", label = "Date Range for VOC Slides:"),
@@ -757,11 +761,35 @@ ui <- dashboardPage(
               textOutput("voc_difference_text"),
               tableOutput("voc_difference_table")
               # tableOutput("voc_review_difference_table")
+              ),
+      
+      tabItem(tabName = "qui",
+
+              titlePanel("This is an ordering test"),
+
+              orderInput(inputId = "qui_slides", label = "Slides", items = layout_summary(shiny_qui_pptx)[, 1],
+                         as_source = F, connect = c("qui_order", "qui_remove")),
+              
+              fluidRow(
+              
+              column(1, 
+              orderInput(inputId = "qui_order", "Items to order:", items = NULL, placeholder = "Drag items here...", connect = "qui_remove", width = "50px")),
+              
+              column(1,
+              orderInput(inputId = "qui_remove", "Items to remove:", items = NULL, placeholder = "Drag items here...", connect = "qui_order", width = "50px"))
+      
+              # column(3, NULL)
+              ),
+              
+              actionButton(inputId = "qui_confirm", label = "Confirm Order & Removal")
+              
               )
       
     )))
 
 server <- function(input, output, session) {
+  
+  # browser()
   
   observeEvent(input$analytics_update, {
     
@@ -5919,6 +5947,103 @@ server <- function(input, output, session) {
       write.csv(voc_associations, "~/Desktop/Rob Scripts/Reference Files/VOC Associations Final.csv", row.names = F)
       
     }
+    
+  })
+  
+  observeEvent(input$qui_confirm, {
+    
+    # browser()
+    shiny_qui_pptx <- read_pptx("~/Desktop/shinyqui test.pptx")
+    qui_slide_order <- NULL
+    qui_slide_order <- as.data.frame(input$qui_order_order)
+    qui_slide_order <- qui_slide_order %>% 
+      mutate("slide_order" = rownames(qui_slide_order))
+    
+    for(i in 1:nrow(qui_slide_order)) {
+      
+      # if(i == 1) {browser()}
+      # if(i == 2) {browser()}
+      # if(i == 3) {browser()}
+      # if(i == 4) {browser()}
+    
+    if("Test 1" %in% qui_slide_order$`input$qui_order_order`[i]){
+    
+    x <- "Test Slide 1"
+    shiny_qui_pptx <<- shiny_qui_pptx %>% 
+      add_slide(layout = "Test 1", master = "Office Theme") %>% 
+      ph_with_text(type = "body", str = x)
+    
+    # slide1_placement <- qui_slide_order %>% 
+    #   filter(`input$qui_order_order` == "Test 1") %>% 
+    #   select(slide_order) %>% 
+    #   as.numeric()
+    # 
+    # slide1_list <- list(test_slide1, slide1_placement)
+    
+    }
+    
+    if("Test 2" %in% qui_slide_order$`input$qui_order_order`[i]) {
+    
+    y <- "Test Slide 2"
+    shiny_qui_pptx <<- shiny_qui_pptx %>%
+      add_slide(layout = "Test 2", master = "Office Theme") %>%
+      ph_with_text(type = "body", str = y)
+    
+    # slide2_placement <- qui_slide_order %>% 
+    #   filter(`input$qui_order_order` == "Test 2") %>% 
+    #   select(slide_order) %>% 
+    #   as.numeric()
+    # 
+    # slide2_list <- list(test_slide2, slide2_placement)
+    
+    }
+    
+    if("Test 3" %in% qui_slide_order$`input$qui_order_order`[i]) {
+    
+    z <- "Test Slide 3"
+    shiny_qui_pptx <<- shiny_qui_pptx %>%
+      add_slide(layout = "Test 3", master = "Office Theme") %>%
+      ph_with_text(type = "body", str = z)
+    
+    # slide3_placement <- qui_slide_order %>% 
+    #   filter(`input$qui_order_order` == "Test 3") %>% 
+    #   select(slide_order) %>% 
+    #   as.numeric()
+    # 
+    # slide3_list <- list(test_slide3, slide3_placement)
+    
+    }
+    
+    if("Test 4" %in% qui_slide_order$`input$qui_order_order`[i]) {
+    
+    a <- "Test Slide 4"
+    shiny_qui_pptx <<- shiny_qui_pptx %>%
+      add_slide(layout = "Test 4", master = "Office Theme") %>%
+      ph_with_text(type = "body", str = a)
+    
+    # slide4_placement <- qui_slide_order %>% 
+    #   filter(`input$qui_order_order` == "Test 4") %>% 
+    #   select(slide_order) %>% 
+    #   as.numeric()
+    # 
+    # slide4_list <- list(test_slide4, slide4_placement)
+    
+    }
+    
+    }
+    
+    # browser()
+    
+    # qui_list <- list(slide1_list, slide2_list, slide3_list, slide4_list)
+    
+    print(shiny_qui_pptx, "~/Desktop/QUI TEST.pptx")
+    
+    confirmSweetAlert(session = session, 
+                      inputId = "qui_download_success",
+                      title = "Slides Successfully Downloaded!",
+                      type = "success",
+                      btn_labels = "OK!",
+                      danger_mode = T)
     
   })
   
