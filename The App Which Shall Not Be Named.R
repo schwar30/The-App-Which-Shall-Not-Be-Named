@@ -265,7 +265,7 @@ ui <- dashboardPage(
       # This is a demo to show my idea for calling and ordering slides for shiny. It's much more basic, which
       # very well may mean that pushing it to shiny would be unfeasible (more than likely).
       
-      menuItem("Shiny Qui Order Input", tabName = "qui", icon = icon("question")),
+      menuItem("Shiny Qui Order Input", tabName = "qui", icon = icon("link")),
       
       # For local reporting, we need to generate slides for VOC, and its a total pain to find,
       # so I just wanted it put in a place I know I won't lose it.
