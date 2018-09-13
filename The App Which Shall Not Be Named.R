@@ -109,9 +109,13 @@ qui_slide_info <- NULL
 shiny_qui_absent <- NULL
 shiny_qui_pptx <- officer::read_pptx("~/Desktop/shinyqui test.pptx")
 
+qui_slide_info <- as.data.frame(layout_summary(shiny_qui_pptx)[, 1])
+colnames(qui_slide_info) <- "input.qui_order_order"
+
 # browser()
 shiny_pptx_selected <- read.csv("~/Desktop/Slide Order.csv")
 shiny_pptx_selected$input.qui_order_order <- as.character(shiny_pptx_selected$input.qui_order_order)
+shiny_pptx_selected <- semi_join(shiny_pptx_selected, qui_slide_info)
 # if(nrow(shiny_pptx_selected) == 0) {
 #   
 #   shiny_pptx_selected <- NULL
@@ -119,6 +123,8 @@ shiny_pptx_selected$input.qui_order_order <- as.character(shiny_pptx_selected$in
 # }
 shiny_removed_qui <- read.csv("~/Desktop/Remove Names.csv", stringsAsFactors = F)
 colnames(shiny_removed_qui) <- "input.qui_order_order"
+shiny_removed_qui <- semi_join(shiny_removed_qui, qui_slide_info)
+
 
 # browser()
 # shiny_removed_qui$input.qui_order_order <- as.character(shiny_removed_qui$input.qui_order_order)
@@ -166,8 +172,6 @@ all_qui_entries <- full_join(shiny_removed_qui, shiny_pptx_selected)
 
 # browser()
 
-qui_slide_info <- as.data.frame(layout_summary(shiny_qui_pptx)[, 1])
-colnames(qui_slide_info) <- "input.qui_order_order"
 
 if(is.null(all_qui_entries)) {
   
@@ -6184,6 +6188,15 @@ server <- function(input, output, session) {
     # 
     # slide4_list <- list(test_slide4, slide4_placement)
     
+    }
+      
+    if("Remove" %in% qui_slide_order$`input$qui_order_order`[i]) {
+      
+      b <- "Remove Slide"
+      shiny_qui_pptx <<- shiny_qui_pptx %>%
+        add_slide(layout = "Remove", master = "Office Theme") %>%
+        ph_with_text(type = "body", str = b)
+      
     }
     
     }
