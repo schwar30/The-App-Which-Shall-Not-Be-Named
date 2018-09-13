@@ -16,6 +16,7 @@ library(dplyr)
 library(stringr)
 library(DT)
 library(data.table)
+library(shinyjqui)
 
 # I can't get the auto authorization to work without this option.
 
@@ -94,6 +95,9 @@ shiny_pptx_selected <- read.csv("~/Desktop/Slide Order.csv")
 shiny_pptx_selected$input.qui_order_order <- as.character(shiny_pptx_selected$input.qui_order_order)
 shiny_removed_qui <- read.csv("~/Desktop/Remove Names.csv", stringsAsFactors = F)
 colnames(shiny_removed_qui) <- "input.qui_order_order"
+
+# browser()
+shiny_removed_qui$input.qui_order_order <- as.character(shiny_removed_qui$input.qui_order_order)
 all_qui_entries <- full_join(shiny_removed_qui, shiny_pptx_selected)
 
 # browser()
