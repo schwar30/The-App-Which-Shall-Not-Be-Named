@@ -82,8 +82,26 @@ gmb <- NULL
 review_tracker <- NULL
 gmb_filtered <- NULL
 review_tracker_filtered <- NULL
+shiny_pptx_selected <- NULL
+shiny_removed_qui <- NULL
+all_qui_entries <- NULL
+qui_slide_info <- NULL
+shiny_qui_absent <- NULL
 shiny_qui_pptx <- officer::read_pptx("~/Desktop/shinyqui test.pptx")
+
+# browser()
 shiny_pptx_selected <- read.csv("~/Desktop/Slide Order.csv")
+shiny_pptx_selected$input.qui_order_order <- as.character(shiny_pptx_selected$input.qui_order_order)
+shiny_removed_qui <- read.csv("~/Desktop/Remove Names.csv", stringsAsFactors = F)
+colnames(shiny_removed_qui) <- "input.qui_order_order"
+all_qui_entries <- full_join(shiny_removed_qui, shiny_pptx_selected)
+
+# browser()
+
+qui_slide_info <- as.data.frame(layout_summary(shiny_qui_pptx)[, 1])
+colnames(qui_slide_info) <- "input.qui_order_order"
+shiny_qui_absent <- anti_join(qui_slide_info, all_qui_entries)
+if(nrow(shiny_qui_absent) == 0) {shiny_qui_absent <- NULL}
 
 
 ui <- dashboardPage(
@@ -766,17 +784,23 @@ ui <- dashboardPage(
       tabItem(tabName = "qui",
 
               titlePanel("This is an ordering test"),
+              
+              # orderInput(inputId = "qui_slides", label = "Slides", items = layout_summary(shiny_qui_pptx)[, 1],
+              #            as_source = F, connect = c("qui_order", "qui_remove")),
 
-              orderInput(inputId = "qui_slides", label = "Slides", items = layout_summary(shiny_qui_pptx)[, 1],
+              orderInput(inputId = "qui_slides", label = "Slides", items = shiny_qui_absent$input.qui_order_order,
                          as_source = F, connect = c("qui_order", "qui_remove")),
               
               fluidRow(
-              
-              column(1, 
-              orderInput(inputId = "qui_order", "Items to order:", items = NULL, placeholder = "Drag items here...", connect = "qui_remove", width = "50px")),
+                
+              # column(1, 
+              # orderInput(inputId = "qui_order", "Items to order:", items = NULL, placeholder = "Drag items here...", connect = c("qui_remove", "qui_slides"), width = "50px")),
               
               column(1,
-              orderInput(inputId = "qui_remove", "Items to remove:", items = NULL, placeholder = "Drag items here...", connect = "qui_order", width = "50px"))
+              orderInput(inputId = "qui_order", "Items to order:", items = shiny_pptx_selected$input.qui_order_order, placeholder = "Drag items here...", connect = c("qui_remove", "qui_slides"), width = "50px")),
+              
+              column(1,
+              orderInput(inputId = "qui_remove", "Items to remove:", items = shiny_removed_qui$input.qui_order_order, placeholder = "Drag items here...", connect = c("qui_order", "qui_slides"), width = "50px"))
       
               # column(3, NULL)
               ),
@@ -792,7 +816,6 @@ server <- function(input, output, session) {
   # browser()
   
   observeEvent(input$analytics_update, {
-    
     
     # browser()
     
@@ -5959,7 +5982,26 @@ server <- function(input, output, session) {
     qui_slide_order <- qui_slide_order %>% 
       mutate("slide_order" = rownames(qui_slide_order))
     
+    # browser()
+    
+    qui_remove_slides <- as_data_frame(input$qui_remove_order)
+    
+    if(nrow(qui_remove_slides) == 0) {
+      
+      x <- ""
+      qui_remove_slides <- data.frame(x)
+      qui_remove_slides <- qui_remove_slides %>% 
+        filter(x != "")
+      
+    }
+    
+    colnames(qui_remove_slides) <- "slide_names"
+    
+    # browser()
+    
     for(i in 1:nrow(qui_slide_order)) {
+      
+      
       
       # if(i == 1) {browser()}
       # if(i == 2) {browser()}
@@ -6037,6 +6079,8 @@ server <- function(input, output, session) {
     # qui_list <- list(slide1_list, slide2_list, slide3_list, slide4_list)
     
     print(shiny_qui_pptx, "~/Desktop/QUI TEST.pptx")
+    write.csv(qui_slide_order, "~/Desktop/Slide Order.csv", row.names = F)
+    write.csv(qui_remove_slides, "~/Desktop/Remove Names.csv", row.names = F)
     
     confirmSweetAlert(session = session, 
                       inputId = "qui_download_success",
