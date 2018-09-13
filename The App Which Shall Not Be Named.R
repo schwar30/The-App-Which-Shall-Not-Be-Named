@@ -883,9 +883,13 @@ ui <- dashboardPage(
               # This stuff is kind of neat. Before anything, I required a few joins which would let R know which columns
               # should remain where. The order Input is just kind of an interesting ui tool though, because while it looks cool,
               # it's actually intuitive for ordering things, which is what the aim of calling specific slides actually is.
-              
+             fluidRow(
+               column(4,
               orderInput(inputId = "qui_slides", label = "Slides", items = shiny_qui_absent$input.qui_order_order,
-                         as_source = F, connect = c("qui_order", "qui_remove")),
+                         as_source = F, connect = c("qui_order", "qui_remove"))),
+              column(6,
+              actionBttn(inputId = "qui_confirm", label = "Confirm Order & Removal", style = "fill")
+               )),
               
               fluidRow(
                 
@@ -899,9 +903,9 @@ ui <- dashboardPage(
               orderInput(inputId = "qui_remove", "Items to remove:", items = shiny_removed_qui$input.qui_order_order, placeholder = "Drag items here...", connect = c("qui_order", "qui_slides"), width = "50px"))
       
               # column(3, NULL)
-              ),
+              )#,
               
-              actionButton(inputId = "qui_confirm", label = "Confirm Order & Removal")
+              # actionButton(inputId = "qui_confirm", label = "Confirm Order & Removal")
               
               )
       
