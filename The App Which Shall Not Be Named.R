@@ -11,12 +11,15 @@ library(shiny)
 
 library(shinyjs)
 
+# Other tools that otherwise would make some neat functions not work.
+
 library(shinydashboard)
 library(dplyr)
 library(stringr)
 library(DT)
 library(data.table)
 library(shinyjqui)
+library(shinyWidgets)
 
 # I can't get the auto authorization to work without this option.
 
@@ -31,16 +34,28 @@ library(googleAnalyticsR)
 # only use the current officer package. Migrating away from the ReporteRs
 # package and the VOC tab in would be wonderful, needed additions.
 
+# I will keep this in in the off chance that VOC Plus fails and something is needed,
+# but I don't intend on that happening. This is an outdated program and nothing will be
+# (from this point forward) coded with it, and many other important programs (like VOC Plus)
+# rewrote everything so they were up to date. Don't use this package or in general the packages
+# associated with it.
+
 library(ReporteRs)
 
 # It's time to start learning these bad boys
+
+# They're not difficult and all relevant programs in here are reworked with them.
 
 library(officer)
 library(flextable)
 
 # Both are used for API calls
 
-library(RAdwords)
+# I never figured this one out. I think I had to personally set something up, but the fact that I got
+# as far as Adam in attempting to set up Bing's API (despite both failing) means that I don't think I 
+# need to worry too much about accessing everything
+
+# library(RAdwords)
 
 # There isn't anything particularly wrong with RGA, I just wanted to 
 # try something different so I wouldn't just copy Adam's / Austin's code
@@ -49,11 +64,10 @@ library(RAdwords)
 # library(RGA)
 
 # Below is likely unnecessary because the google sheets API is ridiculously slow.
-# Took over a half hour to input a datatable with ~10,000 entries.
+# Took over a half hour to input a datatable with ~10,000 entries. I sunset the tab, so there's no reason
+# to actually keep this program in the script
 
-library(googlesheets)
-
-library(shinyWidgets)
+# library(googlesheets)
 
 # This is particularly for the call files and lead exports which tend to be rather large
 
@@ -74,6 +88,11 @@ options(shiny.maxRequestSize = 30 * 1024^2)
 # still requires an initial value. I could directly set the choices equal to NULL, but having them
 # exist first is a decent thing to do anyway. I should also rename these so they aren't general.
 
+# These are just to insure that nothing crashes from the "[object] not found" error. Some others 
+# Such as the powerpoints and reference docs are referred to in the ui, so they need to be read in
+# immediately. None of those files are particularly large though, so it doesn't take (noticably) 
+# anymore time.
+
 data1 <- NULL
 data2 <- NULL
 data_set <- NULL
@@ -93,20 +112,86 @@ shiny_qui_pptx <- officer::read_pptx("~/Desktop/shinyqui test.pptx")
 # browser()
 shiny_pptx_selected <- read.csv("~/Desktop/Slide Order.csv")
 shiny_pptx_selected$input.qui_order_order <- as.character(shiny_pptx_selected$input.qui_order_order)
+# if(nrow(shiny_pptx_selected) == 0) {
+#   
+#   shiny_pptx_selected <- NULL
+#   
+# }
 shiny_removed_qui <- read.csv("~/Desktop/Remove Names.csv", stringsAsFactors = F)
 colnames(shiny_removed_qui) <- "input.qui_order_order"
 
 # browser()
-shiny_removed_qui$input.qui_order_order <- as.character(shiny_removed_qui$input.qui_order_order)
+# shiny_removed_qui$input.qui_order_order <- as.character(shiny_removed_qui$input.qui_order_order)
+
+# if(nrow(shiny_removed_qui) == 0) {
+#   
+#   shiny_removed_qui <- NULL
+#   
+# }
+
+# browser()
+
+if(nrow(shiny_removed_qui) == 0 | nrow(shiny_pptx_selected) == 0) {
+  
+  if(nrow(shiny_removed_qui) == 0 & nrow(shiny_pptx_selected) == 0) {
+    
+    all_qui_entries <- NULL
+    
+  }else{
+    
+    if(nrow(shiny_removed_qui) == 0) {
+      
+      # browser()
+      
+      all_qui_entries <- shiny_pptx_selected
+      shiny_pptx_selected$input.qui_order_order <- as.character(shiny_pptx_selected$input.qui_order_order)
+      
+      
+    }else{
+      
+      # browser()
+      
+      all_qui_entries <- shiny_removed_qui
+      shiny_removed_qui$input.qui_order_order <- as.character(shiny_removed_qui$input.qui_order_order)
+      
+    }
+    
+  }
+  
+}else{
+
 all_qui_entries <- full_join(shiny_removed_qui, shiny_pptx_selected)
+
+}
 
 # browser()
 
 qui_slide_info <- as.data.frame(layout_summary(shiny_qui_pptx)[, 1])
 colnames(qui_slide_info) <- "input.qui_order_order"
-shiny_qui_absent <- anti_join(qui_slide_info, all_qui_entries)
-if(nrow(shiny_qui_absent) == 0) {shiny_qui_absent <- NULL}
 
+if(is.null(all_qui_entries)) {
+  
+  shiny_qui_absent <- qui_slide_info
+  
+}else{
+
+shiny_qui_absent <- anti_join(qui_slide_info, all_qui_entries)
+
+}
+
+if(nrow(shiny_qui_absent) == 0) {
+  
+  shiny_qui_absent <- NULL
+  
+  }else{
+    
+    # browser()
+  
+  shiny_qui_absent$input.qui_order_order <- as.character(shiny_qui_absent$input.qui_order_order)
+  
+}
+
+# browser()
 
 ui <- dashboardPage(
   
@@ -173,6 +258,9 @@ ui <- dashboardPage(
       #          menuSubItem("Paused & Removed Keywords", tabName = "totals_keyword"),
       #          menuSubItem("Summaries", tabName = "summary_keyword")),
       
+      # This is a demo to show my idea for calling and ordering slides for shiny. It's much more basic, which
+      # very well may mean that pushing it to shiny would be unfeasible (more than likely).
+      
       menuItem("Shiny Qui Order Input", tabName = "qui", icon = icon("question")),
       
       # For local reporting, we need to generate slides for VOC, and its a total pain to find,
@@ -219,7 +307,7 @@ ui <- dashboardPage(
       #          menuSubItem("Edit Google Sheet", tabName = "edit_gsheet"),
       #          menuSubItem("Remove Google Sheet", tabName = "remove_gsheet")),
       
-      # This is one of the most helpful apps encountered in this app. Before, the olds script used outdated programs and had horrible
+      # This is one of the most helpful tabs encountered in this app. Before, the olds script used outdated programs and had horrible
       # naming conventions (although that's not a particular reason to toss a functioning script). All in all, this was built in an 
       # effort to automate the VOC slides which took a fairly long time to actually merge, but now if the association doc is updated,
       # everything should run. Even if it is not, there are tools to interact with the script to dynamically update the associations doc.
@@ -792,6 +880,10 @@ ui <- dashboardPage(
               # orderInput(inputId = "qui_slides", label = "Slides", items = layout_summary(shiny_qui_pptx)[, 1],
               #            as_source = F, connect = c("qui_order", "qui_remove")),
 
+              # This stuff is kind of neat. Before anything, I required a few joins which would let R know which columns
+              # should remain where. The order Input is just kind of an interesting ui tool though, because while it looks cool,
+              # it's actually intuitive for ordering things, which is what the aim of calling specific slides actually is.
+              
               orderInput(inputId = "qui_slides", label = "Slides", items = shiny_qui_absent$input.qui_order_order,
                          as_source = F, connect = c("qui_order", "qui_remove")),
               
@@ -5980,6 +6072,20 @@ server <- function(input, output, session) {
   observeEvent(input$qui_confirm, {
     
     # browser()
+    
+    if(length(input$qui_slides_order) != 0) {
+      
+      confirmSweetAlert(session = session, 
+                        inputId = "qui_items_in_slides",
+                        title = "Please put all of the slides in the order or remove columns!",
+                        text = "This feature could be removed since the only relevant column is the order column.",
+                        type = "warning",
+                        btn_labels = "OK!",
+                        danger_mode = T)
+      
+    }else{
+    
+    # browser()
     shiny_qui_pptx <- read_pptx("~/Desktop/shinyqui test.pptx")
     qui_slide_order <- NULL
     qui_slide_order <- as.data.frame(input$qui_order_order)
@@ -6092,6 +6198,8 @@ server <- function(input, output, session) {
                       type = "success",
                       btn_labels = "OK!",
                       danger_mode = T)
+    
+    }
     
   })
   
