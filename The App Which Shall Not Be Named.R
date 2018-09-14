@@ -891,8 +891,9 @@ ui <- dashboardPage(
                column(4,
               orderInput(inputId = "qui_slides", label = "Slides", items = shiny_qui_absent$input.qui_order_order,
                          as_source = F, connect = c("qui_order", "qui_remove"))),
-              column(6,
-              actionBttn(inputId = "qui_confirm", label = "Confirm Order & Removal", style = "fill")
+              column(6, offset = 2,
+              actionBttn(inputId = "qui_confirm", label = "Confirm Order & Removal", style = "fill"),
+              actionBttn(inputId = "qui_confirm_normal", label = "No Custom Order / Removal", style = "fill", color = "danger")
                )),
               
               fluidRow(
@@ -6117,9 +6118,13 @@ server <- function(input, output, session) {
     
     # browser()
     
+    withProgress(message = "Downloading Powerpoints", value = 0, {
+      
+        # incProgress(1/length(bing_campaign_selection), detail = paste0("Downloading ", i, " of ", length(bing_campaign_selection)))
+    
     for(i in 1:nrow(qui_slide_order)) {
       
-      
+      incProgress(1/nrow(qui_slide_order), detail = paste0("Generating Slide ", i, " of ", nrow(qui_slide_order)))
       
       # if(i == 1) {browser()}
       # if(i == 2) {browser()}
@@ -6198,8 +6203,240 @@ server <- function(input, output, session) {
         ph_with_text(type = "body", str = b)
       
     }
-    
+      
+      # This is just a test to see if there is any slowdown of introducing more
+      # slides that the loop has to hit. With the small slide selection, I don't 
+      # Think this is going to be an issue, but I may add some more actual slides 
+      # so I can actually test approximate speeds of the loop for a slide dec 
+      # selection of roughly equivalent lengths
+      
+      if("Wow1" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow1", master = "Office Theme")
+        
+      }
+      
+      if("Wow2" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow2", master = "Office Theme")
+        
+      }
+      
+      if("Wow3" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow3", master = "Office Theme")
+        
+      }
+      
+      if("Wow4" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow4", master = "Office Theme")
+        
+      }
+      
+      if("Wow5" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow5", master = "Office Theme")
+        
+      }
+      
+      if("Wow6" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow6", master = "Office Theme")
+        
+      }
+      
+      if("Wow7" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow7", master = "Office Theme")
+        
+      }
+      
+      if("Wow8" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow8", master = "Office Theme")
+        
+      }
+      
+      if("Wow9" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow9", master = "Office Theme")
+        
+      }
+      
+      if("Wow10" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow10", master = "Office Theme")
+        
+      }
+      
+      if("Wow11" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow11", master = "Office Theme")
+        
+      }
+      
+      if("Wow12" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow12", master = "Office Theme")
+        
+      }
+      
+      if("Wow13" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow13", master = "Office Theme")
+        
+      }
+      
+      if("Wow14" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow14", master = "Office Theme")
+        
+      }
+      
+      if("Wow15" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow15", master = "Office Theme")
+        
+      }
+      
+      if("Wow16" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow16", master = "Office Theme")
+        
+      }
+      
+      if("Wow17" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow17", master = "Office Theme")
+        
+      }
+      
+      if("Wow18" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow18", master = "Office Theme")
+        
+      }
+      
+      if("Wow19" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow19", master = "Office Theme")
+        
+      }
+      
+      if("Wow20" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow20", master = "Office Theme")
+        
+      }
+      
+      if("Wow21" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow21", master = "Office Theme")
+        
+      }
+      
+      if("Wow22" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow22", master = "Office Theme")
+        
+      }
+      
+      if("Wow23" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow23", master = "Office Theme")
+        
+      }
+      
+      if("Wow24" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow24", master = "Office Theme")
+        
+      }
+      
+      if("Wow25" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow25", master = "Office Theme")
+        
+      }
+      
+      if("Wow26" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow26", master = "Office Theme")
+        
+      }
+      
+      if("Wow27" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow27", master = "Office Theme")
+        
+      }
+      
+      if("Wow28" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow28", master = "Office Theme")
+        
+      }
+      
+      if("Wow29" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow29", master = "Office Theme")
+        
+      }
+      
+      if("Wow30" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow30", master = "Office Theme")
+        
+      }
+      
+      if("Wow31" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow31", master = "Office Theme")
+        
+      }
+      
+      if("Wow32" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        shiny_qui_pptx <<- shiny_qui_pptx %>%
+          add_slide(layout = "Wow32", master = "Office Theme")
+        
+      }
+      
     }
+    
+    })
     
     # browser()
     
@@ -6217,6 +6454,71 @@ server <- function(input, output, session) {
                       danger_mode = T)
     
     }
+    
+  })
+  
+  observeEvent(input$qui_confirm_normal, {
+    
+    # browser()
+    
+    x <- "Test Slide 1"
+    y <- "Test Slide 2"
+    z <- "Test Slide 3"
+    a <- "Test Slide 4"
+    b <- "Remove Slide"
+    
+    shiny_qui_pptx <<- shiny_qui_pptx %>% 
+      add_slide(layout = "Test 1", master = "Office Theme") %>% 
+      ph_with_text(type = "body", str = x) %>%
+      add_slide(layout = "Test 2", master = "Office Theme") %>%
+      ph_with_text(type = "body", str = y) %>%
+      add_slide(layout = "Test 3", master = "Office Theme") %>%
+      ph_with_text(type = "body", str = z) %>%
+      add_slide(layout = "Test 4", master = "Office Theme") %>%
+      ph_with_text(type = "body", str = a) %>%
+      add_slide(layout = "Remove", master = "Office Theme") %>%
+      ph_with_text(type = "body", str = b) %>%
+      add_slide(layout = "Wow1", master = "Office Theme") %>%
+      add_slide(layout = "Wow2", master = "Office Theme") %>%
+      add_slide(layout = "Wow3", master = "Office Theme") %>%
+      add_slide(layout = "Wow4", master = "Office Theme") %>%
+      add_slide(layout = "Wow5", master = "Office Theme") %>%
+      add_slide(layout = "Wow6", master = "Office Theme") %>%
+      add_slide(layout = "Wow7", master = "Office Theme") # %>%
+      # add_slide(layout = "Wow8", master = "Office Theme") %>%
+      # add_slide(layout = "Wow9", master = "Office Theme") %>%
+      # add_slide(layout = "Wow10", master = "Office Theme") %>%
+      # add_slide(layout = "Wow11", master = "Office Theme") %>%
+      # add_slide(layout = "Wow12", master = "Office Theme") %>%
+      # add_slide(layout = "Wow13", master = "Office Theme") %>%
+      # add_slide(layout = "Wow14", master = "Office Theme") %>%
+      # add_slide(layout = "Wow15", master = "Office Theme") %>%
+      # add_slide(layout = "Wow16", master = "Office Theme") %>%
+      # add_slide(layout = "Wow17", master = "Office Theme") %>%
+      # add_slide(layout = "Wow18", master = "Office Theme") %>%
+      # add_slide(layout = "Wow19", master = "Office Theme") %>%
+      # add_slide(layout = "Wow20", master = "Office Theme") %>%
+      # add_slide(layout = "Wow21", master = "Office Theme") %>%
+      # add_slide(layout = "Wow22", master = "Office Theme") %>%
+      # add_slide(layout = "Wow23", master = "Office Theme") %>%
+      # add_slide(layout = "Wow24", master = "Office Theme") %>%
+      # add_slide(layout = "Wow25", master = "Office Theme") %>%
+      # add_slide(layout = "Wow26", master = "Office Theme") %>%
+      # add_slide(layout = "Wow27", master = "Office Theme") %>%
+      # add_slide(layout = "Wow28", master = "Office Theme") %>%
+      # add_slide(layout = "Wow29", master = "Office Theme") %>%
+      # add_slide(layout = "Wow30", master = "Office Theme") %>%
+      # add_slide(layout = "Wow31", master = "Office Theme") %>%
+      # add_slide(layout = "Wow32", master = "Office Theme")
+    
+    print(shiny_qui_pptx, "~/Desktop/QUI STANDARD TEST.pptx")
+    
+    confirmSweetAlert(session = session, 
+                      inputId = "qui_standard_download_success",
+                      title = "Slides Successfully Downloaded!",
+                      type = "success",
+                      btn_labels = "OK!",
+                      danger_mode = T)
     
   })
   
