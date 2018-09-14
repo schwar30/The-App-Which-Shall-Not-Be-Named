@@ -902,10 +902,10 @@ ui <- dashboardPage(
               # orderInput(inputId = "qui_order", "Items to order:", items = NULL, placeholder = "Drag items here...", connect = c("qui_remove", "qui_slides"), width = "50px")),
               
               column(1,
-              orderInput(inputId = "qui_order", "Items to order:", items = shiny_pptx_selected$input.qui_order_order, placeholder = "Drag items here...", connect = c("qui_remove", "qui_slides"), width = "50px")),
+              orderInput(inputId = "qui_order", "Items to order:", items = shiny_pptx_selected$input.qui_order_order, placeholder = "Drag items here...", connect = c("qui_remove", "qui_slides"), width = "75px")),
               
               column(1,
-              orderInput(inputId = "qui_remove", "Items to remove:", items = shiny_removed_qui$input.qui_order_order, placeholder = "Drag items here...", connect = c("qui_order", "qui_slides"), width = "50px"))
+              orderInput(inputId = "qui_remove", "Items to remove:", items = shiny_removed_qui$input.qui_order_order, placeholder = "Drag items here...", connect = c("qui_order", "qui_slides"), width = "75px"))
       
               # column(3, NULL)
               )#,
