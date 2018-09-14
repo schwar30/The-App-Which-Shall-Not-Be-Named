@@ -6484,32 +6484,32 @@ server <- function(input, output, session) {
       add_slide(layout = "Wow4", master = "Office Theme") %>%
       add_slide(layout = "Wow5", master = "Office Theme") %>%
       add_slide(layout = "Wow6", master = "Office Theme") %>%
-      add_slide(layout = "Wow7", master = "Office Theme") # %>%
-      # add_slide(layout = "Wow8", master = "Office Theme") %>%
-      # add_slide(layout = "Wow9", master = "Office Theme") %>%
-      # add_slide(layout = "Wow10", master = "Office Theme") %>%
-      # add_slide(layout = "Wow11", master = "Office Theme") %>%
-      # add_slide(layout = "Wow12", master = "Office Theme") %>%
-      # add_slide(layout = "Wow13", master = "Office Theme") %>%
-      # add_slide(layout = "Wow14", master = "Office Theme") %>%
-      # add_slide(layout = "Wow15", master = "Office Theme") %>%
-      # add_slide(layout = "Wow16", master = "Office Theme") %>%
-      # add_slide(layout = "Wow17", master = "Office Theme") %>%
-      # add_slide(layout = "Wow18", master = "Office Theme") %>%
-      # add_slide(layout = "Wow19", master = "Office Theme") %>%
-      # add_slide(layout = "Wow20", master = "Office Theme") %>%
-      # add_slide(layout = "Wow21", master = "Office Theme") %>%
-      # add_slide(layout = "Wow22", master = "Office Theme") %>%
-      # add_slide(layout = "Wow23", master = "Office Theme") %>%
-      # add_slide(layout = "Wow24", master = "Office Theme") %>%
-      # add_slide(layout = "Wow25", master = "Office Theme") %>%
-      # add_slide(layout = "Wow26", master = "Office Theme") %>%
-      # add_slide(layout = "Wow27", master = "Office Theme") %>%
-      # add_slide(layout = "Wow28", master = "Office Theme") %>%
-      # add_slide(layout = "Wow29", master = "Office Theme") %>%
-      # add_slide(layout = "Wow30", master = "Office Theme") %>%
-      # add_slide(layout = "Wow31", master = "Office Theme") %>%
-      # add_slide(layout = "Wow32", master = "Office Theme")
+      add_slide(layout = "Wow7", master = "Office Theme") %>%
+      add_slide(layout = "Wow8", master = "Office Theme") %>%
+      add_slide(layout = "Wow9", master = "Office Theme") %>%
+      add_slide(layout = "Wow10", master = "Office Theme") %>%
+      add_slide(layout = "Wow11", master = "Office Theme") %>%
+      add_slide(layout = "Wow12", master = "Office Theme") %>%
+      add_slide(layout = "Wow13", master = "Office Theme") %>%
+      add_slide(layout = "Wow14", master = "Office Theme") %>%
+      add_slide(layout = "Wow15", master = "Office Theme") %>%
+      add_slide(layout = "Wow16", master = "Office Theme") %>%
+      add_slide(layout = "Wow17", master = "Office Theme") %>%
+      add_slide(layout = "Wow18", master = "Office Theme") %>%
+      add_slide(layout = "Wow19", master = "Office Theme") %>%
+      add_slide(layout = "Wow20", master = "Office Theme") %>%
+      add_slide(layout = "Wow21", master = "Office Theme") %>%
+      add_slide(layout = "Wow22", master = "Office Theme") %>%
+      add_slide(layout = "Wow23", master = "Office Theme") %>%
+      add_slide(layout = "Wow24", master = "Office Theme") %>%
+      add_slide(layout = "Wow25", master = "Office Theme") %>%
+      add_slide(layout = "Wow26", master = "Office Theme") %>%
+      add_slide(layout = "Wow27", master = "Office Theme") %>%
+      add_slide(layout = "Wow28", master = "Office Theme") %>%
+      add_slide(layout = "Wow29", master = "Office Theme") %>%
+      add_slide(layout = "Wow30", master = "Office Theme") %>%
+      add_slide(layout = "Wow31", master = "Office Theme") %>%
+      add_slide(layout = "Wow32", master = "Office Theme")
     
     print(shiny_qui_pptx, "~/Desktop/QUI STANDARD TEST.pptx")
     
