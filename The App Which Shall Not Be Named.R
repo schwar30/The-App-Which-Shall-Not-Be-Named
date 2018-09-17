@@ -107,161 +107,9 @@ shiny_removed_qui <- NULL
 all_qui_entries <- NULL
 qui_slide_info <- NULL
 shiny_qui_absent <- NULL
-shiny_qui_pptx <- officer::read_pptx("~/Desktop/shinyqui test.pptx")
-
+shiny_qui_pptx <- officer::read_pptx("~/Desktop/Rob Scripts/Reference Files/shinyqui test.pptx")
 qui_slide_info <- as.data.frame(layout_summary(shiny_qui_pptx)[, 1])
 colnames(qui_slide_info) <- "input.qui_order_order"
-
-# browser()
-shiny_pptx_selected <- read.csv("~/Desktop/Slide Order.csv")
-shiny_pptx_selected$input.qui_order_order <- as.character(shiny_pptx_selected$input.qui_order_order)
-shiny_pptx_selected <- semi_join(shiny_pptx_selected, qui_slide_info)
-
-local_pptx_selected <- read.csv("~/Desktop/Local Slide Order.csv")
-local_pptx_selected$input.qui_order_order <- as.character(local_pptx_selected$input.qui_order_order)
-local_pptx_selected <- semi_join(local_pptx_selected, qui_slide_info)
-# if(nrow(shiny_pptx_selected) == 0) {
-#   
-#   shiny_pptx_selected <- NULL
-#   
-# }
-shiny_removed_qui <- read.csv("~/Desktop/Remove Names.csv", stringsAsFactors = F)
-colnames(shiny_removed_qui) <- "input.qui_order_order"
-shiny_removed_qui <- semi_join(shiny_removed_qui, qui_slide_info)
-
-local_removed_qui <- read.csv("~/Desktop/Local Remove Names.csv", stringsAsFactors = F)
-colnames(local_removed_qui) <- "input.qui_order_order"
-local_removed_qui <- semi_join(local_removed_qui, qui_slide_info)
-
-
-# browser()
-# shiny_removed_qui$input.qui_order_order <- as.character(shiny_removed_qui$input.qui_order_order)
-
-# if(nrow(shiny_removed_qui) == 0) {
-#   
-#   shiny_removed_qui <- NULL
-#   
-# }
-
-# browser()
-
-if(nrow(shiny_removed_qui) == 0 | nrow(shiny_pptx_selected) == 0) {
-  
-  if(nrow(shiny_removed_qui) == 0 & nrow(shiny_pptx_selected) == 0) {
-    
-    all_qui_entries <- NULL
-    
-  }else{
-    
-    if(nrow(shiny_removed_qui) == 0) {
-      
-      # browser()
-      
-      all_qui_entries <- shiny_pptx_selected
-      shiny_pptx_selected$input.qui_order_order <- as.character(shiny_pptx_selected$input.qui_order_order)
-      
-      
-    }else{
-      
-      # browser()
-      
-      all_qui_entries <- shiny_removed_qui
-      shiny_removed_qui$input.qui_order_order <- as.character(shiny_removed_qui$input.qui_order_order)
-      
-    }
-    
-  }
-  
-}else{
-
-all_qui_entries <- full_join(shiny_removed_qui, shiny_pptx_selected)
-
-} 
-
-if(nrow(local_removed_qui) == 0 | nrow(local_pptx_selected) == 0) {
-  
-  if(nrow(local_removed_qui) == 0 & nrow(local_pptx_selected) == 0) {
-    
-    local_all_qui_entries <- NULL
-    
-  }else{
-    
-    if(nrow(local_removed_qui) == 0) {
-      
-      # browser()
-      
-      local_all_qui_entries <- local_pptx_selected
-      local_pptx_selected$input.qui_order_order <- as.character(local_pptx_selected$input.qui_order_order)
-      
-      
-    }else{
-      
-      # browser()
-      
-      local_all_qui_entries <- local_removed_qui
-      local_removed_qui$input.qui_order_order <- as.character(local_removed_qui$input.qui_order_order)
-      
-    }
-    
-  }
-  
-}else{
-  
-  local_all_qui_entries <- full_join(local_removed_qui, local_pptx_selected)
-  
-} 
-  
-
-
-# browser()
-
-
-if(is.null(all_qui_entries)) {
-  
-  shiny_qui_absent <- qui_slide_info
-  
-}else{
-
-shiny_qui_absent <- anti_join(qui_slide_info, all_qui_entries)
-
-}
-
-if(nrow(shiny_qui_absent) == 0) {
-  
-  shiny_qui_absent <- NULL
-  
-  }else{
-    
-    # browser()
-  
-  shiny_qui_absent$input.qui_order_order <- as.character(shiny_qui_absent$input.qui_order_order)
-  
-  }
-
-
-if(is.null(local_all_qui_entries)) {
-  
-  local_qui_absent <- qui_slide_info
-  
-}else{
-  
-  local_qui_absent <- anti_join(qui_slide_info, local_all_qui_entries)
-  
-}
-
-if(nrow(local_qui_absent) == 0) {
-  
-  local_qui_absent <- NULL
-  
-}else{
-  
-  # browser()
-  
-  local_qui_absent$input.qui_order_order <- as.character(local_qui_absent$input.qui_order_order)
-  
-}
-
-# browser()
 
 ui <- dashboardPage(
   
@@ -6172,7 +6020,7 @@ server <- function(input, output, session) {
     # }else{
     
     # browser()
-    shiny_qui_pptx <- read_pptx("~/Desktop/shinyqui test.pptx")
+    shiny_qui_pptx <- read_pptx("~/Desktop/Rob Scripts/Reference Files/shinyqui test.pptx")
     qui_slide_order <- NULL
     qui_slide_order <- as.data.frame(input$qui_order_order)
     qui_slide_order <- qui_slide_order %>% 
@@ -6542,13 +6390,13 @@ server <- function(input, output, session) {
     
     if(input$coop_local_toggle == F) {
       
-    write.csv(qui_slide_order, "~/Desktop/Slide Order.csv", row.names = F)
-    write.csv(qui_remove_slides, "~/Desktop/Remove Names.csv", row.names = F)
+    write.csv(qui_slide_order, "~/Desktop/Rob Scripts/Reference Files/Slide Order.csv", row.names = F)
+    write.csv(qui_remove_slides, "~/Desktop/Rob Scripts/Reference Files/Remove Names.csv", row.names = F)
     
     }else{
       
-    write.csv(qui_slide_order, "~/Desktop/Local Slide Order.csv", row.names = F)
-    write.csv(qui_remove_slides, "~/Desktop/Local Remove Names.csv", row.names = F)
+    write.csv(qui_slide_order, "~/Desktop/Rob Scripts/Reference Files/Local Slide Order.csv", row.names = F)
+    write.csv(qui_remove_slides, "~/Desktop/Rob Scripts/Reference Files/Local Remove Names.csv", row.names = F)
       
     }
     
@@ -6633,6 +6481,69 @@ server <- function(input, output, session) {
     # browser()
     
     if(input$coop_local_toggle == F) {
+      
+      shiny_pptx_selected <- read.csv("~/Desktop/Rob Scripts/Reference Files/Slide Order.csv")
+      shiny_pptx_selected$input.qui_order_order <- as.character(shiny_pptx_selected$input.qui_order_order)
+      shiny_pptx_selected <- semi_join(shiny_pptx_selected, qui_slide_info)
+      
+      shiny_removed_qui <- read.csv("~/Desktop/Rob Scripts/Reference Files/Remove Names.csv", stringsAsFactors = F)
+      colnames(shiny_removed_qui) <- "input.qui_order_order"
+      shiny_removed_qui <- semi_join(shiny_removed_qui, qui_slide_info)
+      
+      if(nrow(shiny_removed_qui) == 0 | nrow(shiny_pptx_selected) == 0) {
+        
+        if(nrow(shiny_removed_qui) == 0 & nrow(shiny_pptx_selected) == 0) {
+          
+          all_qui_entries <- NULL
+          
+        }else{
+          
+          if(nrow(shiny_removed_qui) == 0) {
+            
+            # browser()
+            
+            all_qui_entries <- shiny_pptx_selected
+            shiny_pptx_selected$input.qui_order_order <- as.character(shiny_pptx_selected$input.qui_order_order)
+            
+            
+          }else{
+            
+            # browser()
+            
+            all_qui_entries <- shiny_removed_qui
+            shiny_removed_qui$input.qui_order_order <- as.character(shiny_removed_qui$input.qui_order_order)
+            
+          }
+          
+        }
+        
+      }else{
+        
+        all_qui_entries <- full_join(shiny_removed_qui, shiny_pptx_selected)
+        
+      } 
+      
+      if(is.null(all_qui_entries)) {
+        
+        shiny_qui_absent <- qui_slide_info
+        
+      }else{
+        
+        shiny_qui_absent <- anti_join(qui_slide_info, all_qui_entries)
+        
+      }
+      
+      if(nrow(shiny_qui_absent) == 0) {
+        
+        shiny_qui_absent <- NULL
+        
+      }else{
+        
+        # browser()
+        
+        shiny_qui_absent$input.qui_order_order <- as.character(shiny_qui_absent$input.qui_order_order)
+        
+      }
     
     output$qui_rendering <- renderUI({
       
@@ -6662,6 +6573,89 @@ server <- function(input, output, session) {
     )#,
     )})
     }else{
+      
+      # browser()
+      
+      local_pptx_selected <- read.csv("~/Desktop/Rob Scripts/Reference Files/Local Slide Order.csv")
+      local_pptx_selected$input.qui_order_order <- as.character(local_pptx_selected$input.qui_order_order)
+      local_pptx_selected <- semi_join(local_pptx_selected, qui_slide_info)
+      # if(nrow(shiny_pptx_selected) == 0) {
+      #   
+      #   shiny_pptx_selected <- NULL
+      #   
+      # }
+      
+      local_removed_qui <- read.csv("~/Desktop/Rob Scripts/Reference Files/Local Remove Names.csv", stringsAsFactors = F)
+      colnames(local_removed_qui) <- "input.qui_order_order"
+      local_removed_qui <- semi_join(local_removed_qui, qui_slide_info)
+      
+      # browser()
+      # shiny_removed_qui$input.qui_order_order <- as.character(shiny_removed_qui$input.qui_order_order)
+      
+      # if(nrow(shiny_removed_qui) == 0) {
+      #   
+      #   shiny_removed_qui <- NULL
+      #   
+      # }
+      
+      # browser()
+      
+      if(nrow(local_removed_qui) == 0 | nrow(local_pptx_selected) == 0) {
+        
+        if(nrow(local_removed_qui) == 0 & nrow(local_pptx_selected) == 0) {
+          
+          local_all_qui_entries <- NULL
+          
+        }else{
+          
+          if(nrow(local_removed_qui) == 0) {
+            
+            # browser()
+            
+            local_all_qui_entries <- local_pptx_selected
+            local_pptx_selected$input.qui_order_order <- as.character(local_pptx_selected$input.qui_order_order)
+            
+            
+          }else{
+            
+            # browser()
+            
+            local_all_qui_entries <- local_removed_qui
+            local_removed_qui$input.qui_order_order <- as.character(local_removed_qui$input.qui_order_order)
+            
+          }
+          
+        }
+        
+      }else{
+        
+        local_all_qui_entries <- full_join(local_removed_qui, local_pptx_selected)
+        
+      } 
+      
+      if(is.null(local_all_qui_entries)) {
+        
+        local_qui_absent <- qui_slide_info
+        
+      }else{
+        
+        local_qui_absent <- anti_join(qui_slide_info, local_all_qui_entries)
+        
+      }
+      
+      if(nrow(local_qui_absent) == 0) {
+        
+        local_qui_absent <- NULL
+        
+      }else{
+        
+        # browser()
+        
+        local_qui_absent$input.qui_order_order <- as.character(local_qui_absent$input.qui_order_order)
+        
+      }
+      
+      # browser()
       
       output$qui_rendering <- renderUI({
         
