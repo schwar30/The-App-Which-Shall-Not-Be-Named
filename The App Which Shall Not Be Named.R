@@ -116,6 +116,10 @@ colnames(qui_slide_info) <- "input.qui_order_order"
 shiny_pptx_selected <- read.csv("~/Desktop/Slide Order.csv")
 shiny_pptx_selected$input.qui_order_order <- as.character(shiny_pptx_selected$input.qui_order_order)
 shiny_pptx_selected <- semi_join(shiny_pptx_selected, qui_slide_info)
+
+local_pptx_selected <- read.csv("~/Desktop/Local Slide Order.csv")
+local_pptx_selected$input.qui_order_order <- as.character(local_pptx_selected$input.qui_order_order)
+local_pptx_selected <- semi_join(local_pptx_selected, qui_slide_info)
 # if(nrow(shiny_pptx_selected) == 0) {
 #   
 #   shiny_pptx_selected <- NULL
@@ -124,6 +128,10 @@ shiny_pptx_selected <- semi_join(shiny_pptx_selected, qui_slide_info)
 shiny_removed_qui <- read.csv("~/Desktop/Remove Names.csv", stringsAsFactors = F)
 colnames(shiny_removed_qui) <- "input.qui_order_order"
 shiny_removed_qui <- semi_join(shiny_removed_qui, qui_slide_info)
+
+local_removed_qui <- read.csv("~/Desktop/Local Remove Names.csv", stringsAsFactors = F)
+colnames(local_removed_qui) <- "input.qui_order_order"
+local_removed_qui <- semi_join(local_removed_qui, qui_slide_info)
 
 
 # browser()
@@ -168,7 +176,42 @@ if(nrow(shiny_removed_qui) == 0 | nrow(shiny_pptx_selected) == 0) {
 
 all_qui_entries <- full_join(shiny_removed_qui, shiny_pptx_selected)
 
-}
+} 
+
+if(nrow(local_removed_qui) == 0 | nrow(local_pptx_selected) == 0) {
+  
+  if(nrow(local_removed_qui) == 0 & nrow(local_pptx_selected) == 0) {
+    
+    local_all_qui_entries <- NULL
+    
+  }else{
+    
+    if(nrow(local_removed_qui) == 0) {
+      
+      # browser()
+      
+      local_all_qui_entries <- local_pptx_selected
+      local_pptx_selected$input.qui_order_order <- as.character(local_pptx_selected$input.qui_order_order)
+      
+      
+    }else{
+      
+      # browser()
+      
+      local_all_qui_entries <- local_removed_qui
+      local_removed_qui$input.qui_order_order <- as.character(local_removed_qui$input.qui_order_order)
+      
+    }
+    
+  }
+  
+}else{
+  
+  local_all_qui_entries <- full_join(local_removed_qui, local_pptx_selected)
+  
+} 
+  
+
 
 # browser()
 
@@ -192,6 +235,29 @@ if(nrow(shiny_qui_absent) == 0) {
     # browser()
   
   shiny_qui_absent$input.qui_order_order <- as.character(shiny_qui_absent$input.qui_order_order)
+  
+  }
+
+
+if(is.null(local_all_qui_entries)) {
+  
+  local_qui_absent <- qui_slide_info
+  
+}else{
+  
+  local_qui_absent <- anti_join(qui_slide_info, local_all_qui_entries)
+  
+}
+
+if(nrow(local_qui_absent) == 0) {
+  
+  local_qui_absent <- NULL
+  
+}else{
+  
+  # browser()
+  
+  local_qui_absent$input.qui_order_order <- as.character(local_qui_absent$input.qui_order_order)
   
 }
 
@@ -881,34 +947,45 @@ ui <- dashboardPage(
 
               titlePanel("This is an ordering test"),
               
+              prettyToggle(inputId = "coop_local_toggle",
+                           label_on = "Local Slides",
+                           icon_on = icon("empire"),
+                           status_on = "success",
+                           status_off = "primary",
+                           label_off = "Coop Slides",
+                           icon_off = icon("rebel")),
+              
               # orderInput(inputId = "qui_slides", label = "Slides", items = layout_summary(shiny_qui_pptx)[, 1],
               #            as_source = F, connect = c("qui_order", "qui_remove")),
 
               # This stuff is kind of neat. Before anything, I required a few joins which would let R know which columns
               # should remain where. The order Input is just kind of an interesting ui tool though, because while it looks cool,
               # it's actually intuitive for ordering things, which is what the aim of calling specific slides actually is.
-             fluidRow(
-               column(4,
-              orderInput(inputId = "qui_slides", label = "Slides", items = shiny_qui_absent$input.qui_order_order,
-                         as_source = F, connect = c("qui_order", "qui_remove"))),
-              column(6, offset = 2,
-              actionBttn(inputId = "qui_confirm", label = "Confirm Order & Removal", style = "fill"),
-              actionBttn(inputId = "qui_confirm_normal", label = "No Custom Order / Removal", style = "fill", color = "danger")
-               )),
               
-              fluidRow(
-                
-              # column(1, 
-              # orderInput(inputId = "qui_order", "Items to order:", items = NULL, placeholder = "Drag items here...", connect = c("qui_remove", "qui_slides"), width = "50px")),
+              uiOutput("qui_rendering")
               
-              column(1,
-              orderInput(inputId = "qui_order", "Items to order:", items = shiny_pptx_selected$input.qui_order_order, placeholder = "Drag items here...", connect = c("qui_remove", "qui_slides"), width = "75px")),
-              
-              column(1,
-              orderInput(inputId = "qui_remove", "Items to remove:", items = shiny_removed_qui$input.qui_order_order, placeholder = "Drag items here...", connect = c("qui_order", "qui_slides"), width = "75px"))
-      
-              # column(3, NULL)
-              )#,
+             # fluidRow(
+             #   column(4,
+             #  orderInput(inputId = "qui_slides", label = "Slides", items = shiny_qui_absent$input.qui_order_order,
+             #             as_source = F, connect = c("qui_order", "qui_remove"))),
+             #  column(6, offset = 2,
+             #  actionBttn(inputId = "qui_confirm", label = "Confirm Order & Removal", style = "fill"),
+             #  actionBttn(inputId = "qui_confirm_normal", label = "No Custom Order / Removal", style = "fill", color = "danger")
+             #   )),
+             #  
+             #  fluidRow(
+             #    
+             #  # column(1, 
+             #  # orderInput(inputId = "qui_order", "Items to order:", items = NULL, placeholder = "Drag items here...", connect = c("qui_remove", "qui_slides"), width = "50px")),
+             #  
+             #  column(1,
+             #  orderInput(inputId = "qui_order", "Items to order:", items = shiny_pptx_selected$input.qui_order_order, placeholder = "Drag items here...", connect = c("qui_remove", "qui_slides"), width = "75px")),
+             #  
+             #  column(1,
+             #  orderInput(inputId = "qui_remove", "Items to remove:", items = shiny_removed_qui$input.qui_order_order, placeholder = "Drag items here...", connect = c("qui_order", "qui_slides"), width = "75px"))
+             # 
+             #  # column(3, NULL)
+             #  )#,
               
               # actionButton(inputId = "qui_confirm", label = "Confirm Order & Removal")
               
@@ -6434,6 +6511,25 @@ server <- function(input, output, session) {
         
       }
       
+      if("Coop Local" %in% qui_slide_order$`input$qui_order_order`[i]) {
+        
+        if(input$coop_local_toggle == F) {
+          
+          coop_value <- "This is a Co-Op Slide Dec."
+          shiny_qui_pptx <<- shiny_qui_pptx %>%
+            add_slide(layout = "Coop Local", master = "Office Theme") %>% 
+            ph_with_text(type = "body", str = coop_value)
+          
+        }else{
+          
+          local_value <- "This is a Local Slide Dec."
+          shiny_qui_pptx <<- shiny_qui_pptx %>%
+            add_slide(layout = "Coop Local", master = "Office Theme") %>% 
+            ph_with_text(type = "body", str = local_value)
+        }
+        
+      }
+      
     }
     
     })
@@ -6443,8 +6539,18 @@ server <- function(input, output, session) {
     # qui_list <- list(slide1_list, slide2_list, slide3_list, slide4_list)
     
     print(shiny_qui_pptx, "~/Desktop/QUI TEST.pptx")
+    
+    if(input$coop_local_toggle == F) {
+      
     write.csv(qui_slide_order, "~/Desktop/Slide Order.csv", row.names = F)
     write.csv(qui_remove_slides, "~/Desktop/Remove Names.csv", row.names = F)
+    
+    }else{
+      
+    write.csv(qui_slide_order, "~/Desktop/Local Slide Order.csv", row.names = F)
+    write.csv(qui_remove_slides, "~/Desktop/Local Remove Names.csv", row.names = F)
+      
+    }
     
     confirmSweetAlert(session = session, 
                       inputId = "qui_download_success",
@@ -6521,6 +6627,77 @@ server <- function(input, output, session) {
                       danger_mode = T)
     
   })
+  
+  observeEvent(input$coop_local_toggle, {
+    
+    # browser()
+    
+    if(input$coop_local_toggle == F) {
+    
+    output$qui_rendering <- renderUI({
+      
+    tagList(
+    
+    fluidRow(
+      column(4,
+             orderInput(inputId = "qui_slides", label = "Slides", items = shiny_qui_absent$input.qui_order_order,
+                        as_source = F, connect = c("qui_order", "qui_remove"))),
+      column(6, offset = 2,
+             actionBttn(inputId = "qui_confirm", label = "Confirm Order & Removal", style = "fill"),
+             actionBttn(inputId = "qui_confirm_normal", label = "No Custom Order / Removal", style = "fill", color = "danger")
+      )),
+    
+    fluidRow(
+      
+      # column(1, 
+      # orderInput(inputId = "qui_order", "Items to order:", items = NULL, placeholder = "Drag items here...", connect = c("qui_remove", "qui_slides"), width = "50px")),
+      
+      column(1,
+             orderInput(inputId = "qui_order", "Items to order:", items = shiny_pptx_selected$input.qui_order_order, placeholder = "Drag items here...", connect = c("qui_remove", "qui_slides"), width = "75px")),
+      
+      column(1,
+             orderInput(inputId = "qui_remove", "Items to remove:", items = shiny_removed_qui$input.qui_order_order, placeholder = "Drag items here...", connect = c("qui_order", "qui_slides"), width = "75px"))
+      
+      # column(3, NULL)
+    )#,
+    )})
+    }else{
+      
+      output$qui_rendering <- renderUI({
+        
+        tagList(
+      
+          fluidRow(
+            column(4,
+                   orderInput(inputId = "qui_slides", label = "Slides", items = local_qui_absent$input.qui_order_order,
+                              as_source = F, connect = c("qui_order", "qui_remove"))),
+            column(6, offset = 2,
+                   actionBttn(inputId = "qui_confirm", label = "Confirm Order & Removal", style = "fill"),
+                   actionBttn(inputId = "qui_confirm_normal", label = "No Custom Order / Removal", style = "fill", color = "danger")
+            )),
+          
+          fluidRow(
+            
+            # column(1, 
+            # orderInput(inputId = "qui_order", "Items to order:", items = NULL, placeholder = "Drag items here...", connect = c("qui_remove", "qui_slides"), width = "50px")),
+            
+            column(1,
+                   orderInput(inputId = "qui_order", "Items to order:", items = local_pptx_selected$input.qui_order_order, placeholder = "Drag items here...", connect = c("qui_remove", "qui_slides"), width = "75px")),
+            
+            column(1,
+                   orderInput(inputId = "qui_remove", "Items to remove:", items = local_removed_qui$input.qui_order_order, placeholder = "Drag items here...", connect = c("qui_order", "qui_slides"), width = "75px"))
+            
+            # column(3, NULL)
+          )
+      
+        )
+        
+      })
+        
+    } 
+    })
+    
+
   
 }
 
