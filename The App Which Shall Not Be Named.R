@@ -128,7 +128,13 @@ ui <- dashboardPage(
       # This currently generates all of our Bing slides. No API, but it's much better than manually
       # compiling everything
       
-      menuItem("Bing Slides Beta", tabName = "bing", icon = icon("database")),
+      menuItem("Bing Slides Beta", tabName = "bing_screen", icon = icon("database"), 
+               menuSubItem("Bing Upload / Generate Slides", tabName = "bing"),
+               menuSubItem("Bing Missing Associations", tabName = "bing_missing"),
+               menuSubItem("Add Dealer Information", tabName = "bing_add"),
+               menuSubItem("Delete Dealer Information", tabName = "bing_delete"),
+               menuSubItem("Edit Dealer Information", tabName = "bing_edit"),
+               menuSubItem("Create Dealer Association", tabName = "bing_create")),
       
       # This is a tab that shows and allows downloads for the breakout of corporate zipcodes
       
@@ -842,6 +848,46 @@ ui <- dashboardPage(
              #  )#,
               
               # actionButton(inputId = "qui_confirm", label = "Confirm Order & Removal")
+              
+              ),
+      
+      tabItem(tabName = "bing_missing",
+              
+              titlePanel("Unassociated Bing Campaigns"),
+              
+              uiOutput("bing_missing_render")
+              
+              ),
+      
+      tabItem(tabName = "bing_add",
+              
+              titlePanel("Add Dealer Information to Bing Doc"),
+              
+              uiOutput("bing_add_render")
+              
+              ),
+      
+      tabItem(tabName = "bing_delete",
+              
+              titlePanel("Delete Dealer Information from Bing Doc"),
+              
+              uiOutput("bing_delete_render")
+              
+              ),
+      
+      tabItem(tabName = "bing_edit",
+              
+              titlePanel("Edit Dealer Information in Bing Doc"),
+              
+              uiOutput("bing_edit_render")
+              
+              ),
+      
+      tabItem(tabName = "bing_create", 
+              
+              titlePanel("Create Bing Campaign / Dealer Association"),
+              
+              uiOutput("bing_create_render")
               
               )
       
@@ -6725,7 +6771,11 @@ server <- function(input, output, session) {
     } 
     })
     
-
+observeEvent(input$bing_missing_reference_campaigns, {
+  
+  # browser()
+  
+})
   
 }
 
