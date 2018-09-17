@@ -6159,17 +6159,17 @@ server <- function(input, output, session) {
     
     # browser()
     
-    if(length(input$qui_slides_order) != 0) {
-      
-      confirmSweetAlert(session = session, 
-                        inputId = "qui_items_in_slides",
-                        title = "Please put all of the slides in the order or remove columns!",
-                        text = "This feature could be removed since the only relevant column is the order column.",
-                        type = "warning",
-                        btn_labels = "OK!",
-                        danger_mode = T)
-      
-    }else{
+    # if(length(input$qui_slides_order) != 0) {
+    #   
+    #   confirmSweetAlert(session = session, 
+    #                     inputId = "qui_items_in_slides",
+    #                     title = "Please put all of the slides in the order or remove columns!",
+    #                     text = "This feature could be removed since the only relevant column is the order column.",
+    #                     type = "warning",
+    #                     btn_labels = "OK!",
+    #                     danger_mode = T)
+    #   
+    # }else{
     
     # browser()
     shiny_qui_pptx <- read_pptx("~/Desktop/shinyqui test.pptx")
@@ -6559,7 +6559,7 @@ server <- function(input, output, session) {
                       btn_labels = "OK!",
                       danger_mode = T)
     
-    }
+    # }
     
   })
   
