@@ -7050,6 +7050,146 @@ observeEvent(input$bing_confirm_dealer_info, {
   }
   
 })
+
+observeEvent(input$bing_delete_assoc_row, {
+  
+  # browser()
+  
+  if(is.null(input$bing_delete_table_rows_selected)) {
+    
+    confirmSweetAlert(session = session,
+                      inputId = "bing_delete_empty_select",
+                      title = "Please select row(s) to delete!",
+                      type = "warning",
+                      btn_labels = "OK!",
+                      danger_mode = T)
+    
+  }else{
+    
+    coop_associations <- coop_associations[-input$bing_delete_table_rows_selected, ]
+    
+    write.csv(coop_associations, "~/Desktop/Associations Test.csv")
+    
+    coop_asssociation_length <<- coop_associations %>% 
+      select(Bing_Campaign) %>% 
+      filter(Bing_Campaign != "") %>% 
+      distinct()
+    
+    bing_campaign_detect <<- bing_campaign_options %>% 
+      rename("Bing_Campaign" = `Select Campaigns (all campaigns also available!)`) %>% 
+      filter(Bing_Campaign != "All Campaigns")
+    
+    bing_missing_associations <<- anti_join(bing_campaign_detect, coop_asssociation_length)
+    bing_missing_associations <<- bing_missing_associations %>% 
+      rename("Campaigns not linked to Co-op" = Bing_Campaign)
+    
+    distinct_bing_associations <<- coop_associations %>% 
+      select(Coop) %>% 
+      filter(Coop != "") %>% 
+      distinct()
+    
+    updateTextInput(session = session, inputId = "bing_assoc_coop", label = "Co-op Name:", value = NULL)
+    updateTextInput(session = session, inputId = "bing_assoc_dealer", label = "Dealer Name:", value = NULL)
+    updateNumericInput(session = session, inputId = "bing_assoc_local_id", label = "Local ID:", value = NULL, min = 0)
+    updateSelectizeInput(session = session, inputId = "bing_coop_align", label = "Select Co-Op", choices = distinct_bing_associations$Coop, selected = NULL)
+    updateSelectizeInput(session = session, inputId = "bing_campaign_align", label = "Select Campaign", choices = bing_campaign_detect$Bing_Campaign, selected = NULL)
+    
+    output$bing_missing_table <- renderTable({
+      
+      bing_missing_associations
+      
+    })
+    
+    output$bing_add_render <- renderUI({
+      
+      tagList(
+        
+        fluidRow(
+          
+          column(3, 
+                 
+                 textInput(inputId = "bing_assoc_coop", label = "Co-op Name:", value = "")
+                 
+          ),
+          
+          column(3, 
+                 
+                 textInput(inputId = "bing_assoc_dealer", label = "Dealer Name:", value = "")
+                 
+          ),
+          
+          column(2, 
+                 
+                 numericInput(inputId = "bing_assoc_local_id", label = "Local ID:", value = "", min = 0)
+                 
+          )
+          
+        ),
+        
+        actionButton(inputId = "bing_confirm_dealer_info", label = "Confirm Dealer Info")
+        
+      )
+      
+    })
+    
+    output$bing_delete_table <- renderDataTable(datatable(coop_associations, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
+    
+    output$bing_edit_table <- renderDataTable(datatable(coop_associations, editable = T, selection = "none", rownames = F, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
+    
+    output$bing_create_render <- renderUI({
+      
+      tagList(
+        
+        fluidRow(
+          
+          column(2,
+                 
+                 selectizeInput(inputId = "bing_coop_align", label = "Select Co-Op", choices = distinct_bing_associations$Coop, selected = NULL, multiple = T)
+                 
+          ),
+          
+          column(2, 
+                 
+                 selectizeInput(inputId = "bing_campaign_align", label = "Select Campaign", choices = bing_campaign_detect$Bing_Campaign, selected = NULL, multiple = T)
+                 
+          )
+          
+        ), 
+        
+        actionButton(inputId = "bing_align_confirm", label = "Confirm Associaiton")
+        
+      )
+      
+    })
+    
+    output$bing_view_table <- renderDataTable(datatable(coop_associations, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
+    
+    output$bing_delete_render <- renderUI({
+      
+      tagList(
+        
+        fluidRow(
+          
+          column(2, offset = 5, 
+                 
+                 actionButton(inputId = "bing_delete_assoc_row", label = "Delete Row")
+                 
+          ))
+        
+      )
+      
+    })
+    
+    confirmSweetAlert(session = session,
+                      inputId = "bing_delete_success",
+                      title = "Row(s) successfully removed",
+                      type = "success",
+                      btn_labels = "OK!",
+                      danger_mode = T)
+    
+  }
+  
+})
   
 }
 
