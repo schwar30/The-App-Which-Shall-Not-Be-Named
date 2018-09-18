@@ -4708,7 +4708,7 @@ server <- function(input, output, session) {
 
           bing_prev_total_cost <- bing_prev_total_cost[1, 1]
 
-          # coop_associations2 <- read.csv("~/Desktop/Rob Scripts/Reference Files/Bing Associations.csv")
+          # coop_associations2 <- read.csv(~/Desktop/Rob Scripts/Reference Files/Bing Associations.csv")
           
           # browser()
           
@@ -6929,7 +6929,7 @@ observeEvent(input$bing_confirm_dealer_info, {
     
     coop_associations <- rbind(coop_associations, bing_dealer_info)
     
-    write.csv(coop_associations, "~/Desktop/Associations Test.csv", row.names = F)
+    write.csv(coop_associations, "~/Desktop/Rob Scripts/Reference Files/Bing Associations.csv", row.names = F)
     
     coop_asssociation_length <<- coop_associations %>% 
       select(Bing_Campaign) %>% 
@@ -7070,7 +7070,7 @@ observeEvent(input$bing_delete_assoc_row, {
     
     coop_associations <- coop_associations[-input$bing_delete_table_rows_selected, ]
     
-    write.csv(coop_associations, "~/Desktop/Associations Test.csv", row.names = F)
+    write.csv(coop_associations, "~/Desktop/Rob Scripts/Reference Files/Bing Associations.csv", row.names = F)
     
     coop_asssociation_length <<- coop_associations %>% 
       select(Bing_Campaign) %>% 
@@ -7354,7 +7354,7 @@ observeEvent(input$bing_edit_change, {
     coop_associations[bing_edit_row, bing_edit_column] <<- coerceValue(bing_edit_value, coop_associations[bing_edit_row, bing_edit_column])
     replaceData(bing_edit_proxy, coop_associations, resetPaging = F)
     
-    write.csv(coop_associations, "~/Desktop/Associations Test.csv", row.names = F)
+    write.csv(coop_associations, "~/Desktop/Rob Scripts/Reference Files/Bing Associations.csv", row.names = F)
     
     coop_asssociation_length <<- coop_associations %>% 
       select(Bing_Campaign) %>% 
@@ -7651,7 +7651,7 @@ observeEvent(input$bing_align_confirm, {
         select(Coop, Dealers, Local_ID, real_campaigns) %>% 
         rename("Bing_Campaign" = real_campaigns)
       
-      write.csv(coop_associations, "~/Desktop/Associations Test.csv", row.names = F)
+      write.csv(coop_associations, "~/Desktop/Rob Scripts/Reference Files/Bing Associations.csv", row.names = F)
       
       coop_asssociation_length <<- coop_associations %>% 
         select(Bing_Campaign) %>% 
