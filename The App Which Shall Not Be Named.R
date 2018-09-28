@@ -741,7 +741,24 @@ ui <- dashboardPage(
                                fileInput(inputId = "bing_prior_export", label = "Please upload prior year dealer inquiry file")),
               selectizeInput(inputId = "bing_campaign", label = "Please input the campaign you want:", choices = NULL, selected = NULL, multiple = T),
               textInput(inputId = "bing_daterange", label = "Please input the date range of reporting:", value = ""),
-              actionButton(inputId = "bing_generate", label = "Generate Slide(s)")),
+              
+              # fluidRow(
+              # 
+              # column(2,
+              #   
+              actionButton(inputId = "bing_generate", label = "Generate Slide(s) & Report(s)")
+              # 
+              # ),
+              # 
+              # column(2,
+              # 
+              #        actionButton(inputId = "bing_word_doc")
+              # 
+              #        )
+              # 
+              # )
+              
+              ),
       
       tabItem(tabName = "voc_all",
               
@@ -4602,19 +4619,19 @@ server <- function(input, output, session) {
      
         # browser()
         
-        current_keyword_flextable <- regulartable(bing_keywords_current_year) %>% theme_zebra() %>% 
-          bg(bg = "#0A3C6E", part = "header") %>% fontsize(i = 1, part = "header", size = 12) %>% 
+        current_keyword_flextable <- regulartable(bing_keywords_current_year) %>% theme_zebra(even_body = "#EBF1DE", odd_body = "#B4BB43") %>% 
+          bg(bg = "#28476E", part = "header") %>% fontsize(i = 1, part = "header", size = 12) %>% 
           fontsize(size = 10, part = "body") %>% color(i = 1, part = "header", color = "white") %>% 
           bold(part = "header") %>% width(width = c(2.5, 1.2)) %>% align(align = "left", part = "all", j = 1) %>% 
           font(part = "all", fontname = "Arial") %>% 
-          height(part = "body", height = .05)
+          height(part = "body", height = .19)
         
-        prior_keyword_flextable <- regulartable(bing_keywords_prior_year) %>% theme_zebra() %>% 
-          bg(bg = "#0A3C6E", part = "header") %>% fontsize(i = 1, part = "header", size = 12) %>% 
+        prior_keyword_flextable <- regulartable(bing_keywords_prior_year) %>% theme_zebra(even_body = "#EBF1DE", odd_body = "#B4BB43") %>% 
+          bg(bg = "#28476E", part = "header") %>% fontsize(i = 1, part = "header", size = 12) %>% 
           fontsize(size = 10, part = "body") %>% color(i = 1, part = "header", color = "white") %>% 
           bold(part = "header") %>% width(width = c(2.5, 1.2)) %>% align(align = "left", part = "all", j = 1) %>% 
           font(part = "all", fontname = "Arial") %>% 
-          height(part = "body", height = .05)
+          height(part = "body", height = .19)
       
         bing_powerpoint <<- read_pptx(path = "~/Desktop/Rob Scripts/Reference Files/BingSampleSlide.pptx")
         
@@ -4632,14 +4649,14 @@ server <- function(input, output, session) {
           
           # browser()
           
-          # layout_properties(bing_powerpoint, layout = "Bing Keyword YOY", master = "Default Theme")
+          layout_properties(bing_powerpoint, layout = "Bing Keyword YOY", master = "Default Theme")
           
           bing_powerpoint <<- bing_powerpoint %>% 
             add_slide(layout = "Bing Keyword YOY", master = "Default Theme") %>% 
             ph_with_flextable(type = "tbl", value = prior_keyword_flextable, index = 1) %>% 
             ph_with_flextable(type = "tbl", value = current_keyword_flextable, index = 2) %>% 
-            ph_with_text(type = "body", str = previous_year_text, index = 7) %>% 
-            ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 6)
+            ph_with_text(type = "body", str = previous_year_text, index = 4) %>% 
+            ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 3)
           
         }else{
           
@@ -4647,13 +4664,13 @@ server <- function(input, output, session) {
           
           # browser()
           
-          # layout_properties(bing_powerpoint, layout = "Bing Keyword No YOY", master = "Default Theme")
+          layout_properties(bing_powerpoint, layout = "Bing Keyword No YOY", master = "Default Theme")
           
           bing_powerpoint <<- bing_powerpoint %>% 
             add_slide(layout = "Bing Keyword No YOY", master = "Default Theme") %>% 
             ph_with_flextable(type = "tbl", value = current_keyword_flextable) %>% 
-            ph_with_text(type = "body", str = current_year_text, index = 7) %>% 
-            ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 6)
+            ph_with_text(type = "body", str = current_year_text, index = 4) %>% 
+            ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 3)
           
           # print("There is no data in the prior year keywords. No YOY table will be generated.")
           
@@ -4861,16 +4878,16 @@ server <- function(input, output, session) {
             bing_powerpoint <<- bing_powerpoint %>%
               add_slide(layout = "Bing Performance YOY", master = "Default Theme") %>%
               # ph_with_flextable(type = "tbl", value = current_keyword_flextable) %>%
-              ph_with_text(type = "body", str = current_year_text, index = 24) %>%
-              ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 11) %>%
-              ph_with_text(type = "body", str = paid_search_prior, index = 22) %>%
-              ph_with_text(type = "body", str = prior_conv_rate_text, index = 23) %>%
-              ph_with_text(type = "body", str = current_clicks_text, index = 16) %>%
-              ph_with_text(type = "body", str = current_cpc_text, index = 17) %>%
-              ph_with_text(type = "body", str = paid_search_current, index = 18) %>%
-              ph_with_text(type = "body", str = current_conv_rate_text, index = 19) %>%
-              ph_with_text(type = "body", str = prior_clicks_text, index = 20) %>%
-              ph_with_text(type = "body", str = prior_cpc_text, index = 21)
+              ph_with_text(type = "body", str = current_year_text, index = 5) %>%
+              ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 4) %>%
+              ph_with_text(type = "body", str = paid_search_prior, index = 14) %>%
+              ph_with_text(type = "body", str = prior_conv_rate_text, index = 15) %>%
+              ph_with_text(type = "body", str = current_clicks_text, index = 10) %>%
+              # ph_with_text(type = "body", str = current_cpc_text, index = 17) %>%
+              ph_with_text(type = "body", str = paid_search_current, index = 11) %>%
+              ph_with_text(type = "body", str = current_conv_rate_text, index = 12) %>%
+              ph_with_text(type = "body", str = prior_clicks_text, index = 13) 
+              # ph_with_text(type = "body", str = prior_cpc_text, index = 21)
 
           }else{
 
@@ -4881,14 +4898,14 @@ server <- function(input, output, session) {
             bing_powerpoint <<- bing_powerpoint %>%
               add_slide(layout = "Bing Performance No YOY", master = "Default Theme") %>%
               # ph_with_flextable(type = "tbl", value = current_keyword_flextable) %>%
-              ph_with_text(type = "body", str = current_year_text, index = 20) %>%
-              ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 11) %>%
+              ph_with_text(type = "body", str = current_year_text, index = 5) %>%
+              ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 4) %>%
               # ph_with_text(type = "body", str = paid_search_prior, index = 45) %>%
               # ph_with_text(type = "body", str = prior_conv_rate_text, index = 50) %>%
-              ph_with_text(type = "body", str = current_clicks_text, index = 16) %>%
-              ph_with_text(type = "body", str = current_cpc_text, index = 17) %>%
-              ph_with_text(type = "body", str = paid_search_current, index = 18) %>%
-              ph_with_text(type = "body", str = current_conv_rate_text, index = 19)
+              ph_with_text(type = "body", str = current_clicks_text, index = 11) %>%
+              # ph_with_text(type = "body", str = current_cpc_text, index = 17) %>%
+              ph_with_text(type = "body", str = paid_search_current, index = 12) %>%
+              ph_with_text(type = "body", str = current_conv_rate_text, index = 13)
             # ph_with_text(type = "body", str = prior_clicks_text, index = 87) %>%
             # ph_with_text(type = "body", str = prior_cpc_text, index = 90)
 
