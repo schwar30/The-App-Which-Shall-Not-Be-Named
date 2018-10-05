@@ -115,7 +115,7 @@ coop_associations2 <- read.csv("~/Desktop/Rob Scripts/Reference Files/Bing Assoc
 # coop_associations$Coop <- as.character(coop_associations$Coop)
 # coop_associations$Dealers
 
-
+source("~/Desktop/Rob Scripts/Current Projects/Git/Function List.R")
 qui_slide_info <- as.data.frame(layout_summary(shiny_qui_pptx)[, 1])
 colnames(qui_slide_info) <- "input.qui_order_order"
 
@@ -195,6 +195,8 @@ ui <- dashboardPage(
       # very well may mean that pushing it to shiny would be unfeasible (more than likely).
       
       menuItem("Shiny Qui Order Input", tabName = "qui", icon = icon("link")),
+      
+      menuItem("Slide Function Test", tabName = "slide_function", icon = icon("gem")),
       
       # For local reporting, we need to generate slides for VOC, and its a total pain to find,
       # so I just wanted it put in a place I know I won't lose it.
@@ -919,7 +921,13 @@ ui <- dashboardPage(
               
               dataTableOutput("bing_view_table")
               
-              )
+              ),
+      
+      tabItem(tabName = "slide_function",
+              
+              titlePanel("Better Add component to Slide Doc"), 
+              actionButton(inputId = "function_download", label = "Download Test Slide"),
+              uiOutput("function_list"))
       
     )))
 
@@ -4546,17 +4554,17 @@ server <- function(input, output, session) {
           reporting_period <- gsub("_.*", "", input$bing_daterange)
           current_year <- gsub(".*-.*_", "", input$bing_daterange)
           current_year <- as.integer(current_year)
-          previous_year <- current_year - 1
-          current_year_text <- paste0(reporting_period, " ", current_year, " ", bing_website[i])
-          previous_year_text <- paste0(reporting_period, " YOY ", bing_website[i])
+          # previous_year <- current_year - 1
+          current_year_text <- paste0(reporting_period, " ", current_year)
+          # previous_year_text <- paste0(reporting_period, " YOY ", bing_website[i])
           pptx_name <<- gsub("^Culligan\\s|\\s\\(.*$|\\sGrouped|\\sMetro", "", bing_campaign_selection[i]) 
           
-          bing_keywords_prior_year <- bing_keywords %>% 
-            filter(Campaign == bing_campaign_selection[i]) %>% 
-            select(Keyword, Clicks..Compare.to.) %>% 
-            filter(Clicks..Compare.to. > 0)
+          # bing_keywords_prior_year <- bing_keywords %>% 
+          #   filter(Campaign == bing_campaign_selection[i]) %>% 
+          #   select(Keyword, Clicks..Compare.to.) %>% 
+          #   filter(Clicks..Compare.to. > 0)
           
-       if(nrow(bing_keywords_prior_year) > 0) {
+       # if(nrow(bing_keywords_prior_year) > 0) {
 
         bing_keywords_current_year <- bing_keywords %>% 
           filter(Campaign == bing_campaign_selection[i]) %>% 
@@ -4565,7 +4573,7 @@ server <- function(input, output, session) {
           filter(Clicks > 0) 
         
         current_title <- paste0("Top Keywords ", current_year)
-        previous_title <- paste0("Top Keywords ", previous_year)
+        # previous_title <- paste0("Top Keywords ", previous_year)
         
         bing_keywords_current_year$Keyword <- gsub("[[:punct:]]|^\\s", "", bing_keywords_current_year$Keyword)
         bing_keywords_current_year$Keyword <- str_to_lower(bing_keywords_current_year$Keyword)
@@ -4578,60 +4586,60 @@ server <- function(input, output, session) {
         
         colnames(bing_keywords_current_year) <- c("Top Keywords Current Period", "Clicks")
         
-        bing_keywords_prior_year$Keyword <- gsub("[[:punct:]]|^\\s", "", bing_keywords_prior_year$Keyword)
-        bing_keywords_prior_year$Keyword <- str_to_lower(bing_keywords_prior_year$Keyword)
+        # bing_keywords_prior_year$Keyword <- gsub("[[:punct:]]|^\\s", "", bing_keywords_prior_year$Keyword)
+        # bing_keywords_prior_year$Keyword <- str_to_lower(bing_keywords_prior_year$Keyword)
         
-        bing_keywords_prior_year <- bing_keywords_prior_year %>% 
-          group_by(Keyword) %>% 
-          summarize(Clicks = sum(Clicks..Compare.to.)) %>%
-          arrange(-Clicks) %>% 
-          slice(1:20) 
+        # bing_keywords_prior_year <- bing_keywords_prior_year %>% 
+        #   group_by(Keyword) %>% 
+        #   summarize(Clicks = sum(Clicks..Compare.to.)) %>%
+        #   arrange(-Clicks) %>% 
+        #   slice(1:20) 
         
-        colnames(bing_keywords_prior_year) <- c("Top Keywords Prior Period", "Clicks")
+        # colnames(bing_keywords_prior_year) <- c("Top Keywords Prior Period", "Clicks")
         
-       }else{
+       # }else{
             
-         bing_keywords_current_year <- bing_keywords %>% 
-           filter(Campaign == bing_campaign_selection[i]) %>% 
-           select(Keyword, Clicks) %>% 
-           # arrange(-Clicks) %>% 
-           filter(Clicks > 0) 
+         # bing_keywords_current_year <- bing_keywords %>% 
+         #   filter(Campaign == bing_campaign_selection[i]) %>% 
+         #   select(Keyword, Clicks) %>% 
+         #   # arrange(-Clicks) %>% 
+         #   filter(Clicks > 0) 
+         # 
+         # bing_keywords_current_year$Keyword <- gsub("[[:punct:]]|^\\s", "", bing_keywords_current_year$Keyword)
+         # bing_keywords_current_year$Keyword <- str_to_lower(bing_keywords_current_year$Keyword)
+         # 
+         # bing_keywords_current_year <- bing_keywords_current_year %>% 
+         #   group_by(Keyword) %>% 
+         #   summarise(Clicks = sum(Clicks)) %>% 
+         #   arrange(-Clicks) %>%
+         #   slice(1:20) 
+         # 
+         # bing_keywords_prior_year$Keyword <- gsub("[[:punct:]]|^\\s", "", bing_keywords_prior_year$Keyword)
+         # bing_keywords_prior_year$Keyword <- str_to_lower(bing_keywords_prior_year$Keyword)
+         # 
+         # bing_keywords_prior_year <- bing_keywords_prior_year %>% 
+         #   group_by(Keyword) %>% 
+         #   summarize(Clicks = sum(Clicks..Compare.to.)) %>%
+         #   arrange(-Clicks) %>% 
+         #   slice(1:20) 
          
-         bing_keywords_current_year$Keyword <- gsub("[[:punct:]]|^\\s", "", bing_keywords_current_year$Keyword)
-         bing_keywords_current_year$Keyword <- str_to_lower(bing_keywords_current_year$Keyword)
-         
-         bing_keywords_current_year <- bing_keywords_current_year %>% 
-           group_by(Keyword) %>% 
-           summarise(Clicks = sum(Clicks)) %>% 
-           arrange(-Clicks) %>%
-           slice(1:20) 
-         
-         bing_keywords_prior_year$Keyword <- gsub("[[:punct:]]|^\\s", "", bing_keywords_prior_year$Keyword)
-         bing_keywords_prior_year$Keyword <- str_to_lower(bing_keywords_prior_year$Keyword)
-         
-         bing_keywords_prior_year <- bing_keywords_prior_year %>% 
-           group_by(Keyword) %>% 
-           summarize(Clicks = sum(Clicks..Compare.to.)) %>%
-           arrange(-Clicks) %>% 
-           slice(1:20) 
-         
-          }
+          # }
      
         # browser()
         
-        current_keyword_flextable <- regulartable(bing_keywords_current_year) %>% theme_zebra(even_body = "#EBF1DE", odd_body = "#B4BB43") %>% 
-          bg(bg = "#28476E", part = "header") %>% fontsize(i = 1, part = "header", size = 12) %>% 
+        current_keyword_flextable <- regulartable(bing_keywords_current_year) %>% theme_zebra(even_body = "#ECEDEE", odd_body = "#D5D7DA") %>% 
+          bg(bg = "#17375E", part = "header") %>% fontsize(i = 1, part = "header", size = 12) %>% 
           fontsize(size = 10, part = "body") %>% color(i = 1, part = "header", color = "white") %>% 
           bold(part = "header") %>% width(width = c(2.5, 1.2)) %>% align(align = "left", part = "all", j = 1) %>% 
           font(part = "all", fontname = "Arial") %>% 
-          height(part = "body", height = .19)
+          height(part = "body", height = .19) %>% border(border = fp_border(color = "white"), part = "all")
         
-        prior_keyword_flextable <- regulartable(bing_keywords_prior_year) %>% theme_zebra(even_body = "#EBF1DE", odd_body = "#B4BB43") %>% 
-          bg(bg = "#28476E", part = "header") %>% fontsize(i = 1, part = "header", size = 12) %>% 
-          fontsize(size = 10, part = "body") %>% color(i = 1, part = "header", color = "white") %>% 
-          bold(part = "header") %>% width(width = c(2.5, 1.2)) %>% align(align = "left", part = "all", j = 1) %>% 
-          font(part = "all", fontname = "Arial") %>% 
-          height(part = "body", height = .19)
+        # prior_keyword_flextable <- regulartable(bing_keywords_prior_year) %>% theme_zebra(even_body = "#EBF1DE", odd_body = "#B4BB43") %>% 
+        #   bg(bg = "#17375E", part = "header") %>% fontsize(i = 1, part = "header", size = 12) %>% 
+        #   fontsize(size = 10, part = "body") %>% color(i = 1, part = "header", color = "white") %>% 
+        #   bold(part = "header") %>% width(width = c(2.5, 1.2)) %>% align(align = "left", part = "all", j = 1) %>% 
+        #   font(part = "all", fontname = "Arial") %>% 
+        #   height(part = "body", height = .19) %>% border(border = fp_border(color = "white"), part = "all")
       
         bing_powerpoint <<- read_pptx(path = "~/Desktop/Rob Scripts/Reference Files/BingSampleSlide.pptx")
         
@@ -4645,38 +4653,53 @@ server <- function(input, output, session) {
         
         pptx_name <- gsub("^Culligan\\s|\\s\\(.*$|\\sGrouped|\\sMetro", "", bing_campaign_selection[i]) 
         
-        if(nrow(bing_keywords_prior_year) > 0) {
+        # if(nrow(bing_keywords_prior_year) > 0) {
           
           # browser()
           
-          # layout_properties(bing_powerpoint, layout = "Bing Keyword YOY", master = "Default Theme")
+          layout_properties(bing_powerpoint, layout = "Bing Keyword No YOY", master = "Default Theme")
+          # 
+          # bing_powerpoint <<- bing_powerpoint %>% 
+          #   add_slide(layout = "Bing Keyword YOY", master = "Default Theme") %>% 
+          #   ph_with_flextable(type = "tbl", value = prior_keyword_flextable, index = 1) %>% 
+          #   ph_with_flextable(type = "tbl", value = current_keyword_flextable, index = 2) %>% 
+          #   ph_with_text(type = "body", str = previous_year_text, index = 4) %>% 
+          #   ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 3)
           
-          bing_powerpoint <<- bing_powerpoint %>% 
-            add_slide(layout = "Bing Keyword YOY", master = "Default Theme") %>% 
-            ph_with_flextable(type = "tbl", value = prior_keyword_flextable, index = 1) %>% 
-            ph_with_flextable(type = "tbl", value = current_keyword_flextable, index = 2) %>% 
-            ph_with_text(type = "body", str = previous_year_text, index = 4) %>% 
-            ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 3)
-          
-        }else{
+        # }else{
           
           # pptx_name <- gsub("^Culligan\\s|\\s\\(.*$|\\sGrouped|\\sMetro", "", input$bing_campaign[i]) 
           
           # browser()
           
-          # layout_properties(bing_powerpoint, layout = "Bing Keyword No YOY", master = "Default Theme")
+          # all_slide_info <- layout_properties(bing_powerpoint)
+          # all_slide_info <- select(master_name, name) %>% 
+          #   distinct()
+          
+          # bing_powerpoint %>% slide_summary()
+          # id_labels <- layout_properties(bing_powerpoint)
+          
+          bing_website <- gsub("^.*\\(|\\).*$", "", bing_campaign_selection[i])
+          revised_bing_campaign_selection <- gsub("^Culligan\\s|\\s\\(.*", "", bing_campaign_selection[i])
+          
+          # browser()
           
           bing_powerpoint <<- bing_powerpoint %>% 
             add_slide(layout = "Bing Keyword No YOY", master = "Default Theme") %>% 
-            ph_with_flextable(type = "tbl", value = current_keyword_flextable) %>% 
-            ph_with_text(type = "body", str = current_year_text, index = 4) %>% 
-            ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 3)
+            # slide_summary()
+            ph_with_flextable(type = "tbl", value = current_keyword_flextable) %>%
+            better_pptx_text_assignment(id = 8, slide_type = "body", text = revised_bing_campaign_selection, slide_num = 1) %>% 
+            better_pptx_text_assignment(id = 9, slide_type = "body", text = current_year_text, slide_num = 1) %>% 
+            # better_pptx_text_assignment(id = 6, slide_type = "body", text = paste0("Paid Search - Bing Ads - ", bing_website), slide_num = 1) %>% 
+            ph_with_text(str = paste0("Paid Search - Bing Ads - ", bing_website), type = "title")
+            # ph_with_text(type = "body", str = current_year_text, index = 4) %>%
+            # ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 3)
           
           # print("There is no data in the prior year keywords. No YOY table will be generated.")
           
-          print(paste0("There is no data in the ", pptx_name, " prior year keyword table. No slide for this date range will be generated."))
+          # print(paste0("There is no data in the ", pptx_name, " prior year keyword table. No slide for this date range will be generated."))
           
-        }
+        # }
         
         if(input$bing_performance_toggle == T) {
 
@@ -4691,6 +4714,9 @@ server <- function(input, output, session) {
           # }
           
           # browser()
+          
+          revised_bing_campaign_selection <- gsub("^Culligan\\s|\\s\\(.*", "", bing_campaign_selection[i])
+          # bing_website <- gsub("^.*\\(|\\).*$", "", bing_campaign_selection[i])
           
           bing_keywords_campaign_filtered <-  bing_keywords_upload %>%
             filter(Campaign == bing_campaign_selection[i])
@@ -4877,17 +4903,28 @@ server <- function(input, output, session) {
 
             bing_powerpoint <<- bing_powerpoint %>%
               add_slide(layout = "Bing Performance YOY", master = "Default Theme") %>%
-              # ph_with_flextable(type = "tbl", value = current_keyword_flextable) %>%
-              ph_with_text(type = "body", str = current_year_text, index = 5) %>%
-              ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 4) %>%
-              ph_with_text(type = "body", str = paid_search_prior, index = 14) %>%
-              ph_with_text(type = "body", str = prior_conv_rate_text, index = 15) %>%
-              ph_with_text(type = "body", str = current_clicks_text, index = 10) %>%
-              # ph_with_text(type = "body", str = current_cpc_text, index = 17) %>%
-              ph_with_text(type = "body", str = paid_search_current, index = 11) %>%
-              ph_with_text(type = "body", str = current_conv_rate_text, index = 12) %>%
-              ph_with_text(type = "body", str = prior_clicks_text, index = 13) 
-              # ph_with_text(type = "body", str = prior_cpc_text, index = 21)
+              better_pptx_text_assignment(id = 12, slide_type = "body", text = revised_bing_campaign_selection, slide_num = 2) %>% 
+              better_pptx_text_assignment(id = 26, slide_type = "body", text = current_year_text, slide_num = 2) %>% 
+              better_pptx_text_assignment(id = 31, slide_type = "body", text = current_clicks_text, slide_num = 2) %>% 
+              better_pptx_text_assignment(id = 32, slide_type = "body", text = paid_search_current, slide_num = 2) %>% 
+              better_pptx_text_assignment(id = 33, slide_type = "body", text = current_conv_rate_text, slide_num = 2) %>% 
+              better_pptx_text_assignment(id = 34, slide_type = "body", text = prior_clicks_text, slide_num = 2) %>% 
+              better_pptx_text_assignment(id = 35, slide_type = "body", text = paid_search_prior, slide_num = 2) %>% 
+              better_pptx_text_assignment(id = 36, slide_type = "body", text = prior_conv_rate_text, slide_num = 2) %>% 
+              # better_pptx_text_assignment(id = 3, slide_type = "body", text = paste0("Paid Search - Bing Ads - ", bing_website), slide_num = 2)
+              ph_with_text(str = paste0("Paid Search - Bing Ads - ", bing_website), type = "title")
+              
+              # # ph_with_flextable(type = "tbl", value = current_keyword_flextable) %>%
+              # ph_with_text(type = "body", str = current_year_text, index = 5) %>%
+              # ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 4) %>%
+              # ph_with_text(type = "body", str = paid_search_prior, index = 14) %>%
+              # ph_with_text(type = "body", str = prior_conv_rate_text, index = 15) %>%
+              # ph_with_text(type = "body", str = current_clicks_text, index = 10) %>%
+              # # ph_with_text(type = "body", str = current_cpc_text, index = 17) %>%
+              # ph_with_text(type = "body", str = paid_search_current, index = 11) %>%
+              # ph_with_text(type = "body", str = current_conv_rate_text, index = 12) %>%
+              # ph_with_text(type = "body", str = prior_clicks_text, index = 13) 
+              # # ph_with_text(type = "body", str = prior_cpc_text, index = 21)
 
           }else{
 
@@ -4897,15 +4934,23 @@ server <- function(input, output, session) {
 
             bing_powerpoint <<- bing_powerpoint %>%
               add_slide(layout = "Bing Performance No YOY", master = "Default Theme") %>%
-              # ph_with_flextable(type = "tbl", value = current_keyword_flextable) %>%
-              ph_with_text(type = "body", str = current_year_text, index = 5) %>%
-              ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 4) %>%
-              # ph_with_text(type = "body", str = paid_search_prior, index = 45) %>%
-              # ph_with_text(type = "body", str = prior_conv_rate_text, index = 50) %>%
-              ph_with_text(type = "body", str = current_clicks_text, index = 11) %>%
-              # ph_with_text(type = "body", str = current_cpc_text, index = 17) %>%
-              ph_with_text(type = "body", str = paid_search_current, index = 12) %>%
-              ph_with_text(type = "body", str = current_conv_rate_text, index = 13)
+              better_pptx_text_assignment(id = 12, slide_type = "body", text = revised_bing_campaign_selection, slide_num = 3) %>% 
+              better_pptx_text_assignment(id = 26, slide_type = "body", text = current_year_text, slide_num = 3) %>% 
+              better_pptx_text_assignment(id = 28, slide_type = "body", text = current_clicks_text, slide_num = 3) %>% 
+              better_pptx_text_assignment(id = 29, slide_type = "body", text = paid_search_current, slide_num = 3) %>% 
+              better_pptx_text_assignment(id = 30, slide_type = "body", text = current_conv_rate_text, slide_num = 3) %>% 
+              # better_pptx_text_assignment(id = 3, slide_type = "body", text = paste0("Paid Search - Bing Ads - ", bing_website), slide_num = 3)
+              ph_with_text(str = paste0("Paid Search - Bing Ads - ", bing_website), type = "title")
+              
+              # # ph_with_flextable(type = "tbl", value = current_keyword_flextable) %>%
+              # ph_with_text(type = "body", str = current_year_text, index = 5) %>%
+              # ph_with_text(type = "body", str = paste0("-", bing_campaign_selection[i]), index = 4) %>%
+              # # ph_with_text(type = "body", str = paid_search_prior, index = 45) %>%
+              # # ph_with_text(type = "body", str = prior_conv_rate_text, index = 50) %>%
+              # ph_with_text(type = "body", str = current_clicks_text, index = 11) %>%
+              # # ph_with_text(type = "body", str = current_cpc_text, index = 17) %>%
+              # ph_with_text(type = "body", str = paid_search_current, index = 12) %>%
+              # ph_with_text(type = "body", str = current_conv_rate_text, index = 13)
             # ph_with_text(type = "body", str = prior_clicks_text, index = 87) %>%
             # ph_with_text(type = "body", str = prior_cpc_text, index = 90)
 
