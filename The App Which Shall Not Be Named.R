@@ -71,7 +71,7 @@ library(flextable)
 
 # This is particularly for the call files and lead exports which tend to be rather large
 
-options(shiny.maxRequestSize = 30 * 1024^2)
+options(shiny.maxRequestSize = 100 * 1024^2)
 
 # I need this because I want the selectize option in the UI for API calls.
 
