@@ -1,7 +1,22 @@
+# This is only a Test.......
+# %>% %>% %>% %>% %>% %>% %>% %>% %>% %>% %>% %>% %>% %>% %>% %>% %>% %>% %>% 
+
+
+
+
+
+
+
 # Adwords API Call, Google Sheets do not work. Not honestly sure if I should
 # try to make sheets work since its API restrictions renders it ineffective.
 # I can't figure out the Adwords API call yet, but if I can, that would be a 
 # decent addition.
+
+# The only reason why the Adwords API failed was because I needed to set up
+# a new project. I'm not sure that this is something worth doing, since I work
+# with the API's literally all the time, and it really is only the setup I was failing
+# on. Again, this is mainly a testing app, and I think I've outgrown the need
+# to play with this package.
 
 # This is ultimately the life-blood of this whole script
 
