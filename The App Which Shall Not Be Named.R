@@ -1,11 +1,5 @@
-# This is only a Test.......
-# %>% %>% %>% %>% %>% %>% %>% %>% %>% %>% %>% %>% %>% %>% %>% %>% %>% %>% %>% 
 
-
-
-
-
-
+# Make this WORK!!!!!!
 
 # Adwords API Call, Google Sheets do not work. Not honestly sure if I should
 # try to make sheets work since its API restrictions renders it ineffective.
