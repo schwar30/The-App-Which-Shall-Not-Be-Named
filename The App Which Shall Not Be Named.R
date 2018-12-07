@@ -1,4 +1,3 @@
-
 # Make this WORK!!!!!!
 
 # Adwords API Call, Google Sheets do not work. Not honestly sure if I should
@@ -5495,7 +5494,7 @@ server <- function(input, output, session) {
                        "Discovery.searches", "Total.views", "Search.views", "Maps.views", "Total.actions", "Website.actions",
                        "Directions.actions", "Phone.call.actions")
     
-    review_tracker_col_names <- c("Location.ID", "Dealer.ID", "Store.Number..External.ID.", "Location.Name", "Location.Address",
+    review_tracker_col_names <- c("Location.ID", "Rank", "Store.Number..External.ID.", "Location.Name", "Location.Address",
                                   "Location.City", "Location.State", "Location.Zip.Code", "Location.Added.On.Date", "Average.Star.Rating",
                                   "Response.Rate", "Number.of.Reviews")
     
@@ -5524,10 +5523,12 @@ server <- function(input, output, session) {
         
         voc_data1 <- read.csv(input$exp_voc_file$datapath[1], stringsAsFactors = T, fileEncoding = "latin1")
         # gmb <- voc_data2
-        
+        # browser()
         if(all(review_tracker_col_names %in% colnames(voc_data1))) {
           
           review_tracker <<- voc_data1 
+          
+          # browser()
           
           if(all(gmb_col_names %in% colnames(voc_data2))) {
             
@@ -5660,6 +5661,8 @@ server <- function(input, output, session) {
           
         }
         
+        # browser()
+        
         if(all(review_tracker_col_names %in% colnames(voc_data1))) {
           
           review_tracker <<- voc_data1
@@ -5724,6 +5727,8 @@ server <- function(input, output, session) {
         filter(!str_detect(Business.name, "NOT DOWNLOADABLE")) %>% 
         filter(str_detect(Business.name, "Culligan|culligan"))
       
+      # browser()
+      
       gmb <- left_join(gmb, voc_associations, by = c("Business.name", "Address"))
       
       review_tracker <- review_tracker %>% 
@@ -5765,7 +5770,7 @@ server <- function(input, output, session) {
         
         dir.create(paste0("/Volumes/Front/Culligan/Local Website Reporting/VOC ", input$exp_voc_date_range))
         
-        full_voc <- as.data.frame(lapply(full_voc, as.character), stringsAsFactors = F)
+        full_voc <<- as.data.frame(lapply(full_voc, as.character), stringsAsFactors = F)
         
         # dat <- full_voc
         # 
@@ -5781,7 +5786,11 @@ server <- function(input, output, session) {
         
         for(i in 1:nrow(full_voc)) {
           
+          # browser()
+          
           incProgress(1/nrow(full_voc), detail = paste0("Downloading ", i, " of ", nrow(full_voc)))
+          
+          # browser()
           
           # mydoc = pptx(template ="~/shiny-server/shiny_app/MasterData/other_files/Co-op_template.pptx")
           # mydoc=addSlide(mydoc,slide.layout = "VOC Title")
@@ -5795,24 +5804,70 @@ server <- function(input, output, session) {
           # mydoc = addParagraph(mydoc,dat$city_state[i])
           # file = paste0("~/Desktop/test/ ",dat$citySt[i], ".pptx")
           # writeDoc(mydoc, file)
+          # browser()
           
-          voc_powerpoint_doc <- read_pptx(path = "~/shiny-server/shiny_app/MasterData/other_files/Master_template.pptx") %>% 
-            add_slide(layout = "VOC Title", master = "Title Slide") %>% 
-            add_slide(layout = "VOC Info", master = "Title Slide") %>% 
-            ph_with_text(type = "body", str = full_voc$Total.views[i], index = 17) %>% 
-            ph_with_text(type = "body", str = full_voc$Phone.call.actions[i], index = 18) %>% 
-            ph_with_text(type = "body", str = full_voc$Directions.actions[i], index = 19) %>% 
-            ph_with_text(type = "body", str = full_voc$Website.actions[i], index = 3) %>% 
-            ph_with_text(type = "body", str = full_voc$Average.Star.Rating[i], index = 4) %>% 
-            ph_with_text(type = "body", str = full_voc$Number.of.Reviews[i], index = 5) %>% 
-            ph_with_text(type = "body", str = full_voc$city_state[i], index = 6)
+          # mydoc <- read_pptx(path = "~/shiny-server/shiny_app/MasterData/other_files/Master_template.pptx")
+          # better_pptx_text_assignment(id = 12, slide_type = "body", text = revised_bing_campaign_selection, slide_num = 2)
+          
+          voc_template <- read_pptx(path = "~/shiny-server/shiny_app/MasterData/other_files/Master_template.pptx")
+          
+          # browser()
+          
+          # better_pptx_text_assignment <- function(x, id, slide_type, text, slide_num) {
+          #   browser()
+          #   id_labels <- as.data.frame(layout_properties(x))
+          #   
+          #   slide_order <- id_labels %>% 
+          #     select(master_name, name) %>% 
+          #     distinct()
+          #   master_slide <- as.character(slide_order[slide_num, 1])
+          #   layout_slide <- as.character(slide_order[slide_num, 2])
+          #   
+          #   id_order <- id_labels %>% 
+          #     filter(type == slide_type) %>% 
+          #     filter(name == layout_slide) %>% 
+          #     filter(master_name == master_slide)
+          #   
+          #   row_number <- which(grepl(id, id_order$id))
+          #   
+          #   if(length(row_number) > 1) {
+          #     
+          #     row_number <- min(row_number)
+          #     
+          #   }
+          #   
+          #   # browser()
+          #   ph_with_text(x = x, str = text, type = slide_type, index = row_number)
+          #   
+          # }
+          
+          # browser()
+          
+          voc_powerpoint_doc <- voc_template %>% 
+            # add_slide(layout = "VOC Title", master = "title") %>% 
+            add_slide(layout = "body_voc", master = "body") %>% 
+            better_pptx_text_assignment(id = 2, slide_type = "title", text = paste0("VOC - Culligan of ", full_voc$city_state[i]), slide_num = 9) %>% 
+            better_pptx_text_assignment(id = 21, slide_type = "body", text = full_voc$Number.of.Reviews[i], slide_num = 9) %>%
+            better_pptx_text_assignment(id = 20, slide_type = "body", text = digits(full_voc$Average.Star.Rating[i], digits = 1), slide_num = 9) %>%
+            better_pptx_text_assignment(id = 16, slide_type = "body", text = input$exp_voc_date_range, slide_num = 9) %>%
+            better_pptx_text_assignment(id = 24, slide_type = "body", text = comma(full_voc$Total.views[i], digits = 0), slide_num = 9) %>%
+            better_pptx_text_assignment(id = 25, slide_type = "body", text = comma(full_voc$Phone.call.actions[i], digits = 0), slide_num = 9) %>%
+            better_pptx_text_assignment(id = 26, slide_type = "body", text = comma(full_voc$Directions.actions[i], digits = 0), slide_num = 9) %>%
+            better_pptx_text_assignment(id = 27, slide_type = "body", text = comma(full_voc$Website.actions[i], digits = 0), slide_num = 9) #%>% 
+            
+            # ph_with_text(type = "body", str = full_voc$Total.views[i], index = 17) %>% 
+            # ph_with_text(type = "body", str = full_voc$Phone.call.actions[i], index = 18) %>% 
+            # ph_with_text(type = "body", str = full_voc$Directions.actions[i], index = 19) %>% 
+            # ph_with_text(type = "body", str = full_voc$Website.actions[i], index = 3) %>% 
+            # ph_with_text(type = "body", str = full_voc$Average.Star.Rating[i], index = 4) %>% 
+            # ph_with_text(type = "body", str = full_voc$Number.of.Reviews[i], index = 5) %>% 
+            # ph_with_text(type = "body", str = full_voc$city_state[i], index = 6)
           
           # browser()
           save_file <- paste0("/Volumes/Front/Culligan/Local Website Reporting/VOC ", input$exp_voc_date_range, "/", full_voc$city_state[i], ".pptx")
           # save_file <- paste0("~/Desktop/test/", full_voc$city_state[i], ".pptx")
           print(voc_powerpoint_doc, save_file)
             
-          
           # mydoc = pptx(template ="~/shiny-server/shiny_app/MasterData/other_files/Co-op_template.pptx")
           # mydoc=addSlide(mydoc,slide.layout = "VOC Title")
           # mydoc=addSlide(mydoc,slide.layout = "VOC Info")
@@ -5898,6 +5953,8 @@ server <- function(input, output, session) {
         }else{
           
           # browser()
+          
+          
           
           gmb_filtered_dt <- gmb_filtered %>% 
             select(Business.name, Address) %>% 

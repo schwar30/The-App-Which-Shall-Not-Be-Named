@@ -9,7 +9,7 @@
 # 
 
 better_pptx_text_assignment <- function(x, id, slide_type, text, slide_num) {
-  
+  # browser()
   id_labels <- as.data.frame(layout_properties(x))
   
   slide_order <- id_labels %>% 
@@ -18,6 +18,8 @@ better_pptx_text_assignment <- function(x, id, slide_type, text, slide_num) {
   master_slide <- as.character(slide_order[slide_num, 1])
   layout_slide <- as.character(slide_order[slide_num, 2])
   
+  # browser()
+  
   id_order <- id_labels %>% 
     filter(type == slide_type) %>% 
     filter(name == layout_slide) %>% 
@@ -25,12 +27,13 @@ better_pptx_text_assignment <- function(x, id, slide_type, text, slide_num) {
   
   row_number <- which(grepl(id, id_order$id))
   
-  if(length(row_number > 1)) {
+  if(length(row_number) > 1) {
     
     row_number <- min(row_number)
     
   }
   
+  # browser()
   ph_with_text(x = x, str = text, type = slide_type, index = row_number)
   
 }
