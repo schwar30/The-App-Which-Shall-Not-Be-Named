@@ -83,7 +83,7 @@ options(shiny.maxRequestSize = 100 * 1024^2)
 
 # I need this because I want the selectize option in the UI for API calls.
 
-# client_csv <- read.csv("~/Desktop/Rob Scripts/Reference Files/client_website_ga_id.csv")
+# client_csv <- read.csv("~/Desktop/Rob Scripts/reference_files/client_website_ga_id.csv")
 # client_csv <- client_csv %>% 
 #   filter(str_detect(UA, "UA"))
 
@@ -117,13 +117,13 @@ qui_slide_info <- NULL
 shiny_qui_absent <- NULL
 bing_lead_export <- NULL
 bing_lead_export_prior <- NULL
-shiny_qui_pptx <- officer::read_pptx("~/Desktop/Rob Scripts/Reference Files/shinyqui test.pptx")
-coop_associations <- read.csv("~/Desktop/Rob Scripts/Reference Files/Bing Associations.csv", stringsAsFactors = F)
-coop_associations2 <- read.csv("~/Desktop/Rob Scripts/Reference Files/Bing Associations.csv", stringsAsFactors = F)
+shiny_qui_pptx <- officer::read_pptx("~/tawsnbn/reference_files/shinyqui test.pptx")
+coop_associations <- read.csv("~/tawsnbn/reference_files/Bing Associations.csv", stringsAsFactors = F)
+coop_associations2 <- read.csv("~/tawsnbn/reference_files/Bing Associations.csv", stringsAsFactors = F)
 # coop_associations$Coop <- as.character(coop_associations$Coop)
 # coop_associations$Dealers
 
-source("~/Desktop/Rob Scripts/Current Projects/Git/Function List.R")
+source("~/tawsnbn/scripts/Function List.R")
 qui_slide_info <- as.data.frame(layout_summary(shiny_qui_pptx)[, 1])
 colnames(qui_slide_info) <- "input.qui_order_order"
 
@@ -202,9 +202,9 @@ ui <- dashboardPage(
       # This is a demo to show my idea for calling and ordering slides for shiny. It's much more basic, which
       # very well may mean that pushing it to shiny would be unfeasible (more than likely).
       
-      menuItem("Shiny Qui Order Input", tabName = "qui", icon = icon("link")),
+      # menuItem("Shiny Qui Order Input", tabName = "qui", icon = icon("link")),
       
-      menuItem("Slide Function Test", tabName = "slide_function", icon = icon("gem")),
+      # menuItem("Slide Function Test", tabName = "slide_function", icon = icon("gem")),
       
       # For local reporting, we need to generate slides for VOC, and its a total pain to find,
       # so I just wanted it put in a place I know I won't lose it.
@@ -213,7 +213,7 @@ ui <- dashboardPage(
       # of local reporting, I am probably going to sunset this as well. It's very barebones and VOC Plus is 
       # much much more helpful.
       
-      menuItem("VOC Beta", tabName = "voc", icon = icon("bomb")),
+      # menuItem("VOC Beta", tabName = "voc", icon = icon("bomb")),
       
       # More of a testing thing than anything else. Playing around with some of the API stuff is probably
       # a good idea for here and beyond just incase something breaks or a new call is needed. The stuff I
@@ -261,12 +261,13 @@ ui <- dashboardPage(
                menuSubItem("View Differences", tabName = "voc_all_differences"),
                menuSubItem("VOC Association Edit", tabName = "voc_all_edit"),
                menuSubItem("VOC Association Add", tabName = "voc_all_add"),
-               menuSubItem("VOC Association Delete", tabName = "voc_all_delete")),
+               menuSubItem("VOC Association Delete", tabName = "voc_all_delete"),
+               menuSubItem("VOC Beta", tabName = "voc", icon = icon("bomb")))
       
       # On occassion we will be asked about inquiry zipcode breakouts, which isn't very common, but it 
       # would take like half an hour or so to finalize, and this is just easier since its now generalized
       
-      menuItem("Zipcode Breakout", tabName = "zipcode", icon = icon("empire"))
+      # menuItem("Zipcode Breakout", tabName = "zipcode", icon = icon("empire"))
       
     ) 
     
@@ -2224,7 +2225,7 @@ server <- function(input, output, session) {
       # This little bit of code is just so that the API call can run without needing to sign in to 
       # Google Analytics
       
-      ga_auth("~/Desktop/Rob Scripts/Reference Files/ga.oauth")
+      ga_auth("~/tawsnbn/reference_files/ga.oauth")
       
       # This lists all the Kennedy Accounts, UA codes, and analyticsID's.
       
@@ -2460,7 +2461,7 @@ server <- function(input, output, session) {
     # isolate(input$corpID)
     # isolate(input$corp_dealer)
     
-    data_table <- read.csv("~/Desktop/Rob Scripts/Reference Files/zip codes.csv")
+    data_table <- read.csv("~/tawsnbn/reference_files/Zip Codes.csv")
     
     data_table <- data_table %>% 
       select(PAR.Name, Dealer, FSA.ZIP.Code, Percentage.of.FSA.ZIP)
@@ -2563,7 +2564,7 @@ server <- function(input, output, session) {
   
   corp_setup <- reactive({
     
-    data_table <- read.csv("~/Desktop/Rob Scripts/Reference Files/zip codes.csv")
+    data_table <- read.csv("~/tawsnbn/reference_files/Zip Codes.csv")
     
     data_table <- data_table %>% 
       select(PAR.Name, Dealer, FSA.ZIP.Code, Percentage.of.FSA.ZIP)
@@ -4324,7 +4325,7 @@ server <- function(input, output, session) {
         
       }else{
         
-        export_names <- read.csv("~/Desktop/Rob Scripts/Reference Files/Export Names.csv")
+        export_names <- read.csv("~/tawsnbn/reference_files/Export Names.csv")
         
         export_names <- export_names$names
         
@@ -4373,7 +4374,7 @@ server <- function(input, output, session) {
         
       }else{
         
-        export_names <- read.csv("~/Desktop/Rob Scripts/Reference Files/Export Names.csv")
+        export_names <- read.csv("~/tawsnbn/reference_files/Export Names.csv")
         
         export_names <- export_names$names
         
@@ -4649,7 +4650,7 @@ server <- function(input, output, session) {
         #   font(part = "all", fontname = "Arial") %>% 
         #   height(part = "body", height = .19) %>% border(border = fp_border(color = "white"), part = "all")
       
-        bing_powerpoint <<- read_pptx(path = "~/Desktop/Rob Scripts/Reference Files/BingSampleSlide.pptx")
+        bing_powerpoint <<- read_pptx(path = "~/tawsnbn/reference_files/BingSampleSlide.pptx")
         
         # browser()
         
@@ -4759,7 +4760,7 @@ server <- function(input, output, session) {
 
           bing_prev_total_cost <- bing_prev_total_cost[1, 1]
 
-          # coop_associations2 <- read.csv(~/Desktop/Rob Scripts/Reference Files/Bing Associations.csv")
+          # coop_associations2 <- read.csv(~/Desktop/Rob Scripts/reference_files/Bing Associations.csv")
           
           # browser()
           
@@ -5123,7 +5124,7 @@ server <- function(input, output, session) {
       # previous_year_text <- paste0(reporting_period, " YOY ", bing_website)
       pptx_name <- gsub("^Culligan\\s|\\s\\(.*$|\\sGrouped|\\sMetro", "", bing_campaign_selection) 
 
-      bing_powerpoint <<- read_pptx(path = "~/Desktop/Rob Scripts/Reference Files/BingSampleSlide.pptx")
+      bing_powerpoint <<- read_pptx(path = "~/tawsnbn/reference_files/BingSampleSlide.pptx")
       # bing_powerpoint <<- bing_powerpoint %>% 
       #   add_slide(layout = "Bing Keyword", master = "Default Theme") %>% 
       #   ph_with_flextable(type = "tbl", value = current_keyword_flextable) %>% 
@@ -5710,7 +5711,7 @@ server <- function(input, output, session) {
       
       # browser()
       
-      voc_associations <<- read.csv("~/Desktop/Rob Scripts/Reference Files/VOC Associations Final.csv", stringsAsFactors = F)
+      voc_associations <<- read.csv("~/tawsnbn/reference_files/VOC Associations Final.csv", stringsAsFactors = F)
       
       # browser()
       
@@ -5768,6 +5769,10 @@ server <- function(input, output, session) {
         # browser()
         # 
         
+        if(file.exists("~/shiny-server/shiny_app/MasterData/other_files/Master_template.pptx")) {
+          
+        voc_template <- read_pptx(path = "~/shiny-server/shiny_app/MasterData/other_files/Master_template.pptx")
+        
         dir.create(paste0("/Volumes/Front/Culligan/Local Website Reporting/VOC ", input$exp_voc_date_range))
         
         full_voc <<- as.data.frame(lapply(full_voc, as.character), stringsAsFactors = F)
@@ -5809,8 +5814,9 @@ server <- function(input, output, session) {
           # mydoc <- read_pptx(path = "~/shiny-server/shiny_app/MasterData/other_files/Master_template.pptx")
           # better_pptx_text_assignment(id = 12, slide_type = "body", text = revised_bing_campaign_selection, slide_num = 2)
           
-          voc_template <- read_pptx(path = "~/shiny-server/shiny_app/MasterData/other_files/Master_template.pptx")
+          # browser()
           
+         
           # browser()
           
           # better_pptx_text_assignment <- function(x, id, slide_type, text, slide_num) {
@@ -5902,8 +5908,18 @@ server <- function(input, output, session) {
                           btn_labels = "OK!",
                           danger_mode = T)
         
+        }else{
+        
+          confirmSweetAlert(session = session,
+                            inputId = "no_voc_pptx",
+                            title = "VOC Master Slide Not Found!",
+                            text = "Make sure you have the Shiny repo in your home folder.",
+                            type = "warning",
+                            btn_labels = "OK!",
+                            danger_mode = T)
+          
       }
-      
+      }
     }
     
   })
@@ -6139,7 +6155,7 @@ server <- function(input, output, session) {
     if(input$voc_confirm_add == T){
       
       # browser()
-      voc_associations <- read.csv("~/Desktop/Rob Scripts/Reference Files/VOC Associations Final.csv", stringsAsFactors = F)
+      voc_associations <- read.csv("~/tawsnbn/reference_files/VOC Associations Final.csv", stringsAsFactors = F)
       voc_add_row <- c(input$voc_store_code, input$voc_business_name, input$voc_location_name, input$voc_address, input$voc_location_address)
       voc_add_row <- as.data.frame(t(as.data.frame(voc_add_row)))
       colnames(voc_add_row) <- colnames(voc_associations)
@@ -6163,7 +6179,7 @@ server <- function(input, output, session) {
         
       }else{
         
-      write.csv(voc_associations, "~/Desktop/Rob Scripts/Reference Files/VOC Associations Final.csv", row.names = F)
+      write.csv(voc_associations, "~/tawsnbn/reference_files/VOC Associations Final.csv", row.names = F)
       output$voc_all_add_table <- renderTable(voc_associations)
       output$voc_all_delete_table <- renderDataTable(datatable(voc_associations, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
       output$voc_all_edit_table <- renderDataTable(datatable(voc_associations, editable = T, selection = "none", rownames = F, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
@@ -6214,7 +6230,7 @@ server <- function(input, output, session) {
       output$voc_all_add_table <- renderTable(voc_associations)
       output$voc_all_edit_table <- renderDataTable(datatable(voc_associations, editable = T, selection = "none", rownames = F, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
       
-      write.csv(voc_associations, "~/Desktop/Rob Scripts/Reference Files/VOC Associations Final.csv", row.names = F)
+      write.csv(voc_associations, "~/tawsnbn/reference_files/VOC Associations Final.csv", row.names = F)
       
       confirmSweetAlert(session = session,
                         inputId = "voc_delete_selected_confirm",
@@ -6290,7 +6306,7 @@ server <- function(input, output, session) {
     output$voc_all_edit_table <- renderDataTable(datatable(voc_associations, editable = T, selection = "none", rownames = F, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
     output$voc_all_add_table <- renderTable(voc_associations)
     output$voc_all_delete_table <- renderDataTable(datatable(voc_associations, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
-    write.csv(voc_associations, "~/Desktop/Rob Scripts/Reference Files/VOC Associations Final.csv", row.names = F)
+    write.csv(voc_associations, "~/tawsnbn/reference_files/VOC Associations Final.csv", row.names = F)
     
     }else{
       
@@ -6306,7 +6322,7 @@ server <- function(input, output, session) {
       output$voc_all_edit_table <- renderDataTable(datatable(voc_associations, editable = T, selection = "none", rownames = F, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
       output$voc_all_add_table <- renderTable(voc_associations)
       output$voc_all_delete_table <- renderDataTable(datatable(voc_associations, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
-      write.csv(voc_associations, "~/Desktop/Rob Scripts/Reference Files/VOC Associations Final.csv", row.names = F)
+      write.csv(voc_associations, "~/tawsnbn/reference_files/VOC Associations Final.csv", row.names = F)
       
     }
     
@@ -6329,7 +6345,7 @@ server <- function(input, output, session) {
     # }else{
     
     # browser()
-    shiny_qui_pptx <- read_pptx("~/Desktop/Rob Scripts/Reference Files/shinyqui test.pptx")
+    shiny_qui_pptx <- read_pptx("~/tawsnbn/reference_files/shinyqui test.pptx")
     qui_slide_order <- NULL
     qui_slide_order <- as.data.frame(input$qui_order_order)
     qui_slide_order <- qui_slide_order %>% 
@@ -6699,13 +6715,13 @@ server <- function(input, output, session) {
     
     if(input$coop_local_toggle == F) {
       
-    write.csv(qui_slide_order, "~/Desktop/Rob Scripts/Reference Files/Slide Order.csv", row.names = F)
-    write.csv(qui_remove_slides, "~/Desktop/Rob Scripts/Reference Files/Remove Names.csv", row.names = F)
+    write.csv(qui_slide_order, "~/tawsnbn/reference_files/Slide Order.csv", row.names = F)
+    write.csv(qui_remove_slides, "~/tawsnbn/reference_files/Remove Names.csv", row.names = F)
     
     }else{
       
-    write.csv(qui_slide_order, "~/Desktop/Rob Scripts/Reference Files/Local Slide Order.csv", row.names = F)
-    write.csv(qui_remove_slides, "~/Desktop/Rob Scripts/Reference Files/Local Remove Names.csv", row.names = F)
+    write.csv(qui_slide_order, "~/tawsnbn/reference_files/Local Slide Order.csv", row.names = F)
+    write.csv(qui_remove_slides, "~/tawsnbn/reference_files/Local Remove Names.csv", row.names = F)
       
     }
     
@@ -6791,11 +6807,11 @@ server <- function(input, output, session) {
     
     if(input$coop_local_toggle == F) {
       
-      shiny_pptx_selected <- read.csv("~/Desktop/Rob Scripts/Reference Files/Slide Order.csv")
+      shiny_pptx_selected <- read.csv("~/tawsnbn/reference_files/Slide Order.csv")
       shiny_pptx_selected$input.qui_order_order <- as.character(shiny_pptx_selected$input.qui_order_order)
       shiny_pptx_selected <- semi_join(shiny_pptx_selected, qui_slide_info)
       
-      shiny_removed_qui <- read.csv("~/Desktop/Rob Scripts/Reference Files/Remove Names.csv", stringsAsFactors = F)
+      shiny_removed_qui <- read.csv("~/tawsnbn/reference_files/Remove Names.csv", stringsAsFactors = F)
       colnames(shiny_removed_qui) <- "input.qui_order_order"
       shiny_removed_qui <- semi_join(shiny_removed_qui, qui_slide_info)
       
@@ -6885,7 +6901,7 @@ server <- function(input, output, session) {
       
       # browser()
       
-      local_pptx_selected <- read.csv("~/Desktop/Rob Scripts/Reference Files/Local Slide Order.csv")
+      local_pptx_selected <- read.csv("~/tawsnbn/reference_files/Local Slide Order.csv")
       local_pptx_selected$input.qui_order_order <- as.character(local_pptx_selected$input.qui_order_order)
       local_pptx_selected <- semi_join(local_pptx_selected, qui_slide_info)
       # if(nrow(shiny_pptx_selected) == 0) {
@@ -6894,7 +6910,7 @@ server <- function(input, output, session) {
       #   
       # }
       
-      local_removed_qui <- read.csv("~/Desktop/Rob Scripts/Reference Files/Local Remove Names.csv", stringsAsFactors = F)
+      local_removed_qui <- read.csv("~/tawsnbn/reference_files/Local Remove Names.csv", stringsAsFactors = F)
       colnames(local_removed_qui) <- "input.qui_order_order"
       local_removed_qui <- semi_join(local_removed_qui, qui_slide_info)
       
@@ -7145,7 +7161,7 @@ observeEvent(input$bing_confirm_dealer_info, {
     
     coop_associations <- rbind(coop_associations, bing_dealer_info)
     
-    write.csv(coop_associations, "~/Desktop/Rob Scripts/Reference Files/Bing Associations.csv", row.names = F)
+    write.csv(coop_associations, "~/tawsnbn/reference_files/Bing Associations.csv", row.names = F)
     
     coop_asssociation_length <<- coop_associations %>% 
       select(Bing_Campaign) %>% 
@@ -7286,7 +7302,7 @@ observeEvent(input$bing_delete_assoc_row, {
     
     coop_associations <- coop_associations[-input$bing_delete_table_rows_selected, ]
     
-    write.csv(coop_associations, "~/Desktop/Rob Scripts/Reference Files/Bing Associations.csv", row.names = F)
+    write.csv(coop_associations, "~/tawsnbn/reference_files/Bing Associations.csv", row.names = F)
     
     coop_asssociation_length <<- coop_associations %>% 
       select(Bing_Campaign) %>% 
@@ -7570,7 +7586,7 @@ observeEvent(input$bing_edit_change, {
     coop_associations[bing_edit_row, bing_edit_column] <<- coerceValue(bing_edit_value, coop_associations[bing_edit_row, bing_edit_column])
     replaceData(bing_edit_proxy, coop_associations, resetPaging = F)
     
-    write.csv(coop_associations, "~/Desktop/Rob Scripts/Reference Files/Bing Associations.csv", row.names = F)
+    write.csv(coop_associations, "~/tawsnbn/reference_files/Bing Associations.csv", row.names = F)
     
     coop_asssociation_length <<- coop_associations %>% 
       select(Bing_Campaign) %>% 
@@ -7867,7 +7883,7 @@ observeEvent(input$bing_align_confirm, {
         select(Coop, Dealers, Local_ID, real_campaigns) %>% 
         rename("Bing_Campaign" = real_campaigns)
       
-      write.csv(coop_associations, "~/Desktop/Rob Scripts/Reference Files/Bing Associations.csv", row.names = F)
+      write.csv(coop_associations, "~/tawsnbn/reference_files/Bing Associations.csv", row.names = F)
       
       coop_asssociation_length <<- coop_associations %>% 
         select(Bing_Campaign) %>% 
