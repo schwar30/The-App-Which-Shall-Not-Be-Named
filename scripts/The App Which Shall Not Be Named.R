@@ -129,6 +129,8 @@ colnames(qui_slide_info) <- "input.qui_order_order"
 
 ui <- dashboardPage(
   
+  skin = "green",
+  
   dashboardHeader(title = "\nThe\nApp\nWhich\nShall\nNot\nBe\nNamed", titleWidth = 400),
   
   dashboardSidebar(
