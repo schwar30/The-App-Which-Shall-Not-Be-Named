@@ -252,6 +252,13 @@ ui <- dashboardPage(
       #          menuSubItem("Edit Google Sheet", tabName = "edit_gsheet"),
       #          menuSubItem("Remove Google Sheet", tabName = "remove_gsheet")),
       
+      ### I don't think this particular tab is that necessary in shiny, but it is helpful so we don't actually need to edit the dealers ###
+      ### ourselves. Happens from time to time where a dealer isn't present. The idea is to filter through all the data from all time   ###
+      ### and gather the dealers who are actually represented. Technically, this will require the user to have the shiny-server installed ###
+      ### in the correct path, but I don't think this should be a real issue.
+      
+      menuItem("Update Dealer List", tabName = "dealer_update", icon = icon("band-aid")),
+      
       # This is one of the most helpful tabs encountered in this app. Before, the olds script used outdated programs and had horrible
       # naming conventions (although that's not a particular reason to toss a functioning script). All in all, this was built in an 
       # effort to automate the VOC slides which took a fairly long time to actually merge, but now if the association doc is updated,
@@ -278,6 +285,24 @@ ui <- dashboardPage(
   dashboardBody(
     
     tabItems(
+      
+      tabItem(tabName = "dealer_update",
+              
+              titlePanel("Update Dealer List"),
+              
+              fluidRow(
+                column(2,
+                actionBttn(inputId = "get_dealer_list", label = "Get Dealer List")),
+                column(2,
+                uiOutput("dealer_conditional")
+                )
+                ),
+              
+              # actionBttn(inputId = "get_dealer_list", label = "Get Dealer List"),
+              tableOutput("dealer_table")
+              
+              
+              ),
       
       tabItem(tabName = "referral",
               
@@ -8008,6 +8033,130 @@ observeEvent(input$bing_align_confirm, {
     
   }
   
+})
+
+observeEvent(input$get_dealer_list, {
+  
+  withProgress(message = "Gathering Dealer List", value = 0, {
+  
+  incProgress(amount = 0, message = "Preparing To Gather Data")
+    
+  current_date <- Sys.Date()
+  current_year <- gsub("\\-.*", "", current_date)
+  # current_date <- gsub("^.{2}", "", current_date)
+  current_year <- as.numeric(current_year)
+  num_of_years <- current_year - 2014
+  
+  ### The collection of years present for the data
+  
+  combined_data <<- NULL
+  
+  # print("Preparring to Aggregate All Data")
+  
+  
+  for (i in 2015:current_year) {
+    
+    for (j in 1:12) {
+      
+      if(j < 10) {
+        
+        if(file.exists(paste0("~/shiny-server/shiny_app/MasterData/Lead_Exec/data_0", j, "_", i, ".RData"))) {
+          
+          load(paste0("~/shiny-server/shiny_app/MasterData/Lead_Exec/data_0", j, "_", i, ".RData"))
+          new_entry <- get(paste0("data_0", j, "_", i))
+          combined_data <<- rbind(combined_data, new_entry) 
+          
+        }
+        
+        
+      }else{
+        
+        if(file.exists(paste0("~/shiny-server/shiny_app/MasterData/Lead_Exec/data_", j, "_", i, ".RData")))
+          
+        load(paste0("~/shiny-server/shiny_app/MasterData/Lead_Exec/data_", j,"_", i, ".RData"))
+        new_entry <- get(paste0("data_", j, "_", i))
+        combined_data <<- rbind(combined_data, new_entry)
+        
+      }
+      
+    }
+    
+    incProgress(amount = 1/num_of_years, message = paste0(i, " Data Aggregated"))
+    
+  }
+  
+  # print("Finished Aggregating All Data!")
+  
+  unique_dealer_list <- as.data.frame(unique(combined_data$SentTo), stringsAsFactors = F)
+  colnames(unique_dealer_list) <- "SentTo"
+  
+  unique_dealer_list <- unique_dealer_list %>% 
+    filter(!str_detect(SentTo, "^Culligan.*Culligan")) %>% 
+    filter(str_detect(SentTo, "^Culligan"))
+  
+  unique_dealer_list$Local_ID <- gsub("^.*\\(ID\\:\\s|\\).*$", "", unique_dealer_list$SentTo)
+  unique_dealer_list <- unique_dealer_list %>% 
+    select(Local_ID, SentTo) %>% 
+    arrange(Local_ID)
+  unique_dealer_list$SentTo <- gsub("\\, Daigneau Eau de Source Inc\\.|\\, Amaro Water|\\, Group - Bellingham & Snohomish", "", unique_dealer_list$SentTo)
+  
+  unique_dealer_list[str_detect(unique_dealer_list$SentTo, "(ID: 4)") & unique_dealer_list$Local_ID == 4,] <- "Culligan du Sud-Ouest de Quebec (ID: 4)"
+  unique_dealer_list$Local_ID <- gsub("^.*\\(ID\\:\\s|\\).*$", "", unique_dealer_list$SentTo)
+  unique_dealer_list$Local_ID <- as.integer(unique_dealer_list$Local_ID)
+  unique_dealer_list <- unique_dealer_list[!duplicated(unique_dealer_list$SentTo), ]
+  
+  incProgress(amount = 0, message = "Finished Filtering Data")
+  
+  output$dealer_table <- renderTable(unique_dealer_list)
+  
+  output$dealer_conditional <- renderUI(
+    
+    tagList(
+      
+      actionBttn(inputId = "download_dealers", label = "Save Dealer List", color = "royal")
+      
+    )
+    
+  )
+  
+  unique_dealer_list <<- unique_dealer_list
+  
+  sendSweetAlert(session = session,
+                 title = "Dealer List Generated!",
+                 text = "Please look at dealer list before saving into shiny-server repo.",
+                 type = "success",
+                 btn_labels = "OK!"
+                 )
+  
+})
+  
+})
+
+observeEvent(input$download_dealers, {
+  
+  confirmSweetAlert(session = session, 
+                    inputId = "confirm_dealer_list",
+                    title = "Are you sure you want to save this document?",
+                    text = "This will be saved in your shiny-server repo which cannot be undone.",
+                    type = "info",
+                    btn_labels = c("No", "Yes"),
+                    danger_mode = T)
+  
+})
+
+observeEvent(input$confirm_dealer_list, {
+  
+  if(input$confirm_dealer_list) {
+    
+    write.csv(unique_dealer_list, "~/shiny-server/shiny_app/MasterData/other_files/culligan_dealer_name_local_id.csv", row.names = F)
+    sendSweetAlert(session = session,
+                   title = "Dealer List Successfully Saved to shiny-server!",
+                   type = "success",
+                   btn_labels = "OK!"
+                   )
+    
+  }
+
 })
   
 }
