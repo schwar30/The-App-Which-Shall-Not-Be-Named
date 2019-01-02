@@ -176,6 +176,11 @@ ui <- dashboardPage(
                            menuSubItem("Remove Items", tabName = "magic_remove")), 
                menuSubItem("Download", tabName = "magic_download")),
       
+      ### Sometimes (rarely) we are asked to have a monthly breakout for a selection of leads. This is an
+      ### attempt to make this simple. I'd put it in shiny, but I have no idea where to do put this.
+      
+      menuItem("Monthly Breakout", tabName = "month_leads", icon = icon("gavel")),
+      
       # Currently a misnomer, since generally speaking all of the bot traffic is actually through 
       # direct traffic, not organic, but it doesn't really matter since everything is done the same
       # way.
@@ -285,6 +290,31 @@ ui <- dashboardPage(
   dashboardBody(
     
     tabItems(
+      
+      tabItem(tabName = "month_leads",
+              
+              titlePanel("Monthly Breakout"),
+              
+              fluidRow(
+                
+                column(6,
+              
+              fileInput(inputId = "month_raw", label = "Please Input Scrubbed Export: "),
+              actionBttn(inputId = "month_confirm", label = "Get Month Breakout")
+              
+                ),
+              
+              column(6,
+                     
+                     tableOutput("monthly_table")
+                     
+                     )
+              
+              ),
+              
+              uiOutput("month_confirm")
+              
+              ),
       
       tabItem(tabName = "dealer_update",
               
@@ -5797,17 +5827,12 @@ server <- function(input, output, session) {
         # 
         
         if(file.exists("~/shiny-server/shiny_app/MasterData/other_files/Master_template.pptx")) {
-          
-        voc_template <- read_pptx(path = "~/shiny-server/shiny_app/MasterData/other_files/Master_template.pptx")
         
         dir.create(paste0("/Volumes/Front/Culligan/Local Website Reporting/VOC ", input$exp_voc_date_range))
-        
         full_voc <<- as.data.frame(lapply(full_voc, as.character), stringsAsFactors = F)
-        
-        # dat <- full_voc
-        # 
-        # dat=as.data.frame(lapply(dat, as.character), stringsAsFactors=F)
-        
+        full_voc[13:16] <- sapply(full_voc[13:16], as.character)
+        full_voc[13:16] <- sapply(full_voc[13:16], as.numeric)
+      
         # withProgress(message = "Downloading Powerpoints", value = 0, {
         #   
         #   for(i in 1:length(bing_campaign_selection)){
@@ -5842,8 +5867,6 @@ server <- function(input, output, session) {
           # better_pptx_text_assignment(id = 12, slide_type = "body", text = revised_bing_campaign_selection, slide_num = 2)
           
           # browser()
-          
-         
           # browser()
           
           # better_pptx_text_assignment <- function(x, id, slide_type, text, slide_num) {
@@ -5874,9 +5897,11 @@ server <- function(input, output, session) {
           #   
           # }
           
-          # browser()
+         # if(i == 102) browser()
           
-          voc_powerpoint_doc <- voc_template %>% 
+          voc_template <<- read_pptx(path = "~/shiny-server/shiny_app/MasterData/other_files/Master_template.pptx")
+          voc_powerpoint_doc <<- NULL
+          voc_powerpoint_doc <<- voc_template %>% 
             # add_slide(layout = "VOC Title", master = "title") %>% 
             add_slide(layout = "body_voc", master = "body") %>% 
             better_pptx_text_assignment(id = 2, slide_type = "title", text = paste0("VOC - Culligan of ", full_voc$city_state[i]), slide_num = 9) %>% 
@@ -8158,6 +8183,58 @@ observeEvent(input$confirm_dealer_list, {
   }
 
 })
+
+observeEvent(input$month_confirm, {
+  
+  # browser()
+  
+  month_breakout <- read.csv(input$month_raw$datapath)
+  
+  if(all(c("Month", "Year") %in% colnames(month_breakout))) {
+  
+  month_breakout <- month_breakout %>% 
+    group_by(Month, Year) %>% 
+    count() %>% 
+    arrange(Year) %>% 
+    rename("Contacts" = n)
+  
+  month_breakout$Month <- month.name[month_breakout$Month]
+  
+  output$monthly_table <- renderTable(month_breakout)
+  
+  month_breakout <<- month_breakout
+  
+  output$month_confirm <- renderUI(
+    
+    tagList(
+      
+      downloadBttn("monthly_download", label = "Monthly Breakout")
+      
+    )
+    
+  )
+  
+  sendSweetAlert(session = session,
+                 title = "Monthly Breakout Complete!",
+                 type = "success",
+                 btn_labels = "OK!")
+  
+  }else sendSweetAlert(session = session, 
+                       title = "Not a Scrubbed Export!",
+                       type = "error",
+                       btn_labels = "OK!")
+  
+})
+
+output$monthly_download <- downloadHandler(
+  
+  filename = "Monthly Breakout.csv",
+  
+  content = function(file) {
+    write.csv(month_breakout, file, row.names = F)
+  }
+  
+)
   
 }
 
