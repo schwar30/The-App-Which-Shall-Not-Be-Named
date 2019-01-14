@@ -28,6 +28,7 @@ library(DT)
 library(data.table)
 library(shinyjqui)
 library(shinyWidgets)
+library(formattable)
 
 # I can't get the auto authorization to work without this option.
 
@@ -5911,7 +5912,7 @@ server <- function(input, output, session) {
             better_pptx_text_assignment(id = 24, slide_type = "body", text = comma(full_voc$Total.views[i], digits = 0), slide_num = 9) %>%
             better_pptx_text_assignment(id = 25, slide_type = "body", text = comma(full_voc$Phone.call.actions[i], digits = 0), slide_num = 9) %>%
             better_pptx_text_assignment(id = 26, slide_type = "body", text = comma(full_voc$Directions.actions[i], digits = 0), slide_num = 9) %>%
-            better_pptx_text_assignment(id = 27, slide_type = "body", text = comma(full_voc$Website.actions[i], digits = 0), slide_num = 9) #%>% 
+            better_pptx_text_assignment(id = 27, slide_type = "body", text = comma(full_voc$Website.actions[i], digits = 0), slide_num = 9)  
             
             # ph_with_text(type = "body", str = full_voc$Total.views[i], index = 17) %>% 
             # ph_with_text(type = "body", str = full_voc$Phone.call.actions[i], index = 18) %>% 
@@ -8062,11 +8063,12 @@ observeEvent(input$bing_align_confirm, {
 
 observeEvent(input$get_dealer_list, {
   
-  withProgress(message = "Gathering Dealer List", value = 0, {
+  withProgress(message = "Collecting Data", detail = "Preparing Data", value = 0, {
   
-  incProgress(amount = 0, message = "Preparing To Gather Data")
+  incProgress(amount = 0, detail = "Preparing To Gather Data")
     
   current_date <- Sys.Date()
+  current_month <- as.numeric(gsub("^.{4}\\-|\\-.{2}$", "", current_date))
   current_year <- gsub("\\-.*", "", current_date)
   # current_date <- gsub("^.{2}", "", current_date)
   current_year <- as.numeric(current_year)
@@ -8075,6 +8077,8 @@ observeEvent(input$get_dealer_list, {
   ### The collection of years present for the data
   
   combined_data <<- NULL
+  
+  total_months <- num_of_years * 12 - (12 - current_month) 
   
   # print("Preparring to Aggregate All Data")
   
@@ -8093,20 +8097,21 @@ observeEvent(input$get_dealer_list, {
           
         }
         
-        
       }else{
         
-        if(file.exists(paste0("~/shiny-server/shiny_app/MasterData/Lead_Exec/data_", j, "_", i, ".RData")))
+        if(file.exists(paste0("~/shiny-server/shiny_app/MasterData/Lead_Exec/data_", j, "_", i, ".RData"))) {
           
         load(paste0("~/shiny-server/shiny_app/MasterData/Lead_Exec/data_", j,"_", i, ".RData"))
         new_entry <- get(paste0("data_", j, "_", i))
         combined_data <<- rbind(combined_data, new_entry)
         
+        }
+        
       }
       
+      incProgress(amount = 1/total_months, detail = paste0(month.name[j], " ", i, " Data"))
+      
     }
-    
-    incProgress(amount = 1/num_of_years, message = paste0(i, " Data Aggregated"))
     
   }
   
@@ -8130,7 +8135,7 @@ observeEvent(input$get_dealer_list, {
   unique_dealer_list$Local_ID <- as.integer(unique_dealer_list$Local_ID)
   unique_dealer_list <- unique_dealer_list[!duplicated(unique_dealer_list$SentTo), ]
   
-  incProgress(amount = 0, message = "Finished Filtering Data")
+  incProgress(amount = 0, detail = "Finished Filtering Data")
   
   output$dealer_table <- renderTable(unique_dealer_list)
   
