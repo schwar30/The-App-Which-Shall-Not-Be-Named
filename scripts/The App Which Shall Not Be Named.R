@@ -273,10 +273,10 @@ ui <- dashboardPage(
       
       menuItem("VOC Plus", tabName = "voc_exp_all", icon = icon("cube"),
                menuSubItem("VOC Upload / Generate Slides", tabName = "voc_all"),
-               menuSubItem("View Differences", tabName = "voc_all_differences"),
-               menuSubItem("VOC Association Edit", tabName = "voc_all_edit"),
-               menuSubItem("VOC Association Add", tabName = "voc_all_add"),
-               menuSubItem("VOC Association Delete", tabName = "voc_all_delete"),
+               # menuSubItem("View Differences", tabName = "voc_all_differences"),
+               # menuSubItem("VOC Association Edit", tabName = "voc_all_edit"),
+               # menuSubItem("VOC Association Add", tabName = "voc_all_add"),
+               # menuSubItem("VOC Association Delete", tabName = "voc_all_delete"),
                menuSubItem("VOC Beta", tabName = "voc", icon = icon("bomb")))
       
       # On occassion we will be asked about inquiry zipcode breakouts, which isn't very common, but it 
@@ -5580,7 +5580,7 @@ server <- function(input, output, session) {
       
       if(class(voc_data1) == "try-error") {
         
-        voc_data1 <- read.csv(input$exp_voc_file$datapath[1], stringsAsFactors = T, fileEncoding = "latin1")
+        voc_data1 <- read.csv(input$exp_voc_file$datapath[1], stringsAsFactors = F, fileEncoding = "latin1")
         # gmb <- voc_data2
         # browser()
         if(all(review_tracker_col_names %in% colnames(voc_data1))) {
@@ -5638,8 +5638,6 @@ server <- function(input, output, session) {
         voc_data2 <- read.csv(input$exp_voc_file$datapath[2], stringsAsFactors = T, fileEncoding = "latin1")
         # gmb <- voc_data2
         
-        # browser()
-        
         if(all(review_tracker_col_names %in% colnames(voc_data2))) {
           
           
@@ -5651,12 +5649,8 @@ server <- function(input, output, session) {
             
           }else{
             
-            # browser()
-            
             voc_data1 <- NULL
             voc_data2 <- NULL
-            
-            # browser()
             
             confirmSweetAlert(session = session,
                               inputId = "not_gmb_fail_2",
@@ -5773,10 +5767,10 @@ server <- function(input, output, session) {
       
       # browser()
       
-      output$voc_all_delete_table <- renderDataTable(datatable(voc_associations, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
-      output$voc_all_edit_table <- renderDataTable(datatable(voc_associations, editable = T, selection = "none", rownames = F, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
+      # output$voc_all_delete_table <- renderDataTable(datatable(voc_associations, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
+      # output$voc_all_edit_table <- renderDataTable(datatable(voc_associations, editable = T, selection = "none", rownames = F, options = list(lengthMenu = list(c(-1, 100), list("All", "100")))))
       
-      review_tracker <- left_join(review_tracker, voc_associations, by = c("Location.Name", "Location.Address"))
+      # review_tracker <- left_join(review_tracker, voc_associations, by = c("Location.Name", "Location.Address"))
       
       review_tracker <- review_tracker %>% 
         mutate(city_state = paste0(Location.City, " ", Location.State))
@@ -5788,38 +5782,59 @@ server <- function(input, output, session) {
       
       # browser()
       
-      gmb <- left_join(gmb, voc_associations, by = c("Business.name", "Address"))
+      # gmb <- left_join(gmb, voc_associations, by = c("Business.name", "Address"))
       
       review_tracker <- review_tracker %>% 
-        select(Store.code, Location.Name, Business.name, Location.Address, Address, city_state, Average.Star.Rating, Number.of.Reviews)
-      review_tracker_filtered <<- review_tracker %>% 
-        filter(is.na(Store.code))
+        select(#Store.code, Location.Name, Business.name, Location.Address, Address,
+               Store.Number..External.ID., city_state, Average.Star.Rating, Number.of.Reviews)
+      
+      # review_tracker_filtered <<- review_tracker %>% 
+      #   filter(is.na(Store.Number..External.ID.))
+      
+      # colnames(review_tracker_filtered)[1] <<- "Store.code"
+      colnames(review_tracker)[1] <- "Store.code"
+      review_tracker$Store.code <- as.character(review_tracker$Store.code)
       
       gmb <- gmb %>% 
-        select(Store.code.y, Location.Name, Business.name, Location.Address, Address, Total.views, Phone.call.actions, Directions.actions, Website.actions) %>% 
-        rename("Store.code" = Store.code.y)
-      gmb_filtered <<- gmb %>% 
-        filter(is.na(Store.code))
-    
-      full_voc <- full_join(review_tracker, gmb, by = "Store.code")
+        select(Store.code,
+               # Store.code.y, Location.Name, Business.name, Location.Address, Address, 
+               Total.views, Phone.call.actions, Directions.actions, Website.actions) #%>% 
+        #rename("Store.code" = Store.code.y)
       
-      if(nrow(gmb_filtered) > 0 | nrow(review_tracker_filtered) > 0) {
-        
-        # updateSelectizeInput(session = session, inputId = "voc_store_code", label = "Please input Corporate ID:", choices = gmb$Store.code, selected = NULL)
-        updateSelectizeInput(session = session, inputId = "voc_business_name", label = "Please input GMB name:", choices = gmb$Business.name, selected = NULL)
-        updateSelectizeInput(session = session, inputId = "voc_location_name", label = "Please input ReviewTracker name:", choices = review_tracker$Location.Name, selected = NULL)
-        updateSelectizeInput(session = session, input = "voc_address", label = "Please input GMB Address:", choices = gmb$Address, selected = NULL)
-        updateSelectizeInput(session = session, input = "voc_location_address", label = "Please input ReviewTracker address:", choices = review_tracker$Location.Address, selected = NULL)
-        
-        confirmSweetAlert(session = session,
-                          inputId = "update_voc_association_doc",
-                          title = "There appear to be more campaigns on GMB or Review Tracker!",
-                          text = "Please update the VOC associations doc.",
-                          type = "warning",
-                          btn_labels = "OK!",
-                          danger_mode = T)
-        
-      }else{
+      # gmb_filtered <<- gmb %>% 
+      #   filter(is.na(Store.code))
+      
+      gmb$Store.code <- as.character(gsub("[a-z]", "", gmb$Store.code))
+      # 
+      # browser()
+      # 
+      full_voc <- full_join(review_tracker, gmb, by = "Store.code")
+      full_voc[,3:ncol(full_voc)] <-lapply(full_voc[,3:ncol(full_voc)], as.character) 
+      full_voc[,3:ncol(full_voc)] <-lapply(full_voc[,3:ncol(full_voc)], as.numeric) 
+     
+      full_voc <- full_voc %>% 
+        group_by(Store.code) %>% 
+        summarise(city_state = unique(city_state), Average.Star.Rating = unique(Average.Star.Rating), Number.of.Reviews = unique(Number.of.Reviews),
+                  Total.views = sum(Total.views), Phone.call.actions = sum(Phone.call.actions), 
+                  Directions.actions = sum(Directions.actions), Website.actions = sum(Website.actions))
+      
+      # if(nrow(gmb_filtered) > 0 | nrow(review_tracker_filtered) > 0) {
+      #   
+      #   # updateSelectizeInput(session = session, inputId = "voc_store_code", label = "Please input Corporate ID:", choices = gmb$Store.code, selected = NULL)
+      #   updateSelectizeInput(session = session, inputId = "voc_business_name", label = "Please input GMB name:", choices = gmb$Business.name, selected = NULL)
+      #   updateSelectizeInput(session = session, inputId = "voc_location_name", label = "Please input ReviewTracker name:", choices = review_tracker$Location.Name, selected = NULL)
+      #   updateSelectizeInput(session = session, input = "voc_address", label = "Please input GMB Address:", choices = gmb$Address, selected = NULL)
+      #   updateSelectizeInput(session = session, input = "voc_location_address", label = "Please input ReviewTracker address:", choices = review_tracker$Location.Address, selected = NULL)
+      #   
+      #   confirmSweetAlert(session = session,
+      #                     inputId = "update_voc_association_doc",
+      #                     title = "There appear to be more campaigns on GMB or Review Tracker!",
+      #                     text = "Please update the VOC associations doc.",
+      #                     type = "warning",
+      #                     btn_labels = "OK!",
+      #                     danger_mode = T)
+      #   
+      # }else{
         
         # full_voc <- full_voc %>%
         #   slice(1:5)
@@ -5830,9 +5845,9 @@ server <- function(input, output, session) {
         if(file.exists("~/shiny-server/shiny_app/MasterData/other_files/Master_template.pptx")) {
         
         dir.create(paste0("/Volumes/Front/Culligan/Local Website Reporting/VOC ", input$exp_voc_date_range))
-        full_voc <<- as.data.frame(lapply(full_voc, as.character), stringsAsFactors = F)
-        full_voc[13:16] <- sapply(full_voc[13:16], as.character)
-        full_voc[13:16] <- sapply(full_voc[13:16], as.numeric)
+        # full_voc <<- as.data.frame(lapply(full_voc, as.character), stringsAsFactors = F)
+        # full_voc[13:16] <- sapply(full_voc[13:16], as.character)
+        # full_voc[13:16] <- sapply(full_voc[13:16], as.numeric)
       
         # withProgress(message = "Downloading Powerpoints", value = 0, {
         #   
@@ -5902,17 +5917,18 @@ server <- function(input, output, session) {
           
           voc_template <<- read_pptx(path = "~/shiny-server/shiny_app/MasterData/other_files/Master_template.pptx")
           voc_powerpoint_doc <<- NULL
+
           voc_powerpoint_doc <<- voc_template %>% 
             # add_slide(layout = "VOC Title", master = "title") %>% 
             add_slide(layout = "body_voc", master = "body") %>% 
-            better_pptx_text_assignment(id = 2, slide_type = "title", text = paste0("VOC - Culligan of ", full_voc$city_state[i]), slide_num = 9) %>% 
-            better_pptx_text_assignment(id = 21, slide_type = "body", text = full_voc$Number.of.Reviews[i], slide_num = 9) %>%
-            better_pptx_text_assignment(id = 20, slide_type = "body", text = digits(full_voc$Average.Star.Rating[i], digits = 1), slide_num = 9) %>%
-            better_pptx_text_assignment(id = 16, slide_type = "body", text = input$exp_voc_date_range, slide_num = 9) %>%
-            better_pptx_text_assignment(id = 24, slide_type = "body", text = comma(full_voc$Total.views[i], digits = 0), slide_num = 9) %>%
-            better_pptx_text_assignment(id = 25, slide_type = "body", text = comma(full_voc$Phone.call.actions[i], digits = 0), slide_num = 9) %>%
-            better_pptx_text_assignment(id = 26, slide_type = "body", text = comma(full_voc$Directions.actions[i], digits = 0), slide_num = 9) %>%
-            better_pptx_text_assignment(id = 27, slide_type = "body", text = comma(full_voc$Website.actions[i], digits = 0), slide_num = 9)  
+            better_pptx_text_assignment(id = 2, slide_type = "title", text = paste0("VOC - Culligan of ", full_voc$city_state[i]), slide_num = 16) %>%
+            better_pptx_text_assignment(id = 21, slide_type = "body", text = full_voc$Number.of.Reviews[i], slide_num = 16) %>%
+            better_pptx_text_assignment(id = 20, slide_type = "body", text = digits(full_voc$Average.Star.Rating[i], digits = 1), slide_num = 16) %>%
+            better_pptx_text_assignment(id = 16, slide_type = "body", text = input$exp_voc_date_range, slide_num = 16) %>%
+            better_pptx_text_assignment(id = 24, slide_type = "body", text = comma(full_voc$Total.views[i], digits = 0), slide_num = 16) %>%
+            better_pptx_text_assignment(id = 25, slide_type = "body", text = comma(full_voc$Phone.call.actions[i], digits = 0), slide_num = 16) %>%
+            better_pptx_text_assignment(id = 26, slide_type = "body", text = comma(full_voc$Directions.actions[i], digits = 0), slide_num = 16) %>%
+            better_pptx_text_assignment(id = 27, slide_type = "body", text = comma(full_voc$Website.actions[i], digits = 0), slide_num = 16)  
             
             # ph_with_text(type = "body", str = full_voc$Total.views[i], index = 17) %>% 
             # ph_with_text(type = "body", str = full_voc$Phone.call.actions[i], index = 18) %>% 
@@ -5972,7 +5988,7 @@ server <- function(input, output, session) {
                             danger_mode = T)
           
       }
-      }
+      # }
     }
     
   })
