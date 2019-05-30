@@ -1,3 +1,11 @@
+### At this point, the's almost nothing in here that's worth much merit. All of the good tools
+### that were in this are already in Shiny. We had a good run, but there's just nothing worth 
+### Maintaining in this whatsoever. 
+
+#########################
+###### DEPRECIATED ###### 
+#########################
+
 # Make this WORK!!!!!!
 
 # Adwords API Call, Google Sheets do not work. Not honestly sure if I should
